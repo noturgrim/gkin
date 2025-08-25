@@ -125,12 +125,46 @@ export const AssignmentsProvider = ({ children }) => {
     return service;
   };
 
+  // Function to add more future dates - simplified version using getUpcomingSundays
+  const addMoreFutureDates = (additionalCount = 4) => {
+    // Get the latest date we currently have
+    const latestDate = [...assignments].sort((a, b) => {
+      return new Date(b.dateString) - new Date(a.dateString);
+    })[0];
+    
+    // Calculate the offset for getUpcomingSundays
+    // We want to start from the Sunday after the latest date we have
+    const latestDateObj = new Date(latestDate.dateString);
+    const today = new Date();
+    const diffWeeks = Math.ceil((latestDateObj.getTime() - today.getTime()) / (7 * 24 * 60 * 60 * 1000)) + 1;
+    
+    // Get new Sundays starting from where our current data ends
+    const startOffset = diffWeeks;
+    const newSundays = getUpcomingSundays(additionalCount + startOffset).slice(startOffset);
+    
+    // Create new service objects with the same role structure as existing ones
+    const roleTemplate = assignments[0].assignments.map(assignment => ({
+      role: assignment.role,
+      person: ""
+    }));
+    
+    const newServices = newSundays.map(sunday => ({
+      ...sunday,
+      title: "Sunday Service",
+      assignments: [...roleTemplate]
+    }));
+    
+    // Add the new services to our assignments
+    setAssignments(prev => [...prev, ...newServices]);
+  };
+
   const value = {
     assignments,
     updateAssignment,
     addRole,
     removeRole,
-    getAssignmentsForDate
+    getAssignmentsForDate,
+    addMoreFutureDates
   };
 
   return (

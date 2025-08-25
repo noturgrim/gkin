@@ -1,7 +1,6 @@
-import { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
-import { Calendar, Edit } from "lucide-react";
+import { Calendar, Edit, Plus } from "lucide-react";
 import { Button } from "./ui/button";
 import { Link } from "react-router-dom";
 import { getStatusColor } from "../lib/date-utils";
@@ -55,7 +54,7 @@ export function ServiceAssignments({ selectedDate }) {
                 : `${currentService.daysRemaining} days`}
             </Badge>
             <Link to="/assignments">
-              <Button size="sm" variant="ghost" className="h-7 w-7 p-0 ml-1">
+              <Button size="sm" variant="ghost" className="h-7 w-7 p-0 ml-1" title="Edit Assignments">
                 <Edit className="h-3.5 w-3.5" />
               </Button>
             </Link>
@@ -82,6 +81,15 @@ export function ServiceAssignments({ selectedDate }) {
               </div>
             </div>
           ))}
+        </div>
+        
+        <div className="mt-4 pt-3 border-t border-gray-100 flex justify-end">
+          <Link to="/assignments">
+            <Button variant="outline" size="sm" className="flex items-center gap-1">
+              <Plus className="h-3.5 w-3.5" />
+              Manage All Assignments
+            </Button>
+          </Link>
         </div>
       </CardContent>
     </Card>
