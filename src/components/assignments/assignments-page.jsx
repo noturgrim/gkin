@@ -299,7 +299,11 @@ export function AssignmentsPage() {
                 variant={viewMode === "consolidated" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setViewMode("consolidated")}
-                className="flex-1 md:flex-none"
+                className={`flex-1 md:flex-none ${
+                  viewMode === "consolidated" 
+                    ? "bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-sm" 
+                    : "border-gray-300 hover:bg-gray-50"
+                }`}
               >
                 All Weeks
               </Button>
@@ -307,7 +311,11 @@ export function AssignmentsPage() {
                 variant={viewMode === "weekly" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setViewMode("weekly")}
-                className="flex-1 md:flex-none"
+                className={`flex-1 md:flex-none ${
+                  viewMode === "weekly" 
+                    ? "bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-sm" 
+                    : "border-gray-300 hover:bg-gray-50"
+                }`}
               >
                 Week by Week
               </Button>
@@ -383,7 +391,7 @@ export function AssignmentsPage() {
                     setDateRangeFilter(e.target.value);
                     setStartWeekIndex(0); // Reset pagination when filter changes
                   }}
-                  className="pl-10 pr-8 py-2 border border-gray-300 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="pl-10 pr-8 py-2 border border-gray-300 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium text-gray-700"
                 >
                   <option value="upcoming">Upcoming Services</option>
                   <option value="past">Past Services</option>
@@ -399,7 +407,7 @@ export function AssignmentsPage() {
                   setVisibleWeeks(Number(e.target.value));
                   setStartWeekIndex(0); // Reset pagination when view size changes
                 }}
-                className="py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium text-gray-700 min-w-[90px]"
               >
                 <option value="4">Show 4</option>
                 <option value="6">Show 6</option>
@@ -535,7 +543,7 @@ export function AssignmentsPage() {
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
                     
-                    <span className="text-xs text-gray-600">
+                    <span className="text-xs font-medium text-gray-600">
                       {startWeekIndex + 1}-{Math.min(startWeekIndex + visibleWeeks, filteredAssignments.length)} of {filteredAssignments.length}
                     </span>
                     
@@ -629,7 +637,11 @@ export function AssignmentsPage() {
                     onChange={(e) => setNewRoleName(e.target.value)}
                     className="text-sm"
                   />
-                  <Button type="submit" className="flex items-center gap-1">
+                  <Button 
+                    type="submit" 
+                    className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white font-medium whitespace-nowrap px-4"
+                    size="sm"
+                  >
                     <Plus className="h-4 w-4" /> Add Role
                   </Button>
                 </div>
