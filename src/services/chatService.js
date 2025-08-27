@@ -21,9 +21,16 @@ class ChatService {
    */
   connect() {
     return new Promise((resolve, reject) => {
+      // If already connected, just return the existing socket
       if (this.connected && this.socket) {
         resolve(this.socket);
         return;
+      }
+      
+      // If there's an existing socket but not connected, disconnect it first
+      if (this.socket) {
+        this.socket.disconnect();
+        this.socket = null;
       }
 
       // Get the current user
@@ -33,53 +40,75 @@ class ChatService {
         return;
       }
 
-      // Connect to the socket server
-      this.socket = io(env.API_URL.replace('/api', ''), {
-        auth: {
-          token: user.token
-        },
-        transports: ['websocket', 'polling']
-      });
+      // Connect to the socket server with a unique client ID
+      console.log('Connecting to socket server at:', env.API_URL.replace('/api', ''));
+      
+      try {
+        this.socket = io(env.API_URL.replace('/api', ''), {
+          auth: {
+            token: user.token
+          },
+          transports: ['polling', 'websocket'], // Try polling first, then websocket
+          forceNew: true,
+          reconnection: true,
+          reconnectionAttempts: 5,
+          reconnectionDelay: 1000,
+          timeout: 10000 // Increase timeout
+        });
+      } catch (error) {
+        console.error('Error creating socket connection:', error);
+        // Continue execution - we'll handle connection errors in the event handlers
+      }
 
       // Set up event listeners
-      this.socket.on('connect', () => {
-        console.log('Socket connected:', this.socket.id);
-        this.connected = true;
+      if (this.socket) {
+        this.socket.on('connect', () => {
+          console.log('Socket connected:', this.socket.id);
+          this.connected = true;
+          
+          // Rooms are now auto-joined on the server side
+          // No need to manually join rooms here
+          
+          // Notify listeners
+          this.connectionListeners.forEach(listener => listener(true));
+          
+          resolve(this.socket);
+        });
         
-        // Join room for this user's role
-        this.socket.emit('join', user.role);
-        
-        // Join room for this specific user
-        this.socket.emit('join', `user-${user.id}`);
-        
-        // Notify listeners
-        this.connectionListeners.forEach(listener => listener(true));
-        
-        resolve(this.socket);
-      });
+        this.socket.on('connect_error', (error) => {
+          console.warn('Socket connection error:', error.message);
+          // We'll continue without WebSockets - the app can still function with REST API
+          console.log('Continuing without WebSocket connection');
+          this.connected = false;
+          resolve(null); // Resolve with null to indicate no socket connection
+        });
+      } else {
+        console.warn('Failed to create socket - continuing without WebSockets');
+        resolve(null);
+      }
 
-      this.socket.on('disconnect', () => {
-        console.log('Socket disconnected');
-        this.connected = false;
-        
-        // Notify listeners
-        this.connectionListeners.forEach(listener => listener(false));
-      });
+      if (this.socket) {
+        this.socket.on('disconnect', () => {
+          console.log('Socket disconnected');
+          this.connected = false;
+          
+          // Notify listeners
+          this.connectionListeners.forEach(listener => listener(false));
+        });
+      }
 
-      this.socket.on('connect_error', (error) => {
-        console.error('Socket connection error:', error);
-        reject(error);
-      });
+      // Listen for messages and mentions only if socket exists
+      if (this.socket) {
+        // Listen for messages
+        this.socket.on('message', (message) => {
+          this.messageListeners.forEach(listener => listener(message));
+        });
 
-      // Listen for messages
-      this.socket.on('message', (message) => {
-        this.messageListeners.forEach(listener => listener(message));
-      });
-
-      // Listen for mentions
-      this.socket.on('mention', (data) => {
-        this.mentionListeners.forEach(listener => listener(data));
-      });
+        // Listen for mentions
+        this.socket.on('mention', (data) => {
+          this.mentionListeners.forEach(listener => listener(data));
+        });
+      }
     });
   }
 
@@ -148,12 +177,50 @@ class ChatService {
    * @param {number} offset - Number of messages to skip
    * @returns {Promise} Promise with messages
    */
-  async getMessages(limit = 50, offset = 0) {
+  async getMessages(limit = 50, offset = 0, retryCount = 0) {
+    const maxRetries = 3;
+    
     try {
-      return await api.get(`/chat/messages?limit=${limit}&offset=${offset}`);
+      // Check if user is authenticated
+      const user = authService.getCurrentUser();
+      if (!user || !user.token) {
+        throw new Error('You need to be logged in to fetch messages');
+      }
+      
+      const response = await api.get(`/chat/messages?limit=${limit}&offset=${offset}`);
+      
+      // Ensure we return an array even if the API returns something unexpected
+      if (Array.isArray(response)) {
+        return response;
+      } else if (response && typeof response === 'object') {
+        // If it's an object with data property, return that
+        if (Array.isArray(response.data)) {
+          return response.data;
+        }
+        // Otherwise return an empty array
+        return [];
+      } else {
+        return [];
+      }
     } catch (error) {
-      console.error('Error fetching messages:', error);
-      throw error;
+      // Check if it's a network error (server not running)
+      if (error.message && error.message.includes('Failed to fetch')) {
+        if (retryCount < maxRetries) {
+          // Wait a bit and retry
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          return this.getMessages(limit, offset, retryCount + 1);
+        }
+        throw new Error('Cannot connect to chat server. Please check if the server is running.');
+      } else if (error.message && error.message.includes('Unauthorized')) {
+        throw new Error('Session expired. Please log in again.');
+      } else {
+        if (retryCount < maxRetries) {
+          // Wait a bit and retry
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          return this.getMessages(limit, offset, retryCount + 1);
+        }
+        throw error; // Throw the error to be handled by the component
+      }
     }
   }
 
@@ -166,14 +233,18 @@ class ChatService {
   async sendMessage(content, mentions = []) {
     try {
       // First save the message to the database via API
+      console.log('Sending message via API:', content);
       const message = await api.post('/chat/messages', { content, mentions });
+      console.log('Message saved to database:', message);
       
-      // Then emit it via socket for real-time updates
+      // Then emit it via socket for real-time updates if connected
       if (this.connected && this.socket) {
+        console.log('Emitting message via socket');
         this.socket.emit('message', message);
         
         // If there are mentions, emit those too
         if (mentions && mentions.length > 0) {
+          console.log('Emitting mentions:', mentions);
           mentions.forEach(mention => {
             this.socket.emit('mention', {
               messageId: message.id,
@@ -181,6 +252,8 @@ class ChatService {
             });
           });
         }
+      } else {
+        console.log('Socket not connected, skipping real-time update');
       }
       
       return message;

@@ -61,15 +61,46 @@ const apiRequest = async (endpoint, method = 'GET', data = null, includeAuth = t
 
   try {
     const response = await fetch(url, options);
-    const result = await response.json();
+    
+    // Try to parse JSON response
+    let result;
+    try {
+      const text = await response.text();
+      
+      try {
+        result = JSON.parse(text);
+      } catch (jsonError) {
+        throw new Error(`Invalid JSON response: ${text.substring(0, 100)}...`);
+      }
+    } catch (parseError) {
+      throw new Error(`Failed to parse response: ${parseError.message}`);
+    }
     
     if (!response.ok) {
-      throw new Error(result.message || 'API request failed');
+      // Special handling for authentication errors
+      if (response.status === 401) {
+        console.error('Authentication error:', result.message || 'Unauthorized');
+        // If it's an auth endpoint, don't redirect
+        if (!endpoint.includes('/auth/')) {
+          console.log('Redirecting to login due to authentication error');
+          // Clear user data
+          localStorage.removeItem('currentUser');
+          // Use timeout to avoid state updates during render
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 100);
+        }
+      }
+      throw new Error(result.message || `API request failed: ${response.status} ${response.statusText}`);
     }
     
     return result;
   } catch (error) {
     console.error(`API Error (${endpoint}):`, error);
+    // Add more context to the error
+    if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+      console.error('Network error - Is the server running?');
+    }
     throw error;
   }
 };

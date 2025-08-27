@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const http = require('http');
 const socketIo = require('socket.io');
+const config = require('./config/config');
 
 // Load environment variables
 dotenv.config();
@@ -58,14 +59,58 @@ app.get('/', (req, res) => {
   res.send('GKIN API is running');
 });
 
+// Store active user connections
+const activeConnections = new Map();
+
 // Socket.io connection handler
 io.on('connection', (socket) => {
   console.log('New client connected:', socket.id);
   
+  // Handle authentication
+  const token = socket.handshake.auth.token;
+  if (token) {
+    try {
+      // Verify the token
+      const decoded = jwt.verify(token, config.jwtSecret);
+      const userId = decoded.id;
+      
+      // Store user info in socket
+      socket.userId = userId;
+      socket.userRole = decoded.role;
+      
+      // Check for existing connections from this user
+      if (activeConnections.has(userId)) {
+        const existingSocket = io.sockets.sockets.get(activeConnections.get(userId));
+        if (existingSocket) {
+          console.log(`User ${userId} already has an active connection. Disconnecting previous socket.`);
+          existingSocket.disconnect();
+        }
+      }
+      
+      // Store this as the active connection for this user
+      activeConnections.set(userId, socket.id);
+      
+      // Auto-join rooms for user ID and role
+      socket.join(`user-${userId}`);
+      socket.join(decoded.role);
+      console.log(`Socket ${socket.id} auto-joined rooms: user-${userId}, ${decoded.role}`);
+    } catch (error) {
+      console.error('Socket authentication error:', error);
+      socket.disconnect();
+      return;
+    }
+  }
+  
   // Join a room (for private messaging if needed later)
   socket.on('join', (room) => {
-    socket.join(room);
-    console.log(`Socket ${socket.id} joined room: ${room}`);
+    // Check if socket is already in the room to prevent duplicate joins
+    const rooms = Array.from(socket.rooms.values());
+    if (!rooms.includes(room)) {
+      socket.join(room);
+      console.log(`Socket ${socket.id} joined room: ${room}`);
+    } else {
+      console.log(`Socket ${socket.id} already in room: ${room}`);
+    }
   });
   
   // Handle new messages
@@ -92,6 +137,12 @@ io.on('connection', (socket) => {
   // Handle disconnection
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
+    
+    // Remove from active connections if this was the active socket for the user
+    if (socket.userId && activeConnections.get(socket.userId) === socket.id) {
+      activeConnections.delete(socket.userId);
+      console.log(`Removed user ${socket.userId} from active connections`);
+    }
   });
 });
 
