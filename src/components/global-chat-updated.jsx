@@ -8,6 +8,8 @@ import {
   ChevronDown,
   ChevronUp,
   X,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import {
@@ -18,77 +20,9 @@ import {
   CardDescription,
 } from "./ui/card";
 import { Badge } from "./ui/badge";
-
-// Sample user data
-const users = [
-  {
-    id: 1,
-    name: "John Doe",
-    role: "liturgy",
-    email: "john@example.com",
-    avatar: "https://i.pravatar.cc/150?img=1",
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    role: "pastor",
-    email: "jane@example.com",
-    avatar: "https://i.pravatar.cc/150?img=2",
-  },
-  {
-    id: 3,
-    name: "Mike Johnson",
-    role: "translation",
-    email: "mike@example.com",
-    avatar: "https://i.pravatar.cc/150?img=3",
-  },
-  {
-    id: 4,
-    name: "Sarah Williams",
-    role: "beamer",
-    email: "sarah@example.com",
-    avatar: "https://i.pravatar.cc/150?img=4",
-  },
-  {
-    id: 5,
-    name: "David Brown",
-    role: "music",
-    email: "david@example.com",
-    avatar: "https://i.pravatar.cc/150?img=5",
-  },
-  {
-    id: 6,
-    name: "Lisa Davis",
-    role: "beamer",
-    email: "lisa@example.com",
-    avatar: "https://i.pravatar.cc/150?img=6",
-  },
-];
-
-// Sample messages
-const initialMessages = [
-  {
-    id: 1,
-    sender: users[0],
-    text: "Hi everyone, I've updated the liturgy document for this Sunday.",
-    timestamp: "2023-11-10T09:30:00",
-    mentions: [],
-  },
-  {
-    id: 2,
-    sender: users[1],
-    text: "Thanks @liturgy for the update! I'll review it today.",
-    timestamp: "2023-11-10T10:15:00",
-    mentions: ["liturgy"],
-  },
-  {
-    id: 3,
-    sender: users[3],
-    text: "@translation can you please translate the new sections by tomorrow?",
-    timestamp: "2023-11-10T11:05:00",
-    mentions: ["translation"],
-  },
-];
+import chatService from "../services/chatService";
+import authService from "../services/authService";
+import { useNotifications } from "../context/NotificationContext";
 
 // Enhanced role colors mapping with better contrast
 const roleColors = {
@@ -122,13 +56,16 @@ const roleColors = {
     light: "bg-pink-50",
     border: "border-pink-200",
   },
+  treasurer: {
+    bg: "bg-emerald-600",
+    text: "text-emerald-800",
+    light: "bg-emerald-50",
+    border: "border-emerald-200",
+  },
 };
 
-export function GlobalChat({
-  currentUser = users[0],
-  defaultExpanded = false,
-}) {
-  const [messages, setMessages] = useState(initialMessages);
+export function GlobalChat({ defaultExpanded = false }) {
+  const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [showMentionSuggestions, setShowMentionSuggestions] = useState(false);
   const [mentionSearch, setMentionSearch] = useState("");
@@ -139,11 +76,20 @@ export function GlobalChat({
     const savedState = localStorage.getItem("chatExpanded");
     return savedState !== null ? JSON.parse(savedState) : defaultExpanded;
   });
-  const [unreadCount, setUnreadCount] = useState(0);
   const [isMobileView, setIsMobileView] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isConnected, setIsConnected] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [error, setError] = useState(null);
   const chatEndRef = useRef(null);
   const inputRef = useRef(null);
   const chatContainerRef = useRef(null);
+  
+  // Get current user
+  const currentUser = authService.getCurrentUser();
+  
+  // Get notifications context
+  const { unreadCount, markAllAsRead } = useNotifications();
 
   // Check if mobile view on mount and window resize
   useEffect(() => {
@@ -167,21 +113,69 @@ export function GlobalChat({
     localStorage.setItem("chatExpanded", JSON.stringify(isExpanded));
   }, [isExpanded]);
 
+  // Initialize chat and connect to socket
+  useEffect(() => {
+    const initializeChat = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        // Connect to chat service
+        await chatService.connect();
+        setIsConnected(true);
+        
+        // Load initial messages
+        const initialMessages = await chatService.getMessages();
+        setMessages(initialMessages || []);
+        
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error initializing chat:", error);
+        setError("Failed to connect to chat. Please try again later.");
+        setIsLoading(false);
+      }
+    };
+    
+    initializeChat();
+    
+    // Set up message listener
+    chatService.onMessage(handleNewMessage);
+    chatService.onConnectionChange(handleConnectionChange);
+    
+    // Clean up on unmount
+    return () => {
+      chatService.offMessage(handleNewMessage);
+      chatService.offConnectionChange(handleConnectionChange);
+    };
+  }, []);
+
+  // Handle connection status changes
+  const handleConnectionChange = (connected) => {
+    setIsConnected(connected);
+  };
+
+  // Handle new incoming messages
+  const handleNewMessage = (message) => {
+    setMessages(prevMessages => [...prevMessages, message]);
+  };
+
   // Scroll to bottom when messages change
   useEffect(() => {
-    if (chatEndRef.current) {
+    if (chatEndRef.current && isExpanded) {
       const chatContainer = chatEndRef.current.parentElement;
       if (chatContainer) {
         chatContainer.scrollTop = chatContainer.scrollHeight;
       }
     }
-  }, [messages]);
+  }, [messages, isExpanded]);
 
   // Toggle chat expansion
   const toggleChat = () => {
     setIsExpanded(!isExpanded);
     if (!isExpanded) {
-      setUnreadCount(0); // Reset unread count when opening
+      // Reset unread count when opening
+      markAllAsRead();
+      
       setTimeout(() => {
         if (chatEndRef.current) {
           const chatContainer = chatEndRef.current.parentElement;
@@ -213,24 +207,13 @@ export function GlobalChat({
       const suggestions = [];
 
       // First check for role matches
-      const roles = ["liturgy", "pastor", "translation", "beamer", "music"];
+      const roles = ["liturgy", "pastor", "translation", "beamer", "music", "treasurer"];
       const matchingRoles = roles.filter((role) =>
         role.toLowerCase().includes(searchText)
       );
 
       matchingRoles.forEach((role) => {
         suggestions.push({ type: "role", value: role });
-      });
-
-      // Then check for user matches
-      const matchingUsers = users.filter(
-        (user) =>
-          user.name.toLowerCase().includes(searchText) ||
-          user.role.toLowerCase().includes(searchText)
-      );
-
-      matchingUsers.forEach((user) => {
-        suggestions.push({ type: "user", value: user });
       });
 
       setFilteredSuggestions(suggestions);
@@ -260,35 +243,25 @@ export function GlobalChat({
   };
 
   // Send message
-  const sendMessage = () => {
-    if (newMessage.trim() === "") return;
+  const sendMessage = async () => {
+    if (newMessage.trim() === "" || isSending) return;
 
-    // Extract mentions
-    const mentionRegex = /@(\w+)/g;
-    const mentions = [];
-    let match;
-    while ((match = mentionRegex.exec(newMessage)) !== null) {
-      mentions.push(match[1].toLowerCase());
-    }
-
-    const newMsg = {
-      id: messages.length + 1,
-      sender: currentUser,
-      text: newMessage,
-      timestamp: new Date().toISOString(),
-      mentions: mentions,
-    };
-
-    setMessages([...messages, newMsg]);
-    setNewMessage("");
-
-    // Simulate email notification
-    if (mentions.length > 0) {
-      console.log("Sending email notifications to:", mentions);
-      // In a real app, you would call an API to send emails here
-
-      // Show notification for demo purposes
-      alert(`Email notifications sent to: ${mentions.join(", ")}`);
+    try {
+      setIsSending(true);
+      
+      // Extract mentions
+      const mentions = chatService.extractMentions(newMessage);
+      
+      // Send the message
+      await chatService.sendMessage(newMessage, mentions);
+      
+      // Clear input
+      setNewMessage("");
+      setIsSending(false);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      setError("Failed to send message. Please try again.");
+      setIsSending(false);
     }
   };
 
@@ -310,7 +283,7 @@ export function GlobalChat({
 
   // Group messages by date
   const groupedMessages = messages.reduce((groups, message) => {
-    const date = new Date(message.timestamp).toLocaleDateString();
+    const date = new Date(message.created_at).toLocaleDateString();
     if (!groups[date]) {
       groups[date] = [];
     }
@@ -374,6 +347,11 @@ export function GlobalChat({
               <div className="flex items-center gap-2">
                 <AtSign className="w-5 h-5" />
                 <h2 className="font-medium">General Chat</h2>
+                {!isConnected && (
+                  <Badge variant="outline" className="bg-red-500 text-white border-red-600 text-xs">
+                    Offline
+                  </Badge>
+                )}
               </div>
               <Button
                 variant="ghost"
@@ -395,6 +373,11 @@ export function GlobalChat({
                     <AtSign className="w-4 h-4 text-blue-700" />
                   </div>
                   General Chat
+                  {!isConnected && (
+                    <Badge variant="outline" className="bg-red-500 text-white border-red-600 text-xs ml-2">
+                      Offline
+                    </Badge>
+                  )}
                 </CardTitle>
                 <Button
                   variant="ghost"
@@ -406,130 +389,163 @@ export function GlobalChat({
                 </Button>
               </div>
               <CardDescription className="text-gray-600">
-                Use @role or @name to notify team members
+                Use @role to notify team members
               </CardDescription>
             </CardHeader>
           )}
 
           <CardContent className="flex-1 overflow-y-auto p-0 bg-gray-50">
-            <div className="p-3 md:p-4 space-y-4 md:space-y-6">
-              {Object.entries(groupedMessages).map(([date, dateMessages]) => (
-                <div key={date} className="space-y-4">
-                  <div className="flex justify-center">
-                    <div className="text-xs text-gray-600 bg-gray-100 px-3 py-1 rounded-full border border-gray-200 shadow-sm">
-                      {formatDate(dateMessages[0].timestamp)}
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center h-full">
+                <Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-2" />
+                <p className="text-gray-600 text-sm">Loading messages...</p>
+              </div>
+            ) : error ? (
+              <div className="flex flex-col items-center justify-center h-full p-4">
+                <AlertCircle className="w-8 h-8 text-red-500 mb-2" />
+                <p className="text-red-600 text-center">{error}</p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="mt-4"
+                  onClick={() => window.location.reload()}
+                >
+                  Retry
+                </Button>
+              </div>
+            ) : messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full p-4">
+                <MessageCircle className="w-8 h-8 text-gray-400 mb-2" />
+                <p className="text-gray-500 text-center">No messages yet. Be the first to send a message!</p>
+              </div>
+            ) : (
+              <div className="p-3 md:p-4 space-y-4 md:space-y-6">
+                {Object.entries(groupedMessages).map(([date, dateMessages]) => (
+                  <div key={date} className="space-y-4">
+                    <div className="flex justify-center">
+                      <div className="text-xs text-gray-600 bg-gray-100 px-3 py-1 rounded-full border border-gray-200 shadow-sm">
+                        {formatDate(dateMessages[0].created_at)}
+                      </div>
                     </div>
-                  </div>
 
-                  {dateMessages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`flex gap-2 md:gap-3 ${
-                        message.sender.id === currentUser.id
-                          ? "justify-end"
-                          : ""
-                      }`}
-                    >
-                      {message.sender.id !== currentUser.id && (
-                        <div className="w-8 h-8 md:w-9 md:h-9 rounded-full overflow-hidden flex-shrink-0 border-2 border-white shadow-sm">
-                          <img
-                            src={message.sender.avatar}
-                            alt={message.sender.name}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      )}
-
+                    {dateMessages.map((message) => (
                       <div
-                        className={`max-w-[75%] md:max-w-[70%] ${
+                        key={message.id}
+                        className={`flex gap-2 md:gap-3 ${
                           message.sender.id === currentUser.id
-                            ? "bg-blue-600 text-white rounded-t-lg rounded-bl-lg shadow-sm"
-                            : "bg-white text-gray-800 rounded-t-lg rounded-br-lg border border-gray-200 shadow-sm"
-                        } p-3`}
+                            ? "justify-end"
+                            : ""
+                        }`}
                       >
-                        <div className="flex justify-between items-center mb-1.5">
-                          <span
-                            className={`text-xs font-medium ${
-                              message.sender.id === currentUser.id
-                                ? "text-blue-100"
-                                : "text-gray-700"
-                            }`}
-                          >
-                            {message.sender.id === currentUser.id
-                              ? "You"
-                              : message.sender.name}
+                        {message.sender.id !== currentUser.id && (
+                          <div className="w-8 h-8 md:w-9 md:h-9 rounded-full overflow-hidden flex-shrink-0 border-2 border-white shadow-sm">
+                            <img
+                              src={message.sender.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(message.sender.username)}&background=random`}
+                              alt={message.sender.username}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+
+                        <div
+                          className={`max-w-[75%] md:max-w-[70%] ${
+                            message.sender.id === currentUser.id
+                              ? "bg-blue-600 text-white rounded-t-lg rounded-bl-lg shadow-sm"
+                              : "bg-white text-gray-800 rounded-t-lg rounded-br-lg border border-gray-200 shadow-sm"
+                          } p-3`}
+                        >
+                          <div className="flex justify-between items-center mb-1.5">
                             <span
-                              className={`text-xs ml-1 ${
+                              className={`text-xs font-medium ${
+                                message.sender.id === currentUser.id
+                                  ? "text-blue-100"
+                                  : "text-gray-700"
+                              }`}
+                            >
+                              {message.sender.id === currentUser.id
+                                ? "You"
+                                : message.sender.username}
+                              <span
+                                className={`text-xs ml-1 ${
+                                  message.sender.id === currentUser.id
+                                    ? "text-blue-200"
+                                    : "text-gray-500"
+                                }`}
+                              >
+                                ({message.sender.role})
+                              </span>
+                            </span>
+                            <span
+                              className={`text-xs ${
                                 message.sender.id === currentUser.id
                                   ? "text-blue-200"
                                   : "text-gray-500"
-                              }`}
+                              } flex items-center gap-1`}
                             >
-                              ({message.sender.role})
+                              <Clock className="w-3 h-3" />
+                              {formatTime(message.created_at)}
                             </span>
-                          </span>
-                          <span
-                            className={`text-xs ${
+                          </div>
+                          <p
+                            className={`text-sm break-words ${
                               message.sender.id === currentUser.id
-                                ? "text-blue-200"
-                                : "text-gray-500"
-                            } flex items-center gap-1`}
+                                ? "text-white"
+                                : "text-gray-800"
+                            }`}
                           >
-                            <Clock className="w-3 h-3" />
-                            {formatTime(message.timestamp)}
-                          </span>
-                        </div>
-                        <p
-                          className={`text-sm break-words ${
-                            message.sender.id === currentUser.id
-                              ? "text-white"
-                              : "text-gray-800"
-                          }`}
-                        >
-                          {highlightMentions(message.text)}
-                        </p>
-                        {message.mentions.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {message.mentions.map((mention, index) => {
-                              const roleColor =
-                                roleColors[mention]?.light || "bg-gray-100";
-                              const borderColor =
-                                roleColors[mention]?.border ||
-                                "border-gray-200";
-                              const textColor =
-                                roleColors[mention]?.text || "text-gray-800";
+                            {highlightMentions(message.content)}
+                          </p>
+                          {message.mentions && message.mentions.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {message.mentions.map((mention, index) => {
+                                const mentionValue = mention.value || mention;
+                                const roleColor =
+                                  roleColors[mentionValue]?.light || "bg-gray-100";
+                                const borderColor =
+                                  roleColors[mentionValue]?.border ||
+                                  "border-gray-200";
+                                const textColor =
+                                  roleColors[mentionValue]?.text || "text-gray-800";
 
-                              return (
-                                <span
-                                  key={index}
-                                  className={`text-xs px-2 py-0.5 rounded-full ${roleColor} ${textColor} border ${borderColor}`}
-                                >
-                                  @{mention}
-                                </span>
-                              );
-                            })}
+                                return (
+                                  <span
+                                    key={index}
+                                    className={`text-xs px-2 py-0.5 rounded-full ${roleColor} ${textColor} border ${borderColor}`}
+                                  >
+                                    @{mentionValue}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+
+                        {message.sender.id === currentUser.id && (
+                          <div className="w-8 h-8 md:w-9 md:h-9 rounded-full overflow-hidden flex-shrink-0 border-2 border-white shadow-sm">
+                            <img
+                              src={message.sender.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(message.sender.username)}&background=random`}
+                              alt={message.sender.username}
+                              className="w-full h-full object-cover"
+                            />
                           </div>
                         )}
                       </div>
-
-                      {message.sender.id === currentUser.id && (
-                        <div className="w-8 h-8 md:w-9 md:h-9 rounded-full overflow-hidden flex-shrink-0 border-2 border-white shadow-sm">
-                          <img
-                            src={message.sender.avatar}
-                            alt={message.sender.name}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ))}
-              <div ref={chatEndRef} />
-            </div>
+                    ))}
+                  </div>
+                ))}
+                <div ref={chatEndRef} />
+              </div>
+            )}
           </CardContent>
 
           <div className="p-3 md:p-4 border-t border-gray-200 bg-white relative flex-shrink-0">
+            {!isConnected && (
+              <div className="absolute inset-x-0 -top-8 flex justify-center">
+                <div className="bg-red-100 text-red-800 text-xs px-3 py-1 rounded-t-md border border-red-200">
+                  You are offline. Messages will be sent when you reconnect.
+                </div>
+              </div>
+            )}
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <input
@@ -540,6 +556,7 @@ export function GlobalChat({
                   placeholder="Type a message..."
                   className="w-full px-4 py-2.5 text-sm md:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 shadow-sm"
                   onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                  disabled={isSending}
                 />
 
                 {showMentionSuggestions && filteredSuggestions.length > 0 && (
@@ -617,8 +634,13 @@ export function GlobalChat({
               <Button
                 onClick={sendMessage}
                 className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4"
+                disabled={!newMessage.trim() || isSending}
               >
-                <Send className="w-5 h-5" />
+                {isSending ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <Send className="w-5 h-5" />
+                )}
               </Button>
             </div>
           </div>

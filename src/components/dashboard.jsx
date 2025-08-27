@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { WorkflowBoard } from "./workflow";
 import { WeekSelector } from "./week-selector";
-import { InlineChatComponent } from "./InlineChatComponent";
+// Removed import for old InlineChatComponent
 import { ServiceAssignments } from "./service-assignments";
 import { WelcomeBanner } from "./welcome-banner";
 import { Footer } from "./ui/footer";
@@ -39,6 +39,7 @@ import {
 import { RecentUpdates } from "./recent-updates";
 import { useAssignments } from "./assignments/context/AssignmentsContext";
 import authService from "../services/authService";
+import { GlobalChat } from "./global-chat-updated";
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -192,12 +193,9 @@ function Dashboard() {
             </Card>
           </div>
 
-          {/* Right Column - Global Chat and Recent Updates */}
+          {/* Right Column - Recent Updates */}
           <div className="space-y-4 md:space-y-6">
-            {/* Inline Chat Component */}
-            <div className="h-[500px]">
-              <InlineChatComponent currentUser={user} height="h-[350px]" />
-            </div>
+            {/* Removed old Inline Chat Component */}
 
             {/* Recent Updates */}
             <Card>
@@ -287,6 +285,9 @@ function Dashboard() {
         {/* Footer component */}
         <Footer />
       </div>
+      
+      {/* Global Chat Component */}
+      <GlobalChat defaultExpanded={false} />
     </div>
   );
 }
