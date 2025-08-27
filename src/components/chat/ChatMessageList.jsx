@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import chatService from "../../services/chatService";
-import { Loader2, AlertCircle, MessageCircle } from "lucide-react";
+import { Loader2, AlertCircle, MessageCircle, Clock } from "lucide-react";
 
 export function ChatMessageList({ messages, isLoading, error, formatDate, formatTime, highlightMentions, currentUser }) {
   const chatEndRef = useRef(null);
@@ -122,6 +122,38 @@ export function ChatMessageList({ messages, isLoading, error, formatDate, format
     return messages[index].sender.id !== messages[index + 1].sender.id;
   };
 
+  // Helper function to get the correct bubble classes based on position in sequence
+  const getBubbleClasses = (isSender, isFirst, isLast) => {
+    // Base classes that apply to all bubbles
+    const baseClasses = isSender
+      ? "bg-blue-600 text-white"
+      : "bg-white text-gray-800 border border-gray-200";
+    
+    // Single bubble (both first and last in sequence)
+    if (isFirst && isLast) {
+      return `${baseClasses} rounded-2xl`;
+    }
+    
+    // First bubble in sequence
+    if (isFirst) {
+      return isSender
+        ? `${baseClasses} rounded-t-2xl rounded-l-2xl rounded-br-md`
+        : `${baseClasses} rounded-t-2xl rounded-r-2xl rounded-bl-md`;
+    }
+    
+    // Last bubble in sequence
+    if (isLast) {
+      return isSender
+        ? `${baseClasses} rounded-b-2xl rounded-l-2xl rounded-tr-md`
+        : `${baseClasses} rounded-b-2xl rounded-r-2xl rounded-tl-md`;
+    }
+    
+    // Middle bubble in sequence
+    return isSender
+      ? `${baseClasses} rounded-l-2xl rounded-tr-md rounded-br-md`
+      : `${baseClasses} rounded-r-2xl rounded-tl-md rounded-bl-md`;
+  };
+
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
@@ -175,7 +207,7 @@ export function ChatMessageList({ messages, isLoading, error, formatDate, format
                 key={message.id}
                 className={`flex gap-2 md:gap-3 ${
                   isSender ? "justify-end" : ""
-                }`}
+                } ${!isFirstMessage ? "mt-0.5" : index > 0 ? "mt-3" : ""}`}
               >
                 {!isSender && !isLastInSequence && (
                   <div className="w-8 h-8 md:w-9 md:h-9 flex-shrink-0"></div>
@@ -192,44 +224,34 @@ export function ChatMessageList({ messages, isLoading, error, formatDate, format
                 )}
 
                 <div
-                  className={`max-w-[75%] md:max-w-[70%] ${
-                    isSender
-                      ? "bg-blue-600 text-white"
-                      : "bg-white text-gray-800 border border-gray-200"
-                  } ${
-                    isFirstMessage && isLastInSequence
-                      ? isSender ? "rounded-t-lg rounded-bl-lg" : "rounded-t-lg rounded-br-lg"
-                      : isFirstMessage
-                        ? "rounded-t-lg rounded-br-lg rounded-bl-lg"
-                        : isLastInSequence
-                          ? "rounded-br-lg rounded-bl-lg"
-                          : "rounded-br-lg rounded-bl-lg"
-                  } shadow-sm p-3 ${!isFirstMessage ? "mt-1" : ""}`}
+                  className={`max-w-[75%] md:max-w-[70%] ${getBubbleClasses(isSender, isFirstMessage, isLastInSequence)} shadow-sm p-3`}
                 >
-                  <div className="flex justify-between items-center mb-1.5">
-                    <span
-                      className={`text-xs font-medium ${
-                        isSender ? "text-blue-100" : "text-gray-700"
-                      }`}
-                    >
-                      {isSender ? "You" : message.sender.username}
+                  {isFirstMessage && (
+                    <div className="flex justify-between items-center mb-1.5">
                       <span
-                        className={`text-xs ml-1 ${
-                          isSender ? "text-blue-200" : "text-gray-500"
+                        className={`text-xs font-medium ${
+                          isSender ? "text-blue-100" : "text-gray-700"
                         }`}
                       >
-                        ({message.sender.role})
+                        {isSender ? "You" : message.sender.username}
+                        <span
+                          className={`text-xs ml-1 ${
+                            isSender ? "text-blue-200" : "text-gray-500"
+                          }`}
+                        >
+                          ({message.sender.role})
+                        </span>
                       </span>
-                    </span>
-                    <span
-                      className={`text-xs ${
-                        isSender ? "text-blue-200" : "text-gray-500"
-                      } flex items-center gap-1`}
-                    >
-                      <span className="w-3 h-3">⏱️</span>
-                      {formatTime(message.created_at)}
-                    </span>
-                  </div>
+                      <span
+                        className={`text-xs ${
+                          isSender ? "text-blue-200" : "text-gray-500"
+                        } flex items-center gap-1`}
+                      >
+                        <Clock className="w-3 h-3" />
+                        {formatTime(message.created_at)}
+                      </span>
+                    </div>
+                  )}
                   <p
                     className={`text-sm break-words ${
                       isSender ? "text-white" : "text-gray-800"
