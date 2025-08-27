@@ -101,7 +101,14 @@ class ChatService {
       if (this.socket) {
         // Listen for messages
         this.socket.on('message', (message) => {
-          this.messageListeners.forEach(listener => listener(message));
+          console.log('Socket received message event:', message);
+          if (this.messageListeners.length === 0) {
+            console.warn('No message listeners registered!');
+          }
+          this.messageListeners.forEach(listener => {
+            console.log('Calling message listener');
+            listener(message);
+          });
         });
 
         // Listen for mentions
@@ -128,7 +135,9 @@ class ChatService {
    * @param {Function} listener - Function to call when a new message is received
    */
   onMessage(listener) {
+    console.log('Adding message listener, current count:', this.messageListeners.length);
     this.messageListeners.push(listener);
+    console.log('New message listener count:', this.messageListeners.length);
   }
 
   /**
@@ -136,7 +145,9 @@ class ChatService {
    * @param {Function} listener - The listener to remove
    */
   offMessage(listener) {
+    console.log('Removing message listener, current count:', this.messageListeners.length);
     this.messageListeners = this.messageListeners.filter(l => l !== listener);
+    console.log('New message listener count after removal:', this.messageListeners.length);
   }
 
   /**
@@ -233,18 +244,15 @@ class ChatService {
   async sendMessage(content, mentions = []) {
     try {
       // First save the message to the database via API
-      console.log('Sending message via API:', content);
       const message = await api.post('/chat/messages', { content, mentions });
-      console.log('Message saved to database:', message);
       
       // Then emit it via socket for real-time updates if connected
       if (this.connected && this.socket) {
-        console.log('Emitting message via socket');
+        // Emit the message so the server can broadcast it to all clients
         this.socket.emit('message', message);
         
         // If there are mentions, emit those too
         if (mentions && mentions.length > 0) {
-          console.log('Emitting mentions:', mentions);
           mentions.forEach(mention => {
             this.socket.emit('mention', {
               messageId: message.id,
@@ -252,8 +260,6 @@ class ChatService {
             });
           });
         }
-      } else {
-        console.log('Socket not connected, skipping real-time update');
       }
       
       return message;

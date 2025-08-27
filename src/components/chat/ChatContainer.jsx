@@ -58,6 +58,9 @@ export function ChatContainer({ toggleChat, isMobileView, markAllAsRead }) {
   
   // Track if we've already loaded messages in this session
   const hasLoadedMessagesRef = useRef(false);
+  
+  // Keep track of recently sent message IDs to prevent duplicates
+  const recentlySentMessagesRef = useRef(new Set());
 
   // Initialize chat and connect to socket
   useEffect(() => {
@@ -184,15 +187,35 @@ export function ChatContainer({ toggleChat, isMobileView, markAllAsRead }) {
 
   // Handle new incoming messages
   const handleNewMessage = (message) => {
+    console.log('Socket received message:', message);
+    
+    if (!message || !message.id) {
+      console.warn('Received invalid message without ID');
+      return;
+    }
+    
     // Check if this message is from the current user and already in the messages array
-    // This prevents duplicate messages when the sender receives their own message via socket
-    const isDuplicate = messages.some(existingMsg => existingMsg.id === message.id);
+    // or if it's in our recently sent messages set
+    const isDuplicate = 
+      messages.some(existingMsg => existingMsg.id === message.id) || 
+      recentlySentMessagesRef.current.has(message.id);
+    
+    console.log('Message is duplicate?', isDuplicate, 'Message ID:', message.id);
+    console.log('Current tracked IDs:', [...recentlySentMessagesRef.current]);
     
     if (!isDuplicate) {
+      console.log('Adding new message to state');
       setMessages(prevMessages => {
         const newMessages = Array.isArray(prevMessages) ? [...prevMessages, message] : [message];
         return newMessages;
       });
+    } else {
+      // If it's a duplicate but from the socket, we can remove it from our tracking set
+      // as we no longer need to track it
+      if (recentlySentMessagesRef.current.has(message.id)) {
+        console.log('Removing message ID from tracking set:', message.id);
+        recentlySentMessagesRef.current.delete(message.id);
+      }
     }
   };
 
@@ -241,6 +264,17 @@ export function ChatContainer({ toggleChat, isMobileView, markAllAsRead }) {
       
       // Send the message and get the saved message from the server
       const savedMessage = await chatService.sendMessage(content, mentions);
+      
+      // Track this message ID to prevent duplicates when socket sends it back
+      if (savedMessage && savedMessage.id) {
+        recentlySentMessagesRef.current.add(savedMessage.id);
+        
+        // Set a timeout to clean up the tracking set after a while
+        // This prevents memory leaks if the socket never returns the message
+        setTimeout(() => {
+          recentlySentMessagesRef.current.delete(savedMessage.id);
+        }, 10000); // 10 seconds should be plenty of time
+      }
       
       // Add the message to our local state immediately
       setMessages(prevMessages => [...prevMessages, savedMessage]);
