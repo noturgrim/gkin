@@ -7,49 +7,75 @@ import {
   CardHeader,
   CardTitle,
 } from "./ui/card";
-import { Bell, Mail, AlertCircle, CheckCircle } from "lucide-react";
+import { Bell, AtSign, MessageCircle } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
+import { useNotifications } from "../context/NotificationContext";
 
-const notifications = [
-  {
-    id: 1,
-    type: "action",
-    title: "Pastor review needed",
-    description: "January 7 service concept awaiting review",
-    time: "2 hours ago",
-    icon: AlertCircle,
-    color: "text-orange-700", // Darker orange for better contrast
-    bgColor: "bg-orange-50",
+// Role colors mapping - same as in ChatInput.jsx for consistency
+const roleColors = {
+  liturgy: {
+    bg: "bg-blue-600",
+    text: "text-blue-800",
+    light: "bg-blue-50",
+    border: "border-blue-200",
   },
-  {
-    id: 2,
-    type: "completed",
-    title: "Translation completed",
-    description: "December 31 service translation finished",
-    time: "1 day ago",
-    icon: CheckCircle,
-    color: "text-green-700", // Darker green for better contrast
-    bgColor: "bg-green-50",
+  pastor: {
+    bg: "bg-purple-600",
+    text: "text-purple-800",
+    light: "bg-purple-50",
+    border: "border-purple-200",
   },
-  {
-    id: 3,
-    type: "email",
-    title: "Email sent to beamer team",
-    description: "January 7 service materials forwarded",
-    time: "3 hours ago",
-    icon: Mail,
-    color: "text-blue-700", // Darker blue for better contrast
-    bgColor: "bg-blue-50",
+  translation: {
+    bg: "bg-green-600",
+    text: "text-green-800",
+    light: "bg-green-50",
+    border: "border-green-200",
   },
-];
+  beamer: {
+    bg: "bg-orange-600",
+    text: "text-orange-800",
+    light: "bg-orange-50",
+    border: "border-orange-200",
+  },
+  music: {
+    bg: "bg-pink-600",
+    text: "text-pink-800",
+    light: "bg-pink-50",
+    border: "border-pink-200",
+  },
+  treasurer: {
+    bg: "bg-emerald-600",
+    text: "text-emerald-800",
+    light: "bg-emerald-50",
+    border: "border-emerald-200",
+  },
+};
 
 export function NotificationCenter() {
   const [isOpen, setIsOpen] = useState(false);
-  const unreadCount = notifications.filter((n) => n.type === "action").length;
+  const { unreadCount, mentions, markAsRead } = useNotifications();
   const buttonRef = useRef(null);
-
-  // We don't need dropdown positioning logic anymore
-  // since we're embedding the notifications directly in the layout
+  const panelRef = useRef(null);
+  
+  // Close panel when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        isOpen &&
+        buttonRef.current && 
+        !buttonRef.current.contains(event.target) &&
+        panelRef.current &&
+        !panelRef.current.contains(event.target)
+      ) {
+        setIsOpen(false);
+      }
+    };
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
 
   return (
     <div className="relative">
@@ -62,66 +88,240 @@ export function NotificationCenter() {
       >
         <Bell className="w-4 h-4 text-gray-800" />
         {unreadCount > 0 && (
-          <Badge className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-red-700 text-white font-medium shadow-sm">
+          <Badge className="notification-badge absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-red-700 text-white font-medium shadow-sm">
             {unreadCount}
           </Badge>
         )}
       </Button>
+      
+      {isOpen && (
+        <div 
+          ref={panelRef}
+          className="absolute right-0 mt-2 z-50"
+          style={{ width: '320px' }}
+        >
+          <NotificationPanel />
+        </div>
+      )}
     </div>
   );
 }
 
 // Create a separate component for the notification panel content
 export function NotificationPanel() {
+  const { mentions, markAsRead, refreshMentions } = useNotifications();
+  
+  // Format timestamp
+  const formatTime = (timestamp) => {
+    const now = new Date();
+    const date = new Date(timestamp);
+    const diffInSeconds = Math.floor((now - date) / 1000);
+    
+    if (diffInSeconds < 60) {
+      return 'Just now';
+    } else if (diffInSeconds < 3600) {
+      const minutes = Math.floor(diffInSeconds / 60);
+      return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+    } else if (diffInSeconds < 86400) {
+      const hours = Math.floor(diffInSeconds / 3600);
+      return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    } else {
+      const days = Math.floor(diffInSeconds / 86400);
+      return `${days} day${days > 1 ? 's' : ''} ago`;
+    }
+  };
+  
+  // Handle clicking on a notification
+  const handleNotificationClick = async (mention) => {
+    console.log("Clicked mention object:", mention);
+    
+    if (!mention) {
+      console.error("Mention is undefined");
+      return;
+    }
+    
+    // Immediately mark this specific mention as read locally
+    // This ensures the UI updates instantly
+    const mentionElement = document.querySelector(`[data-mention-id="${mention.id || mention.messageId}"]`);
+    if (mentionElement) {
+      mentionElement.classList.remove("bg-blue-50");
+      mentionElement.classList.add("bg-white");
+      
+      // Remove the "New" badge if it exists
+      const newBadge = mentionElement.querySelector(".new-badge");
+      if (newBadge) {
+        newBadge.style.display = "none";
+      }
+    }
+    
+    // Create a normalized version of the mention with consistent IDs
+    const normalizedMention = {
+      ...mention,
+      is_read: false, // Force to unread for marking
+      id: mention.id || mention.messageId || mention.message_id,
+      messageId: mention.messageId || mention.id || mention.message_id,
+      message_id: mention.message_id || mention.messageId || mention.id
+    };
+    
+    console.log("Normalized mention for marking as read:", normalizedMention);
+    
+    // Collect all possible IDs from the mention object
+    const possibleIds = new Set(); // Use a Set to avoid duplicates
+    
+    // Add any ID fields we find
+    if (normalizedMention.id) possibleIds.add(normalizedMention.id);
+    if (normalizedMention.messageId) possibleIds.add(normalizedMention.messageId);
+    if (normalizedMention.message_id) possibleIds.add(normalizedMention.message_id);
+    
+    // Convert back to array
+    const uniqueIds = Array.from(possibleIds);
+    
+    if (uniqueIds.length === 0) {
+      console.error("Mention has no usable ID field:", mention);
+      return;
+    }
+    
+    console.log("Using IDs for marking as read:", uniqueIds);
+    
+    try {
+      // First, directly update the UI to show the notification as read
+      // This provides immediate feedback to the user
+      if (mention.is_read === false) {
+        // Force unread count to decrement
+        const notificationBadge = document.querySelector('.notification-badge');
+        if (notificationBadge) {
+          const currentCount = parseInt(notificationBadge.textContent || '0');
+          if (currentCount > 0) {
+            notificationBadge.textContent = (currentCount - 1).toString();
+            if (currentCount - 1 === 0) {
+              notificationBadge.style.display = 'none';
+            }
+          }
+        }
+      }
+      
+      // Mark as read using all possible IDs for robustness
+      await markAsRead(uniqueIds);
+      console.log(`Successfully marked mention with IDs ${uniqueIds.join(', ')} as read`);
+      
+      // Log mention details
+      console.log(`Mention type: ${mention.type || 'undefined'}`);
+      console.log(`Mention value: ${mention.value || 'undefined'}`);
+      console.log(`Mention read status: ${mention.is_read ? 'read' : 'unread'}`);
+      
+      // Force a refresh of all mentions to ensure we're in sync with the server
+      // Use a shorter timeout for better responsiveness
+      setTimeout(() => {
+        refreshMentions();
+        console.log("Refreshed mentions after marking as read");
+      }, 100);
+    } catch (error) {
+      console.error("Error marking mention as read:", error);
+      // If there's an error, force a refresh to ensure UI is in sync
+      refreshMentions();
+    }
+  };
+
   return (
-    <Card className="border border-gray-300 bg-white shadow-lg overflow-hidden w-full mt-3">
+    <Card className="border border-gray-300 bg-white shadow-lg overflow-hidden w-full">
       <CardHeader className="pb-3 bg-gray-50 border-b border-gray-200">
         <CardTitle className="text-sm font-semibold text-gray-900">
-          Notifications
+          Mentions
         </CardTitle>
         <CardDescription className="text-gray-700">
-          Recent activity and updates
+          Recent role mentions in chat
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-1 bg-white p-0">
-        {notifications.map((notification) => (
-          <div
-            key={notification.id}
-            className={`flex items-start gap-3 p-3 hover:bg-gray-50 border-b border-gray-100 ${
-              notification.type === "action" ? "bg-yellow-50" : "bg-white"
-            }`}
-          >
-            <div
-              className={`w-8 h-8 rounded-full ${notification.bgColor} flex items-center justify-center flex-shrink-0`}
-            >
-              <notification.icon className={`w-4 h-4 ${notification.color}`} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900">
-                {notification.title}
-              </p>
-              <p className="text-xs text-gray-700">
-                {notification.description}
-              </p>
-              <p className="text-xs text-gray-500 mt-1 flex items-center">
-                <span className="w-1.5 h-1.5 rounded-full bg-gray-400 mr-1"></span>
-                {notification.time}
-              </p>
-            </div>
-            {notification.type === "action" && (
-              <span className="px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800 text-xs font-medium">
-                Action
-              </span>
-            )}
+      <CardContent className="space-y-1 bg-white p-0 max-h-80 overflow-y-auto">
+        {mentions.length === 0 ? (
+          <div className="p-4 text-center text-gray-500 text-sm">
+            No mentions yet
           </div>
-        ))}
+        ) : (
+          mentions.map((mention) => {
+            // Get unique key for the mention
+            const mentionKey = mention.id || mention.messageId || Math.random().toString(36).substring(7);
+            
+            // Get role color or default to blue
+            const role = mention.type === 'role' ? mention.value : 'default';
+            const roleColor = roleColors[role]?.light || "bg-blue-50";
+            const textColor = roleColors[role]?.text || "text-blue-800";
+            
+            // Get message content from either format
+            const messageContent = mention.content || mention.message?.content || "You were mentioned in a message";
+            
+            // Check if the mention is read - be very explicit
+            // For real-time mentions, we need to ensure they're properly marked as unread
+            const isRead = mention.is_read === true; // Only true if explicitly set to true
+            
+            return (
+              <div
+                key={mentionKey}
+                data-mention-id={mention.id || mention.messageId || mentionKey}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  handleNotificationClick(mention);
+                }}
+                className={`flex items-start gap-3 p-3 hover:bg-gray-50 border-b border-gray-100 cursor-pointer ${
+                  !isRead ? "bg-blue-50" : "bg-white"
+                }`}
+              >
+                <div
+                  className={`w-8 h-8 rounded-full ${roleColor} flex items-center justify-center flex-shrink-0`}
+                >
+                  <AtSign className={`w-4 h-4 ${textColor}`} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900">
+                    @{mention.value} mentioned
+                  </p>
+                  <p className="text-xs text-gray-700 truncate">
+                    {messageContent}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1 flex items-center">
+                    <span className="w-1.5 h-1.5 rounded-full bg-gray-400 mr-1"></span>
+                    {mention.created_at ? formatTime(mention.created_at) : "Recently"}
+                  </p>
+                </div>
+                {!isRead && (
+                  <span className="new-badge px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-xs font-medium">
+                    New
+                  </span>
+                )}
+              </div>
+            );
+          })
+        )}
         <div className="p-2 bg-gray-50 border-t border-gray-200">
           <Button
             variant="ghost"
             size="sm"
             className="w-full text-xs font-medium text-blue-800 hover:bg-blue-50 hover:text-blue-900 border border-blue-100"
+            onClick={async (e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              
+              // Collect all possible IDs from unread mentions
+              const unreadIds = [];
+              mentions.filter(m => !m.is_read).forEach(mention => {
+                if (mention.id) unreadIds.push(mention.id);
+                if (mention.messageId) unreadIds.push(mention.messageId);
+                if (mention.message_id) unreadIds.push(mention.message_id);
+              });
+              
+              console.log("Marking all as read:", unreadIds);
+              
+              if (unreadIds.length > 0) {
+                await markAsRead(unreadIds);
+                // Force a refresh to ensure everything is in sync
+                setTimeout(() => {
+                  refreshMentions();
+                }, 300);
+              }
+            }}
           >
-            View all notifications
+            Mark all as read
           </Button>
         </div>
       </CardContent>

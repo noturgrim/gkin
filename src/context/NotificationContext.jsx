@@ -63,57 +63,255 @@ export function NotificationProvider({ children }) {
 
   // Handle new mentions
   const handleNewMention = (mention) => {
-    setMentions(prev => [mention, ...prev]);
-    setUnreadCount(prev => prev + 1);
+    console.log("Raw mention received:", mention);
+    
+    // Check if this mention already exists in our list (by message_id)
+    let isDuplicate = false;
+    
+    setMentions(prev => {
+      // Check if we already have this mention by message_id
+      const existingIndex = prev.findIndex(m => 
+        (m.message_id && m.message_id === mention.messageId) || 
+        (m.messageId && m.messageId === mention.messageId)
+      );
+      
+      if (existingIndex >= 0) {
+        console.log("Duplicate mention detected, not adding:", mention);
+        isDuplicate = true;
+        return prev;
+      }
+      
+      // Ensure the mention has the proper structure
+      const formattedMention = {
+        ...mention,
+        is_read: false, // Explicitly mark as unread
+        // Store message_id in all possible formats for easier matching later
+        id: mention.id || mention.messageId,
+        messageId: mention.messageId || mention.id,
+        message_id: mention.message_id || mention.messageId || mention.id,
+        // Add a special flag to identify real-time mentions
+        isRealTime: true
+      };
+      
+      console.log("New mention added:", formattedMention);
+      
+      // Add to mentions list
+      return [formattedMention, ...prev];
+    });
+    
+    // Only increment unread count if it's not a duplicate
+    if (!isDuplicate) {
+      setUnreadCount(prev => prev + 1);
+    }
+    
+    // Force a refresh to ensure we have the server's version too
+    setTimeout(() => {
+      refreshMentions();
+    }, 1000);
   };
 
   // Mark mentions as read
   const markAsRead = async (mentionIds) => {
     try {
-      await chatService.markMentionsAsRead(mentionIds);
+      console.log("markAsRead called with IDs:", mentionIds);
       
-      // Update local state
-      setMentions(prev => 
-        prev.map(mention => 
-          mentionIds.includes(mention.id) 
-            ? { ...mention, is_read: true } 
-            : mention
-        )
-      );
+      if (!mentionIds || mentionIds.length === 0) {
+        console.error("No valid mention IDs provided");
+        return;
+      }
       
-      // Update unread count
-      const count = await chatService.getUnreadMentionCount();
-      setUnreadCount(count);
+      // First, immediately set unread count to 0 for instant feedback
+      setUnreadCount(0);
+      
+      // Then update local state for better UX
+      let markedCount = 0;
+      let markedMessageIds = []; // Track message IDs for more robust matching
+      
+      setMentions(prev => {
+        console.log("Current mentions:", prev);
+        const updatedMentions = prev.map(mention => {
+          // Normalize the mention to ensure we have all ID formats
+          const normalizedMention = {
+            ...mention,
+            id: mention.id || mention.messageId || mention.message_id,
+            messageId: mention.messageId || mention.id || mention.message_id,
+            message_id: mention.message_id || mention.messageId || mention.id
+          };
+          
+          // Get all possible IDs from the mention object
+          const mentionId = normalizedMention.id;
+          const messageId = normalizedMention.message_id || normalizedMention.messageId;
+          
+          // Check if this mention should be marked as read by matching any of the IDs
+          // We need to check all possible ID combinations
+          const shouldMarkAsRead = mentionIds.some(id => {
+            // Direct ID match
+            if (id === mentionId || id === messageId || id === normalizedMention.messageId) {
+              return true;
+            }
+            
+            // Match by message_id (this is crucial for real-time mentions)
+            const mentionMessageIds = [
+              normalizedMention.message_id,
+              normalizedMention.messageId,
+              normalizedMention.id
+            ].filter(Boolean);
+            
+            return mentionMessageIds.some(msgId => msgId === id);
+          });
+          
+          if (shouldMarkAsRead) {
+            console.log(`Marking mention ${mentionId || messageId} as read`);
+            markedCount++;
+            
+            // Track message IDs for more robust matching
+            if (messageId) {
+              markedMessageIds.push(messageId);
+            }
+            
+            // Return a fully normalized mention with is_read set to true
+            return { ...normalizedMention, is_read: true };
+          }
+          return mention;
+        });
+        console.log(`Marked ${markedCount} mentions as read`);
+        return updatedMentions;
+      });
+      
+      // Send to server - send both IDs and message IDs for robustness
+      // Include all possible IDs to ensure the server marks the correct mention
+      const idsToSend = [...new Set([...mentionIds, ...markedMessageIds])];
+      console.log("Sending to server:", idsToSend);
+      
+      // Send to server and await the response
+      await chatService.markMentionsAsRead(idsToSend);
+      
+      // After server update, do a full refresh of mentions to ensure consistency
+      await refreshMentions();
+      
+      return true; // Indicate success
     } catch (error) {
       console.error('Error marking mentions as read:', error);
+      // Refresh mentions to ensure UI is in sync with server
+      refreshMentions();
+      return false; // Indicate failure
     }
   };
 
   // Mark all mentions as read
   const markAllAsRead = async () => {
-    const unreadMentionIds = mentions
+    // Collect both id and messageId for more robust matching
+    const unreadMentionIds = [];
+    
+    mentions
       .filter(mention => !mention.is_read)
-      .map(mention => mention.id);
+      .forEach(mention => {
+        if (mention.id) unreadMentionIds.push(mention.id);
+        if (mention.messageId) unreadMentionIds.push(mention.messageId);
+        if (mention.message_id) unreadMentionIds.push(mention.message_id);
+      });
+      
+    console.log("Marking all as read, IDs:", unreadMentionIds);
       
     if (unreadMentionIds.length > 0) {
-      await markAsRead(unreadMentionIds);
+      // First update local state immediately
+      setMentions(prev => 
+        prev.map(mention => ({ ...mention, is_read: true }))
+      );
+      
+      // Reset unread count immediately
+      setUnreadCount(0);
+      
+      // Then update server
+      try {
+        await chatService.markMentionsAsRead(unreadMentionIds);
+        
+        // Double-check with server to ensure consistency
+        const count = await chatService.getUnreadMentionCount();
+        
+        // If server still reports unread mentions, do a full refresh
+        if (count > 0) {
+          console.log("Server still reports unread mentions after markAllAsRead, refreshing...");
+          refreshMentions();
+        }
+      } catch (error) {
+        console.error('Error marking all mentions as read:', error);
+        // Refresh mentions to ensure UI is in sync with server
+        refreshMentions();
+      }
     }
   };
 
   // Refresh mentions
   const refreshMentions = async () => {
     try {
+      console.log("Refreshing mentions...");
       setLoading(true);
-      const mentionsData = await chatService.getMentions();
-      setMentions(mentionsData);
       
+      // First get the unread count directly
       const count = await chatService.getUnreadMentionCount();
+      console.log("Server unread count:", count);
+      
+      // Update unread count immediately
       setUnreadCount(count);
       
+      // Then get the full mentions data
+      const mentionsData = await chatService.getMentions();
+      console.log("Refreshed mentions data:", mentionsData);
+      
+      // Update mentions state, but preserve real-time mentions that haven't been synced yet
+      setMentions(prev => {
+        // First, identify real-time mentions that don't have server counterparts
+        const realTimeMentions = prev.filter(m => m.isRealTime);
+        
+        // For each server mention, try to find a matching real-time mention
+        const updatedMentions = mentionsData.map(serverMention => {
+          // Try to find a matching real-time mention by message_id
+          const matchingRealTimeMention = realTimeMentions.find(rtm => 
+            (rtm.messageId && rtm.messageId === serverMention.message_id) ||
+            (rtm.message_id && rtm.message_id === serverMention.message_id)
+          );
+          
+          if (matchingRealTimeMention) {
+            console.log("Matched real-time mention with server mention:", {
+              realTime: matchingRealTimeMention,
+              server: serverMention
+            });
+            
+            // Merge the two mentions, preferring server values but keeping real-time flag
+            return {
+              ...serverMention,
+              isRealTime: true,
+              // Keep all ID formats for easier matching
+              messageId: serverMention.message_id || serverMention.messageId || serverMention.id,
+              // If the real-time mention was marked as read, keep that status
+              is_read: matchingRealTimeMention.is_read === true ? true : serverMention.is_read
+            };
+          }
+          
+          return serverMention;
+        });
+        
+        return updatedMentions;
+      });
+      
+      // If the server says there are no unread mentions, make sure the UI reflects that
+      if (count === 0) {
+        // Force UI update to ensure badge is hidden
+        setUnreadCount(0);
+        
+        // Update all mentions to be read
+        setMentions(prev => 
+          prev.map(mention => ({ ...mention, is_read: true }))
+        );
+      }
+      
       setLoading(false);
+      return { count, mentions: mentionsData };
     } catch (error) {
       console.error('Error refreshing mentions:', error);
       setLoading(false);
+      return { error };
     }
   };
 
