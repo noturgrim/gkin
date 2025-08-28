@@ -6,23 +6,21 @@ import { DemoPanel } from "./components/DemoPanel";
 import { ModalManager } from "./components/ModalManager";
 
 export function WorkflowBoard({ service, currentUserRole, onStartAction }) {
-  // Log role information for debugging
+  // Normalize the user role for consistent handling
+  const normalizedRole = typeof currentUserRole === 'string' 
+    ? currentUserRole 
+    : currentUserRole?.id || 'guest';
+    
   useEffect(() => {
-    console.log("Current user role:", currentUserRole);
-    console.log(
-      "Is treasurer check:",
-      typeof currentUserRole === "object" && currentUserRole.role
-        ? currentUserRole.role.id.toLowerCase() === "treasurer"
-        : typeof currentUserRole === "object" && currentUserRole.id
-        ? currentUserRole.id.toLowerCase() === "treasurer"
-        : currentUserRole?.toLowerCase() === "treasurer"
-    );
-  }, [currentUserRole]);
+    // For debugging purposes only
+    console.log("Current user role object:", currentUserRole);
+    console.log("Current user role (normalized):", normalizedRole);
+  }, [currentUserRole, normalizedRole]);
 
   return (
     <WorkflowProvider
       service={service}
-      currentUserRole={currentUserRole}
+      currentUserRole={normalizedRole}
       onStartAction={onStartAction}
     >
       <div className="space-y-3 md:space-y-4">

@@ -47,12 +47,12 @@ export const WorkflowProvider = ({
   const hasRole = (roleId) => {
     if (!currentUserRole) return false;
 
-    // Handle string roles
+    // Handle string roles (most common case now with the new backend)
     if (typeof currentUserRole === "string") {
       return currentUserRole.toLowerCase() === roleId.toLowerCase();
     }
 
-    // Handle object roles
+    // Handle object roles (legacy format)
     if (typeof currentUserRole === "object") {
       // Check direct id
       if (
@@ -62,9 +62,10 @@ export const WorkflowProvider = ({
         return true;
       }
 
-      // Check nested role object
+      // Check nested role object (old format)
       if (
         currentUserRole.role &&
+        typeof currentUserRole.role === "object" &&
         currentUserRole.role.id &&
         currentUserRole.role.id.toLowerCase() === roleId.toLowerCase()
       ) {

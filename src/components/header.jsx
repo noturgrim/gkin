@@ -121,7 +121,7 @@ export function Header({
               <div>
                 <div className="font-medium text-sm">{user?.username}</div>
                 <div className="text-xs text-gray-500">
-                  {user?.role?.name || "Role"}
+                  {typeof user?.role === "string" ? user.role : user?.role?.name || "Role"}
                 </div>
               </div>
             </div>
@@ -178,7 +178,7 @@ export function Header({
                   {user.username}
                 </span>
                 <span className="text-xs text-gray-500">
-                  {user.role?.name || "Role"}
+                  {typeof user.role === "string" ? user.role : user.role?.name || "Role"}
                 </span>
 
                 {/* Add a dropdown arrow */}
@@ -206,7 +206,7 @@ export function Header({
                   <div className="px-4 py-2 border-b border-gray-100">
                     <div className="font-medium text-sm">{user.username}</div>
                     <div className="text-xs text-gray-500">
-                      {user.role?.name || "Role"}
+                      {typeof user.role === "string" ? user.role : user.role?.name || "Role"}
                     </div>
                   </div>
                   {showLogout && (

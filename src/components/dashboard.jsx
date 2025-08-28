@@ -116,6 +116,9 @@ function Dashboard() {
   useEffect(() => {
     if (!user) {
       navigate("/login");
+    } else {
+      // Debug user object structure
+      console.log("Hey There", user.role);
     }
   }, [user, navigate]);
 
@@ -187,7 +190,7 @@ function Dashboard() {
               <CardContent className="p-3 md:p-6">
                 <WorkflowBoard
                   service={currentService}
-                  currentUserRole={user.role.id}
+                  currentUserRole={user.role}
                   onStartAction={handleStartAction}
                 />
               </CardContent>
