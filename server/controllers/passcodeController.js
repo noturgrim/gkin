@@ -7,8 +7,8 @@ const db = require('../config/db');
  */
 const getAllPasscodes = async (req, res) => {
   try {
-    // Only allow admin or treasurer role to access passcodes
-    if (req.user.role !== 'treasurer') {
+    // Only allow admin role to access passcodes
+    if (req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Access denied: Insufficient permissions' });
     }
     
@@ -29,8 +29,8 @@ const updatePasscode = async (req, res) => {
   try {
     const { role, passcode } = req.body;
     
-    // Only allow admin or treasurer role to update passcodes
-    if (req.user.role !== 'treasurer') {
+    // Only allow admin role to update passcodes
+    if (req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Access denied: Insufficient permissions' });
     }
     

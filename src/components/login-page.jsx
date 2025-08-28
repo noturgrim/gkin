@@ -17,6 +17,7 @@ import {
   LogIn,
   DollarSign,
   AlertCircle,
+  Shield,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import authService from "../services/authService";
@@ -81,6 +82,16 @@ const roles = [
     bgColor: "bg-emerald-50",
     borderColor: "border-emerald-200",
     description: "Manage financial records and budgets",
+  },
+  {
+    id: "admin",
+    name: "Administrator",
+    icon: Shield,
+    color: "bg-indigo-500",
+    textColor: "text-indigo-700",
+    bgColor: "bg-indigo-50",
+    borderColor: "border-indigo-200",
+    description: "System administration and security",
   },
 ];
 
@@ -357,6 +368,8 @@ export function LoginPage() {
                     ? "bg-orange-600 hover:bg-orange-700"
                     : selectedRole.id === "music"
                     ? "bg-pink-600 hover:bg-pink-700"
+                    : selectedRole.id === "admin"
+                    ? "bg-indigo-600 hover:bg-indigo-700"
                     : "bg-emerald-600 hover:bg-emerald-700"
                   : "bg-gray-600 hover:bg-gray-700"
               } text-white font-medium rounded-md shadow-md hover:shadow-lg transition-all text-sm`}

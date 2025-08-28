@@ -30,7 +30,8 @@ async function initializeDatabase() {
         translation: 'translation123',
         beamer: 'beamer123',
         music: 'music123',
-        treasurer: 'treasurer123'
+        treasurer: 'treasurer123',
+        admin: 'admin2025'
       };
       
       for (const [role, passcode] of Object.entries(defaultPasscodes)) {

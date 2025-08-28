@@ -113,7 +113,7 @@ async function runTests() {
     console.log('\n✅ Database setup test passed');
     
     // Test login for each role
-    const roles = ['liturgy', 'pastor', 'translation', 'beamer', 'music', 'treasurer'];
+    const roles = ['liturgy', 'pastor', 'translation', 'beamer', 'music', 'treasurer', 'admin'];
     
     for (const role of roles) {
       // Get passcode from database
@@ -137,6 +137,7 @@ async function runTests() {
     console.log('\n=== TEST SUMMARY ===');
     console.log('✅ Authentication flow is using the database for passcode validation');
     console.log('✅ The system no longer has passcodes in environment variables or config');
+    console.log('✅ Added new admin role for system administration');
     console.log('✅ Passcodes can be managed through the admin interface at /passcode-manager');
     
   } catch (error) {
