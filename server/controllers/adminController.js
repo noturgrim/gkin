@@ -18,8 +18,8 @@ const adminController = {
       try {
         await client.query('BEGIN');
         
-        // Delete all mentions first (due to foreign key constraints)
-        await client.query('DELETE FROM mentions');
+        // Delete all message mentions first (due to foreign key constraints)
+        await client.query('DELETE FROM message_mentions');
         
         // Delete all messages
         await client.query('DELETE FROM messages');
@@ -57,30 +57,51 @@ const adminController = {
    */
   async getMessageStats(req, res) {
     try {
-      // Get message count
-      const messageCountResult = await db.query('SELECT COUNT(*) as count FROM messages');
-      const messageCount = parseInt(messageCountResult.rows[0].count);
+      // Initialize default values
+      let messageCount = 0;
+      let mentionCount = 0;
+      let topUsers = [];
       
-      // Get mention count
-      const mentionCountResult = await db.query('SELECT COUNT(*) as count FROM mentions');
-      const mentionCount = parseInt(mentionCountResult.rows[0].count);
+      try {
+        // Get message count
+        const messageCountResult = await db.query('SELECT COUNT(*) as count FROM messages');
+        messageCount = parseInt(messageCountResult.rows[0].count);
+      } catch (error) {
+        console.error('Error counting messages:', error);
+        // Continue execution even if this query fails
+      }
       
-      // Get user message counts
-      const userMessageCountsResult = await db.query(`
-        SELECT u.username, COUNT(m.id) as message_count
-        FROM users u
-        LEFT JOIN messages m ON m.user_id = u.id
-        GROUP BY u.username
-        ORDER BY message_count DESC
-        LIMIT 5
-      `);
+      try {
+        // Get mention count
+        const mentionCountResult = await db.query('SELECT COUNT(*) as count FROM message_mentions');
+        mentionCount = parseInt(mentionCountResult.rows[0].count);
+      } catch (error) {
+        console.error('Error counting mentions:', error);
+        // Continue execution even if this query fails
+      }
+      
+      try {
+        // Get user message counts
+        const userMessageCountsResult = await db.query(`
+          SELECT u.username, COUNT(m.id) as message_count
+          FROM users u
+          LEFT JOIN messages m ON m.sender_id = u.id
+          GROUP BY u.username
+          ORDER BY message_count DESC
+          LIMIT 5
+        `);
+        topUsers = userMessageCountsResult.rows;
+      } catch (error) {
+        console.error('Error getting top users:', error);
+        // Continue execution even if this query fails
+      }
       
       return res.status(200).json({
         success: true,
         stats: {
           messageCount,
           mentionCount,
-          topUsers: userMessageCountsResult.rows
+          topUsers
         }
       });
     } catch (error) {
