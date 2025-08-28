@@ -218,27 +218,7 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* Admin Tools - Only for admin role */}
-        {user.role === 'admin' && (
-          <div className="mt-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-3">
-              Admin Tools
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
-              <Card className="bg-white hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => navigate('/passcode-manager')}>
-                <CardContent className="p-4 flex items-center gap-3">
-                  <div className="bg-indigo-100 p-2 rounded-full">
-                    <Lock className="h-5 w-5 text-indigo-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-gray-900">Passcode Manager</h3>
-                    <p className="text-sm text-gray-500">Update role passcodes</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        )}
+       
 
         {/* Metrics Cards - Moved to the bottom */}
         <div className="mt-6">

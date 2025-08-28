@@ -7,10 +7,10 @@ import {
   CardDescription,
   CardContent,
   CardFooter,
-} from "./ui/card";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
+} from "../ui/card";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
 import {
   AlertCircle,
   Check,
@@ -29,8 +29,8 @@ import {
   ArrowLeft,
   Home,
 } from "lucide-react";
-import passcodeService from "../services/passcodeService";
-import authService from "../services/authService";
+import passcodeService from "../../services/passcodeService";
+import authService from "../../services/authService";
 
 // Add animation styles
 const animationStyles = `
@@ -316,19 +316,21 @@ export function PasscodeManager({ isEmbedded = false }) {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: animationStyles }} />
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        <div className="mb-4">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleGoBack}
-            className="flex items-center gap-2 hover:bg-indigo-50"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back to Dashboard</span>
-          </Button>
-        </div>
-        <Card className="shadow-lg border-gray-200 overflow-hidden animate-fade-in">
+      <div className={isEmbedded ? "" : "max-w-4xl mx-auto px-4 py-6"}>
+        {!isEmbedded && (
+          <div className="mb-4">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleGoBack}
+              className="flex items-center gap-2 hover:bg-indigo-50"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>Back to Dashboard</span>
+            </Button>
+          </div>
+        )}
+        <Card className={`shadow-lg border-gray-200 overflow-hidden ${!isEmbedded ? "animate-fade-in" : ""}`}>
           <CardHeader className="bg-gradient-to-r from-indigo-50 to-blue-50 border-b border-gray-200">
             <div className="flex justify-between items-center">
               <div>

@@ -6,7 +6,8 @@ import { EmailComposerPage } from "./components/email-composer-page";
 import { ProtectedRoute } from "./components/protected-route";
 import { AssignmentsPage } from "./components/assignments/assignments-page";
 import { AssignmentsProvider } from "./components/assignments/context/AssignmentsContext";
-import { PasscodeManager } from "./components/passcode-manager";
+// PasscodeManager is now part of AdminTools
+import { AdminTools } from "./components/admin/admin-tools";
 
 // Routes configuration
 export const router = createBrowserRouter([
@@ -56,10 +57,10 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: "passcode-manager",
+        path: "admin-tools",
         element: (
-          <ProtectedRoute>
-            <PasscodeManager />
+          <ProtectedRoute requireAdmin={true}>
+            <AdminTools />
           </ProtectedRoute>
         ),
       },
