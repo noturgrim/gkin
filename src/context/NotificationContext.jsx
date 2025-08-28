@@ -63,7 +63,6 @@ export function NotificationProvider({ children }) {
 
   // Handle new mentions
   const handleNewMention = (mention) => {
-    console.log("Raw mention received:", mention);
     
     // Check if this mention already exists in our list (by message_id)
     let isDuplicate = false;
@@ -76,7 +75,6 @@ export function NotificationProvider({ children }) {
       );
       
       if (existingIndex >= 0) {
-        console.log("Duplicate mention detected, not adding:", mention);
         isDuplicate = true;
         return prev;
       }
@@ -90,10 +88,13 @@ export function NotificationProvider({ children }) {
         messageId: mention.messageId || mention.id,
         message_id: mention.message_id || mention.messageId || mention.id,
         // Add a special flag to identify real-time mentions
-        isRealTime: true
+        isRealTime: true,
+        // Preserve sender information if available
+        sender: mention.sender || null,
+        // Add placeholder content if not available
+        content: mention.content || `@${mention.value} mentioned`
       };
       
-      console.log("New mention added:", formattedMention);
       
       // Add to mentions list
       return [formattedMention, ...prev];
@@ -113,7 +114,6 @@ export function NotificationProvider({ children }) {
   // Mark mentions as read
   const markAsRead = async (mentionIds) => {
     try {
-      console.log("markAsRead called with IDs:", mentionIds);
       
       if (!mentionIds || mentionIds.length === 0) {
         console.error("No valid mention IDs provided");
@@ -128,7 +128,6 @@ export function NotificationProvider({ children }) {
       let markedMessageIds = []; // Track message IDs for more robust matching
       
       setMentions(prev => {
-        console.log("Current mentions:", prev);
         const updatedMentions = prev.map(mention => {
           // Normalize the mention to ensure we have all ID formats
           const normalizedMention = {
@@ -161,7 +160,6 @@ export function NotificationProvider({ children }) {
           });
           
           if (shouldMarkAsRead) {
-            console.log(`Marking mention ${mentionId || messageId} as read`);
             markedCount++;
             
             // Track message IDs for more robust matching
@@ -174,14 +172,12 @@ export function NotificationProvider({ children }) {
           }
           return mention;
         });
-        console.log(`Marked ${markedCount} mentions as read`);
         return updatedMentions;
       });
       
       // Send to server - send both IDs and message IDs for robustness
       // Include all possible IDs to ensure the server marks the correct mention
       const idsToSend = [...new Set([...mentionIds, ...markedMessageIds])];
-      console.log("Sending to server:", idsToSend);
       
       // Send to server and await the response
       await chatService.markMentionsAsRead(idsToSend);
@@ -211,7 +207,6 @@ export function NotificationProvider({ children }) {
         if (mention.message_id) unreadMentionIds.push(mention.message_id);
       });
       
-    console.log("Marking all as read, IDs:", unreadMentionIds);
       
     if (unreadMentionIds.length > 0) {
       // First update local state immediately
@@ -231,7 +226,6 @@ export function NotificationProvider({ children }) {
         
         // If server still reports unread mentions, do a full refresh
         if (count > 0) {
-          console.log("Server still reports unread mentions after markAllAsRead, refreshing...");
           refreshMentions();
         }
       } catch (error) {
@@ -245,52 +239,65 @@ export function NotificationProvider({ children }) {
   // Refresh mentions
   const refreshMentions = async () => {
     try {
-      console.log("Refreshing mentions...");
       setLoading(true);
       
       // First get the unread count directly
       const count = await chatService.getUnreadMentionCount();
-      console.log("Server unread count:", count);
       
       // Update unread count immediately
       setUnreadCount(count);
       
       // Then get the full mentions data
       const mentionsData = await chatService.getMentions();
-      console.log("Refreshed mentions data:", mentionsData);
       
       // Update mentions state, but preserve real-time mentions that haven't been synced yet
       setMentions(prev => {
         // First, identify real-time mentions that don't have server counterparts
         const realTimeMentions = prev.filter(m => m.isRealTime);
         
-        // For each server mention, try to find a matching real-time mention
-        const updatedMentions = mentionsData.map(serverMention => {
-          // Try to find a matching real-time mention by message_id
-          const matchingRealTimeMention = realTimeMentions.find(rtm => 
-            (rtm.messageId && rtm.messageId === serverMention.message_id) ||
-            (rtm.message_id && rtm.message_id === serverMention.message_id)
-          );
-          
-          if (matchingRealTimeMention) {
-            console.log("Matched real-time mention with server mention:", {
-              realTime: matchingRealTimeMention,
-              server: serverMention
-            });
+                  // For each server mention, try to find a matching real-time mention
+          const updatedMentions = mentionsData.map(serverMention => {
+            // Try to find a matching real-time mention by message_id
+            const matchingRealTimeMention = realTimeMentions.find(rtm => 
+              (rtm.messageId && rtm.messageId === serverMention.message_id) ||
+              (rtm.message_id && rtm.message_id === serverMention.message_id)
+            );
             
-            // Merge the two mentions, preferring server values but keeping real-time flag
+            // Extract role from content if available
+            let extractedRole = null;
+            if (serverMention.content) {
+              // Look for @role pattern in the content
+              const roleMatch = serverMention.content.match(/@(\w+)/);
+              if (roleMatch && roleMatch[1]) {
+                extractedRole = roleMatch[1].toLowerCase();
+              }
+            }
+            
+            if (matchingRealTimeMention) {
+              // Merge the two mentions, preferring real-time values for role information
+              return {
+                ...serverMention,
+                isRealTime: true,
+                // Keep all ID formats for easier matching
+                messageId: serverMention.message_id || serverMention.messageId || serverMention.id,
+                // If the real-time mention was marked as read, keep that status
+                is_read: matchingRealTimeMention.is_read === true ? true : serverMention.is_read,
+                // Ensure we have sender information
+                sender: serverMention.sender || matchingRealTimeMention.sender,
+                // Preserve the role value from the real-time mention
+                value: matchingRealTimeMention.value || extractedRole || serverMention.value,
+                type: matchingRealTimeMention.type || serverMention.type || 'role'
+              };
+            }
+            
+            // For server mentions without a real-time counterpart, extract role from content
             return {
               ...serverMention,
-              isRealTime: true,
-              // Keep all ID formats for easier matching
-              messageId: serverMention.message_id || serverMention.messageId || serverMention.id,
-              // If the real-time mention was marked as read, keep that status
-              is_read: matchingRealTimeMention.is_read === true ? true : serverMention.is_read
+              // Add the role information
+              value: extractedRole || serverMention.value,
+              type: 'role'
             };
-          }
-          
-          return serverMention;
-        });
+          });
         
         return updatedMentions;
       });

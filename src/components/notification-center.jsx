@@ -133,7 +133,6 @@ export function NotificationPanel() {
   
   // Handle clicking on a notification
   const handleNotificationClick = async (mention) => {
-    console.log("Clicked mention object:", mention);
     
     if (!mention) {
       console.error("Mention is undefined");
@@ -163,7 +162,6 @@ export function NotificationPanel() {
       message_id: mention.message_id || mention.messageId || mention.id
     };
     
-    console.log("Normalized mention for marking as read:", normalizedMention);
     
     // Collect all possible IDs from the mention object
     const possibleIds = new Set(); // Use a Set to avoid duplicates
@@ -181,7 +179,6 @@ export function NotificationPanel() {
       return;
     }
     
-    console.log("Using IDs for marking as read:", uniqueIds);
     
     try {
       // First, directly update the UI to show the notification as read
@@ -202,18 +199,12 @@ export function NotificationPanel() {
       
       // Mark as read using all possible IDs for robustness
       await markAsRead(uniqueIds);
-      console.log(`Successfully marked mention with IDs ${uniqueIds.join(', ')} as read`);
-      
-      // Log mention details
-      console.log(`Mention type: ${mention.type || 'undefined'}`);
-      console.log(`Mention value: ${mention.value || 'undefined'}`);
-      console.log(`Mention read status: ${mention.is_read ? 'read' : 'unread'}`);
+     
       
       // Force a refresh of all mentions to ensure we're in sync with the server
       // Use a shorter timeout for better responsiveness
       setTimeout(() => {
         refreshMentions();
-        console.log("Refreshed mentions after marking as read");
       }, 100);
     } catch (error) {
       console.error("Error marking mention as read:", error);
@@ -242,13 +233,25 @@ export function NotificationPanel() {
             // Get unique key for the mention
             const mentionKey = mention.id || mention.messageId || Math.random().toString(36).substring(7);
             
-            // Get role color or default to blue
-            const role = mention.type === 'role' ? mention.value : 'default';
-            const roleColor = roleColors[role]?.light || "bg-blue-50";
-            const textColor = roleColors[role]?.text || "text-blue-800";
+            // Log the mention for debugging
             
-            // Get message content from either format
-            const messageContent = mention.content || mention.message?.content || "You were mentioned in a message";
+                          // Extract role from content if value is missing
+              let roleValue = mention.value;
+              
+              if (!roleValue && mention.content) {
+                const roleMatch = mention.content.match(/@(\w+)/);
+                if (roleMatch && roleMatch[1]) {
+                  roleValue = roleMatch[1].toLowerCase();
+                }
+              }
+              
+              // Get role color or default to blue
+              const role = mention.type === 'role' ? (roleValue || 'default') : 'default';
+              const roleColor = roleColors[role]?.light || "bg-blue-50";
+              const textColor = roleColors[role]?.text || "text-blue-800";
+              
+              // Get message content from either format
+              const messageContent = mention.content || mention.message?.content || "You were mentioned in a message";
             
             // Check if the mention is read - be very explicit
             // For real-time mentions, we need to ensure they're properly marked as unread
@@ -267,14 +270,24 @@ export function NotificationPanel() {
                   !isRead ? "bg-blue-50" : "bg-white"
                 }`}
               >
-                <div
-                  className={`w-8 h-8 rounded-full ${roleColor} flex items-center justify-center flex-shrink-0`}
-                >
-                  <AtSign className={`w-4 h-4 ${textColor}`} />
-                </div>
+                {mention.sender && mention.sender.avatar_url ? (
+                  <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-gray-200">
+                    <img 
+                      src={mention.sender.avatar_url} 
+                      alt={mention.sender.username} 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div
+                    className={`w-8 h-8 rounded-full ${roleColor} flex items-center justify-center flex-shrink-0`}
+                  >
+                    <AtSign className={`w-4 h-4 ${textColor}`} />
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900">
-                    @{mention.value} mentioned
+                    @{roleValue || 'mention'} mentioned {mention.sender ? `by ${mention.sender.username}` : ''}
                   </p>
                   <p className="text-xs text-gray-700 truncate">
                     {messageContent}
@@ -310,7 +323,6 @@ export function NotificationPanel() {
                 if (mention.message_id) unreadIds.push(mention.message_id);
               });
               
-              console.log("Marking all as read:", unreadIds);
               
               if (unreadIds.length > 0) {
                 await markAsRead(unreadIds);
