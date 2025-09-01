@@ -138,8 +138,21 @@ export const TaskCard = ({ task, categoryId }) => {
           : "bg-gray-50 border-gray-200"
       }`}
     >
-      {/* Task icon with task-specific color */}
-      <div className="mb-1">
+      {/* Task icon with task-specific color - now clickable */}
+      <div 
+        className={`mb-1 ${["concept", "sermon", "final", "slides"].includes(task.id) ? 
+          "cursor-pointer hover:scale-110 transition-transform relative group" : ""}`}
+        onClick={() => {
+          // Only make it clickable for document-type tasks that can have Google Drive links
+          if (["concept", "sermon", "final", "slides"].includes(task.id)) {
+            handleViewDocument(task.id);
+          }
+        }}
+        title={["concept", "sermon", "final", "slides"].includes(task.id) ? "Click to open in Google Drive" : ""}
+      >
+        {["concept", "sermon", "final", "slides"].includes(task.id) && (
+          <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
+        )}
         {isCompleted ? (
           <CheckCircle className={`w-6 h-6 text-green-500`} />
         ) : isActive ? (
