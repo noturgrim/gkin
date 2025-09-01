@@ -111,7 +111,7 @@ export function Header({
           </div>
         )}
 
-        {/* Mobile user menu dropdown */}
+                  {/* Mobile user menu dropdown */}
         {showMobileMenu && (
           <div className="mt-2 rounded-lg border border-gray-200 bg-white shadow-lg p-3 flex flex-col gap-2">
             <div className="flex items-center gap-2">
@@ -125,6 +125,34 @@ export function Header({
                 </div>
               </div>
             </div>
+            
+            {/* Admin Tools option for mobile view */}
+            {user && user.role === 'admin' && (
+              <Button
+                variant="outline"
+                className="w-full text-xs text-blue-600 border-blue-200 hover:bg-blue-50 flex items-center justify-center gap-2"
+                onClick={() => {
+                  setShowMobileMenu(false);
+                  window.location.href = '/admin-tools';
+                }}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+                </svg>
+                Admin Tools
+              </Button>
+            )}
+            
             <Button
               variant="outline"
               className="w-full text-xs"
