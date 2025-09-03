@@ -56,6 +56,17 @@ export function NotificationCenter() {
   const { unreadCount, mentions, markAsRead } = useNotifications();
   const buttonRef = useRef(null);
   const panelRef = useRef(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   
   // Close panel when clicking outside
   useEffect(() => {
@@ -97,15 +108,9 @@ export function NotificationCenter() {
       {isOpen && (
         <div 
           ref={panelRef}
-          className="fixed md:absolute right-0 mt-2 z-50 w-full max-w-[320px] md:right-0"
-          style={{ 
-            top: "calc(100% + 8px)",
-            left: "auto",
-            maxHeight: "calc(100vh - 100px)",
-            overflowY: "auto"
-          }}
+          className={`${isMobile ? 'fixed left-1/2 transform -translate-x-1/2 bottom-16' : 'absolute right-0'} mt-2 z-50 w-[320px] max-w-[95vw]`}
         >
-          <NotificationPanel />
+          <NotificationPanel isMobile={isMobile} />
         </div>
       )}
     </div>
@@ -113,7 +118,7 @@ export function NotificationCenter() {
 }
 
 // Create a separate component for the notification panel content
-export function NotificationPanel() {
+export function NotificationPanel({ isMobile }) {
   const { mentions, markAsRead, refreshMentions } = useNotifications();
   
   // Format timestamp
@@ -228,7 +233,7 @@ export function NotificationPanel() {
           Recent notifications 
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-1 bg-white p-0 max-h-80 overflow-y-auto">
+      <CardContent className="space-y-1 bg-white p-0 max-h-[80vh] md:max-h-80 overflow-y-auto">
         {mentions.length === 0 ? (
           <div className="p-4 text-center text-gray-500 text-sm">
             No notifications yet
