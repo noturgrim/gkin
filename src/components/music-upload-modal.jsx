@@ -3,14 +3,13 @@ import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
-import { Upload, FileText, Music, X } from "lucide-react";
+import { Link, Music, X } from "lucide-react";
 
 export function MusicUploadModal({ isOpen, onClose, onSubmit }) {
   // State for form values
   const [formValues, setFormValues] = useState({
     title: "",
-    fileUploaded: false,
-    fileName: "",
+    musicLink: "",
     notes: "",
   });
 
@@ -19,8 +18,7 @@ export function MusicUploadModal({ isOpen, onClose, onSubmit }) {
     if (isOpen) {
       setFormValues({
         title: "",
-        fileUploaded: false,
-        fileName: "",
+        musicLink: "",
         notes: "",
       });
     }
@@ -35,29 +33,10 @@ export function MusicUploadModal({ isOpen, onClose, onSubmit }) {
     }));
   };
 
-  // Handle file upload
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFormValues((prev) => ({
-        ...prev,
-        fileUploaded: true,
-        fileName: file.name,
-      }));
-    }
-  };
-
-  // Handle file drop
-  const handleDrop = (e) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (file) {
-      setFormValues((prev) => ({
-        ...prev,
-        fileUploaded: true,
-        fileName: file.name,
-      }));
-    }
+  // Validate if the string is a valid Google Drive link
+  const isValidDriveLink = (link) => {
+    // Basic validation - checks if it contains drive.google.com
+    return link.includes("drive.google.com");
   };
 
   // Handle form submission
@@ -69,8 +48,13 @@ export function MusicUploadModal({ isOpen, onClose, onSubmit }) {
       return;
     }
 
-    if (!formValues.fileUploaded) {
-      alert("Please upload a music file");
+    if (!formValues.musicLink.trim()) {
+      alert("Please provide a Google Drive link to the music file");
+      return;
+    }
+
+    if (!isValidDriveLink(formValues.musicLink)) {
+      alert("Please provide a valid Google Drive link");
       return;
     }
 
@@ -114,7 +98,7 @@ export function MusicUploadModal({ isOpen, onClose, onSubmit }) {
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-800">
             <Music className="w-5 h-5 text-indigo-600" />
-            Upload Music File
+            Add Music Link
           </h2>
           <button
             onClick={onClose}
@@ -142,59 +126,25 @@ export function MusicUploadModal({ isOpen, onClose, onSubmit }) {
             </div>
 
             <div>
-              <Label className="text-gray-700 mb-2 block">
-                Upload Music File
+              <Label htmlFor="musicLink" className="text-gray-700 mb-2 block">
+                Music File Link
               </Label>
-              <div
-                className={`border-2 border-dashed rounded-lg p-4 text-center ${
-                  formValues.fileUploaded
-                    ? "border-indigo-300 bg-indigo-50"
-                    : "border-gray-300 hover:border-indigo-300 hover:bg-gray-50"
-                }`}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={handleDrop}
-              >
-                {formValues.fileUploaded ? (
-                  <div className="flex flex-col items-center gap-2">
-                    <FileText className="w-8 h-8 text-indigo-500" />
-                    <span className="text-indigo-600 font-medium">
-                      {formValues.fileName}
-                    </span>
-                    <button
-                      type="button"
-                      className="text-xs text-red-500 hover:text-red-700"
-                      onClick={() =>
-                        setFormValues((prev) => ({
-                          ...prev,
-                          fileUploaded: false,
-                          fileName: "",
-                        }))
-                      }
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-2">
-                    <Upload className="w-8 h-8 text-gray-400" />
-                    <span className="text-gray-500">
-                      Drag and drop your music file here, or
-                    </span>
-                    <label className="cursor-pointer text-indigo-600 hover:text-indigo-700 font-medium">
-                      Browse files
-                      <input
-                        type="file"
-                        className="hidden"
-                        onChange={handleFileChange}
-                        accept=".mp3,.wav,.ogg,.flac,.m4a"
-                      />
-                    </label>
-                    <span className="text-xs text-gray-500 mt-1">
-                      Supported formats: MP3, WAV, OGG, FLAC, M4A
-                    </span>
-                  </div>
-                )}
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Link className="h-4 w-4 text-gray-400" />
+                </div>
+                <Input
+                  id="musicLink"
+                  name="musicLink"
+                  value={formValues.musicLink}
+                  onChange={handleChange}
+                  className="pl-10 border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                  placeholder="Paste Google Drive link to your music file"
+                />
               </div>
+              <p className="text-xs text-gray-500 mt-2">
+                Please share your Google Drive link with viewing permissions enabled
+              </p>
             </div>
 
             <div>
@@ -224,7 +174,7 @@ export function MusicUploadModal({ isOpen, onClose, onSubmit }) {
               type="submit"
               className="bg-indigo-600 hover:bg-indigo-700 text-white"
             >
-              Upload Music
+              Save Music Link
             </Button>
           </div>
         </form>
