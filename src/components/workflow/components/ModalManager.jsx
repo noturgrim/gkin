@@ -6,6 +6,7 @@ import { SermonUploadModal } from "../../sermon-upload-modal";
 import { PastorNotifyModal } from "../../pastor-notify-modal";
 import { LyricsInputModal } from "../../lyrics-input-modal";
 import { TranslationModal } from "../../translation-modal";
+import { ViewTranslatedLyricsModal } from "../../view-translated-lyrics-modal";
 import { SermonTranslationModal } from "../../sermon-translation-modal";
 import { SlidesUploadModal } from "../../slides-upload-modal";
 import { QrCodeUploadModal } from "../../qr-code-upload-modal";
@@ -37,6 +38,8 @@ export const ModalManager = () => {
     isTranslationModalOpen,
     setIsTranslationModalOpen,
     currentLyrics,
+    isViewTranslatedLyricsModalOpen,
+    setIsViewTranslatedLyricsModalOpen,
     isSermonTranslationModalOpen,
     setIsSermonTranslationModalOpen,
     currentSermon,
@@ -111,6 +114,12 @@ export const ModalManager = () => {
         isOpen={isTranslationModalOpen}
         onClose={() => setIsTranslationModalOpen(false)}
         onSubmit={handleTranslationSubmit}
+        lyricsData={currentLyrics}
+      />
+
+      <ViewTranslatedLyricsModal
+        isOpen={isViewTranslatedLyricsModalOpen}
+        onClose={() => setIsViewTranslatedLyricsModalOpen(false)}
         lyricsData={currentLyrics}
       />
 

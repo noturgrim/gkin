@@ -19,6 +19,7 @@ export const useWorkflowHandlers = () => {
     setIsLyricsModalOpen,
     setIsTranslationModalOpen,
     setCurrentLyrics,
+    setIsViewTranslatedLyricsModalOpen,
     setIsSermonTranslationModalOpen,
     setCurrentSermon,
     setIsSlidesUploadModalOpen,
@@ -192,12 +193,18 @@ export const useWorkflowHandlers = () => {
     // Get document links from context if available
     const documentLinks = completedTasks?.documentLinks || {
       // Default Google Drive links for each document type
-      concept: "https://docs.google.com/document/d/1GZkHMPLQnlxQQVQHPZavvPFRRRDCyaHABt_8KlhQxYE/edit",
-      sermon: "https://docs.google.com/document/d/1pMnDsVb7CtcFm2SJE4N1ZHmzgzwcyYQcV2V5Q7JX5oU/edit",
-      final: "https://docs.google.com/document/d/1aN8vgWk2x6KYYUrWWqAYhDKJBq0Ot-VZNQQ3AmJUEgc/edit",
-      qrcode: "https://drive.google.com/file/d/1Qr5wgtaKGQZhMWQEw2MgzGcVhBTTdJLk/view",
-      slides: "https://docs.google.com/presentation/d/1mKQz8oU2QYRdvmJBxLiMNVnWkCkE4MUjea8Z9UzUQMI/edit", 
-      music: "https://drive.google.com/drive/folders/1xKjfMKqw2J7Z8QX5tY2L3EcDXHWA8nP9",
+      concept:
+        "https://docs.google.com/document/d/1GZkHMPLQnlxQQVQHPZavvPFRRRDCyaHABt_8KlhQxYE/edit",
+      sermon:
+        "https://docs.google.com/document/d/1pMnDsVb7CtcFm2SJE4N1ZHmzgzwcyYQcV2V5Q7JX5oU/edit",
+      final:
+        "https://docs.google.com/document/d/1aN8vgWk2x6KYYUrWWqAYhDKJBq0Ot-VZNQQ3AmJUEgc/edit",
+      qrcode:
+        "https://drive.google.com/file/d/1Qr5wgtaKGQZhMWQEw2MgzGcVhBTTdJLk/view",
+      slides:
+        "https://docs.google.com/presentation/d/1mKQz8oU2QYRdvmJBxLiMNVnWkCkE4MUjea8Z9UzUQMI/edit",
+      music:
+        "https://drive.google.com/drive/folders/1xKjfMKqw2J7Z8QX5tY2L3EcDXHWA8nP9",
     };
 
     // Get the document name for the alert
@@ -216,14 +223,16 @@ export const useWorkflowHandlers = () => {
     if (documentUrl) {
       // Open the document in a new tab
       window.open(documentUrl, "_blank");
-      
+
       // Don't show alert when clicking icon, only when clicking view button
       if (!["concept", "sermon", "final", "slides"].includes(taskId)) {
         alert(`Opening ${documentTypes[taskId] || taskId} in Google Drive`);
       }
     } else {
       // Fallback to just showing an alert
-      alert(`No Google Drive link available for ${documentTypes[taskId] || taskId}`);
+      alert(
+        `No Google Drive link available for ${documentTypes[taskId] || taskId}`
+      );
     }
 
     // If you need to call the parent handler
@@ -236,12 +245,18 @@ export const useWorkflowHandlers = () => {
 
     // Get document links from context if available
     const documentLinks = completedTasks?.documentLinks || {
-      concept: "https://docs.google.com/document/d/1GZkHMPLQnlxQQVQHPZavvPFRRRDCyaHABt_8KlhQxYE/edit",
-      sermon: "https://docs.google.com/document/d/1pMnDsVb7CtcFm2SJE4N1ZHmzgzwcyYQcV2V5Q7JX5oU/edit",
-      final: "https://docs.google.com/document/d/1aN8vgWk2x6KYYUrWWqAYhDKJBq0Ot-VZNQQ3AmJUEgc/edit",
-      qrcode: "https://drive.google.com/file/d/1Qr5wgtaKGQZhMWQEw2MgzGcVhBTTdJLk/view",
-      slides: "https://docs.google.com/presentation/d/1mKQz8oU2QYRdvmJBxLiMNVnWkCkE4MUjea8Z9UzUQMI/edit",
-      music: "https://drive.google.com/drive/folders/1xKjfMKqw2J7Z8QX5tY2L3EcDXHWA8nP9",
+      concept:
+        "https://docs.google.com/document/d/1GZkHMPLQnlxQQVQHPZavvPFRRRDCyaHABt_8KlhQxYE/edit",
+      sermon:
+        "https://docs.google.com/document/d/1pMnDsVb7CtcFm2SJE4N1ZHmzgzwcyYQcV2V5Q7JX5oU/edit",
+      final:
+        "https://docs.google.com/document/d/1aN8vgWk2x6KYYUrWWqAYhDKJBq0Ot-VZNQQ3AmJUEgc/edit",
+      qrcode:
+        "https://drive.google.com/file/d/1Qr5wgtaKGQZhMWQEw2MgzGcVhBTTdJLk/view",
+      slides:
+        "https://docs.google.com/presentation/d/1mKQz8oU2QYRdvmJBxLiMNVnWkCkE4MUjea8Z9UzUQMI/edit",
+      music:
+        "https://drive.google.com/drive/folders/1xKjfMKqw2J7Z8QX5tY2L3EcDXHWA8nP9",
     };
 
     // Get document types
@@ -342,6 +357,22 @@ export const useWorkflowHandlers = () => {
     const lyricsData = completedTasks?.lyricsData || { songs: [] };
     setCurrentLyrics(lyricsData);
     setIsTranslationModalOpen(true);
+  };
+
+  const handleViewTranslatedLyrics = () => {
+    console.log("Opening view translated lyrics modal");
+    // Get the current lyrics data and translation data from the completedTasks
+    const lyricsData = completedTasks?.lyricsData || { songs: [] };
+    const translationData = completedTasks?.translationData;
+
+    // Combine the data for the view modal
+    const combinedData = {
+      songs: lyricsData.songs || [],
+      translations: translationData?.translations || [],
+    };
+
+    setCurrentLyrics(combinedData);
+    setIsViewTranslatedLyricsModalOpen(true);
   };
 
   const handleTranslationSubmit = (translationData) => {
@@ -529,6 +560,7 @@ export const useWorkflowHandlers = () => {
     handleAddLyrics,
     handleLyricsSubmit,
     handleTranslateLyrics,
+    handleViewTranslatedLyrics,
     handleTranslationSubmit,
     handleTranslateSermon,
     handleSermonTranslationSubmit,

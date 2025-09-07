@@ -21,12 +21,18 @@ export const WorkflowProvider = ({
     ...service?.taskStatuses,
     // Add default document links
     documentLinks: {
-      concept: "https://docs.google.com/document/d/1GZkHMPLQnlxQQVQHPZavvPFRRRDCyaHABt_8KlhQxYE/edit",
-      sermon: "https://docs.google.com/document/d/1pMnDsVb7CtcFm2SJE4N1ZHmzgzwcyYQcV2V5Q7JX5oU/edit",
-      final: "https://docs.google.com/document/d/1aN8vgWk2x6KYYUrWWqAYhDKJBq0Ot-VZNQQ3AmJUEgc/edit",
-      qrcode: "https://drive.google.com/file/d/1Qr5wgtaKGQZhMWQEw2MgzGcVhBTTdJLk/view",
-      slides: "https://docs.google.com/presentation/d/1mKQz8oU2QYRdvmJBxLiMNVnWkCkE4MUjea8Z9UzUQMI/edit",
-      music: "https://drive.google.com/drive/folders/1xKjfMKqw2J7Z8QX5tY2L3EcDXHWA8nP9",
+      concept:
+        "https://docs.google.com/document/d/1GZkHMPLQnlxQQVQHPZavvPFRRRDCyaHABt_8KlhQxYE/edit",
+      sermon:
+        "https://docs.google.com/document/d/1pMnDsVb7CtcFm2SJE4N1ZHmzgzwcyYQcV2V5Q7JX5oU/edit",
+      final:
+        "https://docs.google.com/document/d/1aN8vgWk2x6KYYUrWWqAYhDKJBq0Ot-VZNQQ3AmJUEgc/edit",
+      qrcode:
+        "https://drive.google.com/file/d/1Qr5wgtaKGQZhMWQEw2MgzGcVhBTTdJLk/view",
+      slides:
+        "https://docs.google.com/presentation/d/1mKQz8oU2QYRdvmJBxLiMNVnWkCkE4MUjea8Z9UzUQMI/edit",
+      music:
+        "https://drive.google.com/drive/folders/1xKjfMKqw2J7Z8QX5tY2L3EcDXHWA8nP9",
     },
   });
 
@@ -45,6 +51,8 @@ export const WorkflowProvider = ({
   const [isLyricsModalOpen, setIsLyricsModalOpen] = useState(false);
   const [isTranslationModalOpen, setIsTranslationModalOpen] = useState(false);
   const [currentLyrics, setCurrentLyrics] = useState(null);
+  const [isViewTranslatedLyricsModalOpen, setIsViewTranslatedLyricsModalOpen] =
+    useState(false);
   const [isSermonTranslationModalOpen, setIsSermonTranslationModalOpen] =
     useState(false);
   const [currentSermon, setCurrentSermon] = useState(null);
@@ -157,6 +165,8 @@ export const WorkflowProvider = ({
     setIsTranslationModalOpen,
     currentLyrics,
     setCurrentLyrics,
+    isViewTranslatedLyricsModalOpen,
+    setIsViewTranslatedLyricsModalOpen,
     isSermonTranslationModalOpen,
     setIsSermonTranslationModalOpen,
     currentSermon,

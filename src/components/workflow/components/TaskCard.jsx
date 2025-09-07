@@ -105,6 +105,7 @@ export const TaskCard = ({ task, categoryId }) => {
     handleQrCodeAction,
     handleAddLyrics,
     handleTranslateLyrics,
+    handleViewTranslatedLyrics,
     handleTranslateSermon,
     handleUploadSermon,
     handleUploadSlides,
@@ -139,34 +140,71 @@ export const TaskCard = ({ task, categoryId }) => {
       }`}
     >
       {/* Task icon with task-specific color - now clickable with enhanced visual indicators */}
-      <div 
-        className={`mb-1 ${["concept", "sermon", "final", "slides"].includes(task.id) ? 
-          "cursor-pointer hover:scale-110 transition-transform relative group" : ""}`}
+      <div
+        className={`mb-1 ${
+          [
+            "concept",
+            "sermon",
+            "final",
+            "slides",
+            "translate-liturgy",
+          ].includes(task.id)
+            ? "cursor-pointer hover:scale-110 transition-transform relative group"
+            : ""
+        }`}
         onClick={() => {
-          // Only make it clickable for document-type tasks that can have Google Drive links
+          // Handle different task types when icon is clicked
           if (["concept", "sermon", "final", "slides"].includes(task.id)) {
             handleViewDocument(task.id);
+          } else if (task.id === "translate-liturgy") {
+            handleViewTranslatedLyrics();
           }
         }}
-        title={["concept", "sermon", "final", "slides"].includes(task.id) ? "Click to open in Google Drive" : ""}
+        title={
+          ["concept", "sermon", "final", "slides"].includes(task.id)
+            ? "Click to open in Google Drive"
+            : task.id === "translate-liturgy"
+            ? "Click to view translated lyrics"
+            : ""
+        }
       >
         {/* Visual clickability indicator for all devices */}
-        {["concept", "sermon", "final", "slides"].includes(task.id) && (
+        {(["concept", "sermon", "final", "slides"].includes(task.id) ||
+          task.id === "translate-liturgy") && (
           <>
             {/* Blue dot indicator that's always visible on mobile, shows on hover for desktop */}
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full md:opacity-0 md:group-hover:opacity-100 transition-opacity"></div>
+            <div
+              className={`absolute -top-1 -right-1 w-3 h-3 ${
+                task.id === "translate-liturgy" ? "bg-green-500" : "bg-blue-500"
+              } rounded-full md:opacity-0 md:group-hover:opacity-100 transition-opacity`}
+            ></div>
             {/* Touch/click icon indicator for mobile */}
-            <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 text-[10px] text-blue-600 font-medium md:hidden">
+            <div
+              className={`absolute -bottom-2 left-1/2 transform -translate-x-1/2 text-[10px] ${
+                task.id === "translate-liturgy"
+                  ? "text-green-600"
+                  : "text-blue-600"
+              } font-medium md:hidden`}
+            >
               tap
             </div>
           </>
         )}
-        <div className={["concept", "sermon", "final", "slides"].includes(task.id) ? 
-          "p-1 rounded-full border-2 border-dashed border-opacity-50 border-blue-300" : ""}>
+        <div
+          className={
+            ["concept", "sermon", "final", "slides"].includes(task.id)
+              ? "p-1 rounded-full border-2 border-dashed border-opacity-50 border-blue-300"
+              : task.id === "translate-liturgy"
+              ? "p-1 rounded-full border-2 border-dashed border-opacity-50 border-green-300"
+              : ""
+          }
+        >
           {isCompleted ? (
             <CheckCircle className={`w-6 h-6 text-green-500`} />
           ) : isActive ? (
-            <AlertCircle className={`w-6 h-6 ${taskStyle.icon} animate-pulse`} />
+            <AlertCircle
+              className={`w-6 h-6 ${taskStyle.icon} animate-pulse`}
+            />
           ) : (
             <task.icon className={`w-6 h-6 ${taskStyle.icon}`} />
           )}
@@ -341,6 +379,16 @@ export const TaskCard = ({ task, categoryId }) => {
             >
               Translate Lyrics
             </Button>
+
+            {completedTasks?.["translate-liturgy"] === "completed" && (
+              <Button
+                size="sm"
+                className={viewButtonClass}
+                onClick={handleViewTranslatedLyrics}
+              >
+                View Translations
+              </Button>
+            )}
           </>
         )}
 
