@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
-import { Textarea } from "./ui/textarea";
 import { Input } from "./ui/input";
-import { Book, X, Save, Upload, FileText } from "lucide-react";
+import { Book, X, Save, ExternalLink, Link as LinkIcon } from "lucide-react";
 
 export function SermonTranslationModal({
   isOpen,
@@ -11,75 +10,30 @@ export function SermonTranslationModal({
   onSubmit,
   sermonData,
 }) {
-  // State for form values
-  const [formValues, setFormValues] = useState({
-    translatedTitle: "",
-    translatedText: "",
-    fileUploaded: false,
-    fileName: "",
-  });
+  // No need for form values anymore, just tracking if translation is complete
+  const [translationComplete, setTranslationComplete] = useState(false);
 
-  // Initialize form with sermon data when modal opens
+  // Reset state when modal opens
   useEffect(() => {
-    if (isOpen && sermonData) {
-      setFormValues({
-        translatedTitle: sermonData.translatedTitle || "",
-        translatedText: sermonData.translatedText || "",
-        fileUploaded: false,
-        fileName: "",
-      });
+    if (isOpen) {
+      setTranslationComplete(false);
     }
-  }, [isOpen, sermonData]);
-
-  // Handle form changes
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormValues((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  // Handle file upload
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFormValues((prev) => ({
-        ...prev,
-        fileUploaded: true,
-        fileName: file.name,
-      }));
-    }
-  };
-
-  // Handle file drop
-  const handleDrop = (e) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (file) {
-      setFormValues((prev) => ({
-        ...prev,
-        fileUploaded: true,
-        fileName: file.name,
-      }));
-    }
-  };
+  }, [isOpen]);
 
   // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (!formValues.translatedTitle.trim() && !formValues.fileUploaded) {
-      alert(
-        "Please either enter a translated title and text or upload a translation file"
-      );
+    if (!translationComplete) {
+      alert("Please confirm that you have completed the translation");
       return;
     }
 
     onSubmit({
-      ...formValues,
+      translationComplete: true,
       originalSermonId: sermonData?.id || "",
       originalSermonTitle: sermonData?.sermonTitle || "",
+      originalSermonLink: sermonData?.sermonLink || "",
       translatedAt: new Date().toISOString(),
     });
   };
@@ -154,25 +108,22 @@ export function SermonTranslationModal({
                     </div>
                   </div>
 
-                  {sermonData.sermonText && (
-                    <div>
-                      <Label className="text-sm text-gray-600">Content</Label>
-                      <div className="p-2 bg-white border border-gray-200 rounded-md text-gray-700 max-h-48 overflow-y-auto">
-                        <pre className="whitespace-pre-wrap font-sans text-sm">
-                          {sermonData.sermonText}
-                        </pre>
-                      </div>
-                    </div>
-                  )}
-
-                  {sermonData.fileName && (
+                  {sermonData.sermonLink && (
                     <div>
                       <Label className="text-sm text-gray-600">
-                        Uploaded File
+                        Google Doc Link
                       </Label>
                       <div className="p-2 bg-white border border-gray-200 rounded-md text-gray-700 flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-blue-500" />
-                        {sermonData.fileName}
+                        <LinkIcon className="w-4 h-4 text-blue-500" />
+                        <a
+                          href={sermonData.sermonLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
+                        >
+                          {sermonData.sermonLink}
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
                       </div>
                     </div>
                   )}
@@ -183,88 +134,42 @@ export function SermonTranslationModal({
               <div className="space-y-4">
                 <h3 className="font-medium text-gray-700">Translation</h3>
 
-                <div className="space-y-3">
-                  <div>
-                    <Label htmlFor="translatedTitle" className="text-gray-700">
-                      Translated Title
-                    </Label>
-                    <Input
-                      id="translatedTitle"
-                      name="translatedTitle"
-                      value={formValues.translatedTitle}
-                      onChange={handleChange}
-                      className="border-gray-300 focus:border-green-500 focus:ring focus:ring-green-200 focus:ring-opacity-50"
-                      placeholder="Enter translated sermon title"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="translatedText" className="text-gray-700">
-                      Translated Content
-                    </Label>
-                    <Textarea
-                      id="translatedText"
-                      name="translatedText"
-                      rows={8}
-                      value={formValues.translatedText}
-                      onChange={handleChange}
-                      className="border-gray-300 focus:border-green-500 focus:ring focus:ring-green-200 focus:ring-opacity-50"
-                      placeholder="Enter translated sermon content"
-                    />
-                  </div>
-
-                  <div className="mt-4">
-                    <Label className="text-gray-700 mb-2 block">
-                      Or Upload Translation File
-                    </Label>
-                    <div
-                      className={`border-2 border-dashed rounded-lg p-4 text-center ${
-                        formValues.fileUploaded
-                          ? "border-green-300 bg-green-50"
-                          : "border-gray-300 hover:border-green-300 hover:bg-gray-50"
-                      }`}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={handleDrop}
-                    >
-                      {formValues.fileUploaded ? (
-                        <div className="flex flex-col items-center gap-2">
-                          <FileText className="w-8 h-8 text-green-500" />
-                          <span className="text-green-600 font-medium">
-                            {formValues.fileName}
-                          </span>
-                          <button
-                            type="button"
-                            className="text-xs text-red-500 hover:text-red-700"
-                            onClick={() =>
-                              setFormValues((prev) => ({
-                                ...prev,
-                                fileUploaded: false,
-                                fileName: "",
-                              }))
-                            }
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center gap-2">
-                          <Upload className="w-8 h-8 text-gray-400" />
-                          <span className="text-gray-500">
-                            Drag and drop your file here, or
-                          </span>
-                          <label className="cursor-pointer text-green-600 hover:text-green-700 font-medium">
-                            Browse files
-                            <input
-                              type="file"
-                              className="hidden"
-                              onChange={handleFileChange}
-                              accept=".doc,.docx,.pdf,.txt"
-                            />
-                          </label>
-                        </div>
-                      )}
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-start">
+                    <div className="mr-3 mt-0.5">
+                      <ExternalLink className="w-5 h-5 text-blue-500" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-blue-800">
+                        Translation Instructions
+                      </h4>
+                      <ol className="mt-2 text-sm text-blue-700 list-decimal pl-5 space-y-1">
+                        <li>
+                          Click the original sermon Google Doc link above to
+                          open it
+                        </li>
+                        <li>
+                          Translate the sermon directly in the same document
+                        </li>
+                        <li>
+                          When you're done, check the confirmation box below
+                        </li>
+                      </ol>
                     </div>
                   </div>
+                </div>
+
+                <div className="mt-6 flex items-center">
+                  <input
+                    type="checkbox"
+                    id="translationComplete"
+                    checked={translationComplete}
+                    onChange={() => setTranslationComplete(!translationComplete)}
+                    className="h-5 w-5 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="translationComplete" className="ml-3 text-gray-700 font-medium">
+                    I confirm that I have completed the translation in the document
+                  </label>
                 </div>
               </div>
             </div>
@@ -281,10 +186,10 @@ export function SermonTranslationModal({
             <Button
               type="submit"
               className="bg-green-600 hover:bg-green-700 text-white"
-              disabled={!sermonData}
+              disabled={!sermonData || !translationComplete}
             >
               <Save className="w-4 h-4 mr-2" />
-              Save Translation
+              Confirm Translation Complete
             </Button>
           </div>
         </form>
