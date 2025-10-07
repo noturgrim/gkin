@@ -466,7 +466,6 @@ export function AssignmentsPage() {
             <WeekSelector
               selectedWeek={selectedWeek}
               onWeekChange={setSelectedWeek}
-              customWeeks={assignments}
             />
           </div>
         )}

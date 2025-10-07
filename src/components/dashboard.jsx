@@ -154,7 +154,6 @@ function Dashboard() {
           <WeekSelector
             selectedWeek={selectedWeek}
             onWeekChange={setSelectedWeek}
-            customWeeks={assignments} // Pass assignments as customWeeks
           />
         </div>
 
