@@ -7,11 +7,15 @@ import { getStatusColor } from "../lib/date-utils";
 import { useAssignments } from "./assignments/context/AssignmentsContext";
 
 export function ServiceAssignments({ selectedDate }) {
-  const { getAssignmentsForDate } = useAssignments();
-  const currentService = getAssignmentsForDate(selectedDate);
+  const { getAssignmentsForDate, assignments } = useAssignments();
+  
+  // Don't try to get assignments if no date is provided or assignments aren't loaded yet
+  const currentService = selectedDate && assignments && assignments.length > 0 
+    ? getAssignmentsForDate(selectedDate) 
+    : null;
 
-  // If no current service, show loading
-  if (!currentService) {
+  // If no assignments loaded yet, show loading
+  if (!assignments || assignments.length === 0) {
     return (
       <Card className="border border-gray-200 shadow-sm">
         <CardHeader className="bg-gray-50 border-b border-gray-200 p-3">
@@ -22,7 +26,32 @@ export function ServiceAssignments({ selectedDate }) {
         </CardHeader>
         <CardContent className="p-3 flex items-center justify-center">
           <div className="text-sm text-gray-500">
-            Loading service details...
+            Loading assignments...
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // If no current service, show no service message
+  if (!currentService) {
+    return (
+      <Card className="border border-gray-200 shadow-sm">
+        <CardHeader className="bg-gray-50 border-b border-gray-200 p-3">
+          <CardTitle className="text-base font-bold flex items-center gap-1">
+            <Calendar className="w-4 h-4 text-blue-600" />
+            Service Assignments
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-3 flex items-center justify-center">
+          <div className="text-sm text-gray-500 text-center">
+            <div>No service found for selected date</div>
+            <div className="mt-1 text-xs">({selectedDate})</div>
+            <Link to="/assignments" className="mt-2 inline-block">
+              <Button size="sm" variant="outline">
+                Manage Assignments
+              </Button>
+            </Link>
           </div>
         </CardContent>
       </Card>

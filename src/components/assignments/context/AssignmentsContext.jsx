@@ -6,49 +6,45 @@ const AssignmentsContext = createContext();
 
 export const useAssignments = () => useContext(AssignmentsContext);
 
+// Default church service roles in Dutch as requested by user
+const DEFAULT_ROLES = [
+  { role: "Voorganger", person: "" },
+  { role: "Ouderling van dienst", person: "" },
+  { role: "Muzikale begeleiding", person: "" },
+  { role: "Voorzangers", person: "" },
+];
+
 export const AssignmentsProvider = ({ children }) => {
   const [assignments, setAssignments] = useState(() => {
     // Try to load from localStorage first
     const savedAssignments = localStorage.getItem("serviceAssignments");
     if (savedAssignments) {
-      return JSON.parse(savedAssignments);
+      try {
+        const parsed = JSON.parse(savedAssignments);
+        // Validate the structure
+        if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].assignments) {
+          return parsed;
+        }
+      } catch (error) {
+        console.warn("Failed to parse saved assignments, creating new ones", error);
+      }
     }
     
-    // Default assignments if none found in localStorage
-    const sundays = getUpcomingSundays(4);
+    // Generate assignments for a comprehensive list of Sundays (52 weeks = 1 year)
+    const sundays = getUpcomingSundays(52);
     
-    return sundays.map((sunday, i) => {
-      // Default assignments for each Sunday
-      const defaultAssignments = [
-        { role: "Voorganger", person: "ds. D. Kurniawan" },
-        { role: "Ouderling van dienst", person: "Althea Simons-Winailan" },
-        { role: "Muzikale begeleiding", person: "Charlie Hendrawan" },
-        { role: "Voorzangers", person: "Yolly Wenker-Tampubolon, Teddy Simanjuntak" },
-      ];
-
-      // Add different people for different weeks to show variety
-      if (i === 1) {
-        defaultAssignments[1].person = "Johan van der Meer";
-        defaultAssignments[3].person = "Maria Jansen, Peter de Vries";
-      } else if (i === 2) {
-        defaultAssignments[0].person = "ds. A. Visser";
-        defaultAssignments[2].person = "David Smit";
-      } else if (i === 3) {
-        defaultAssignments[1].person = "Esther de Boer";
-        defaultAssignments[3].person = "Thomas Bakker, Anna Mulder";
-      }
-
-      return {
-        ...sunday,
-        title: "Sunday Service",
-        assignments: defaultAssignments,
-      };
-    });
+    return sundays.map((sunday) => ({
+      ...sunday,
+      title: "Sunday Service",
+      assignments: [...DEFAULT_ROLES],
+    }));
   });
 
   // Save assignments to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem("serviceAssignments", JSON.stringify(assignments));
+    if (assignments && assignments.length > 0) {
+      localStorage.setItem("serviceAssignments", JSON.stringify(assignments));
+    }
   }, [assignments]);
 
   // Function to update a specific assignment
@@ -57,10 +53,12 @@ export const AssignmentsProvider = ({ children }) => {
       return prevAssignments.map(service => {
         if (service.dateString === dateString) {
           const updatedAssignments = [...service.assignments];
-          updatedAssignments[roleIndex] = {
-            ...updatedAssignments[roleIndex],
-            person: newPerson
-          };
+          if (updatedAssignments[roleIndex]) {
+            updatedAssignments[roleIndex] = {
+              ...updatedAssignments[roleIndex],
+              person: newPerson
+            };
+          }
           
           return {
             ...service,
@@ -74,16 +72,16 @@ export const AssignmentsProvider = ({ children }) => {
 
   // Function to add a new role to all services
   const addRole = (roleName) => {
+    if (!roleName.trim()) return;
+    
     setAssignments(prevAssignments => {
-      return prevAssignments.map(service => {
-        return {
-          ...service,
-          assignments: [
-            ...service.assignments,
-            { role: roleName, person: "" }
-          ]
-        };
-      });
+      return prevAssignments.map(service => ({
+        ...service,
+        assignments: [
+          ...service.assignments,
+          { role: roleName.trim(), person: "" }
+        ]
+      }));
     });
   };
 
@@ -104,84 +102,88 @@ export const AssignmentsProvider = ({ children }) => {
 
   // Function to get assignments for a specific date
   const getAssignmentsForDate = (dateString) => {
-    // Try direct match first
-    let service = assignments.find(s => s.dateString === dateString);
-
-    // If no direct match, find the closest date
-    if (!service && assignments.length > 0) {
-      const selectedDateTime = new Date(dateString).getTime();
-      
-      service = assignments.reduce((closest, current) => {
-        const currentTime = new Date(current.dateString).getTime();
-        const closestTime = closest ? new Date(closest.dateString).getTime() : Infinity;
-        
-        const currentDiff = Math.abs(currentTime - selectedDateTime);
-        const closestDiff = Math.abs(closestTime - selectedDateTime);
-        
-        return currentDiff < closestDiff ? current : closest;
-      }, null);
+    if (!dateString || !assignments || assignments.length === 0) {
+      return null;
     }
     
-    return service;
+    // Try exact match first
+    const exactMatch = assignments.find(s => s.dateString === dateString);
+    if (exactMatch) {
+      return exactMatch;
+    }
+    
+    // If no exact match, try to find the closest upcoming Sunday
+    const targetDate = new Date(dateString);
+    const closestSunday = assignments.find(s => {
+      const serviceDate = new Date(s.dateString);
+      return serviceDate >= targetDate;
+    });
+    
+    return closestSunday || null;
   };
 
-  // Function to add more future dates - simplified version using getUpcomingSundays
+  // Function to add more future dates
   const addMoreFutureDates = (additionalCount = 4) => {
     // Get the latest date we currently have
     const latestDate = [...assignments].sort((a, b) => {
       return new Date(b.dateString) - new Date(a.dateString);
     })[0];
     
-    // Calculate the offset for getUpcomingSundays
-    // We want to start from the Sunday after the latest date we have
-    const latestDateObj = new Date(latestDate.dateString);
-    const today = new Date();
-    const diffWeeks = Math.ceil((latestDateObj.getTime() - today.getTime()) / (7 * 24 * 60 * 60 * 1000)) + 1;
+    if (!latestDate) return;
     
-    // Get new Sundays starting from where our current data ends
-    const startOffset = diffWeeks;
-    const newSundays = getUpcomingSundays(additionalCount + startOffset).slice(startOffset);
+    // Get new Sundays starting from the day after our latest date
+    const nextDate = new Date(latestDate.dateString);
+    nextDate.setDate(nextDate.getDate() + 7); // Next Sunday
     
-    // Create new service objects with the same role structure as existing ones
-    const roleTemplate = assignments[0].assignments.map(assignment => ({
-      role: assignment.role,
-      person: ""
-    }));
-    
-    const newServices = newSundays.map(sunday => ({
-      ...sunday,
-      title: "Sunday Service",
-      assignments: [...roleTemplate]
-    }));
+    const newSundays = [];
+    for (let i = 0; i < additionalCount; i++) {
+      const sunday = new Date(nextDate);
+      sunday.setDate(nextDate.getDate() + (i * 7));
+      
+      const dateString = sunday.toISOString().split('T')[0];
+      const today = new Date();
+      const diffTime = sunday.getTime() - today.getTime();
+      const daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      newSundays.push({
+        date: sunday,
+        dateString,
+        title: sunday.toLocaleDateString("en-US", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        }),
+        daysRemaining,
+        status: daysRemaining < 0 ? "past" : "upcoming",
+        assignments: [...DEFAULT_ROLES]
+      });
+    }
     
     // Add the new services to our assignments
-    setAssignments(prev => [...prev, ...newServices]);
+    setAssignments(prev => [...prev, ...newSundays]);
   };
 
-  // Function to explicitly save assignments to localStorage (and future backend)
+  // Function to save assignments (for future backend integration)
   const saveAssignments = () => {
-    // Currently just saves to localStorage
-    localStorage.setItem("serviceAssignments", JSON.stringify(assignments));
-    
-    // In the future, this would be an API call:
-    // return api.post('/assignments', assignments);
-    
-    // For now, return a promise that resolves immediately
+    // Currently just saves to localStorage (already handled by useEffect)
+    // In the future, this would be an API call
     return new Promise(resolve => {
       setTimeout(() => resolve({ success: true }), 300);
     });
   };
 
+  // Function to remove a specific date
   const removeDate = (dateString) => {
     setAssignments(prevAssignments => {
       return prevAssignments.filter(service => service.dateString !== dateString);
     });
   };
 
+  // Function to add a specific date
   const addSpecificDate = (dateString) => {
     // Check if the date already exists
     const exists = assignments.some(service => service.dateString === dateString);
-    if (exists) return; // Don't add if it already exists
+    if (exists) return;
     
     // Create a new service for this date
     const date = new Date(dateString + 'T00:00:00Z');
@@ -189,19 +191,17 @@ export const AssignmentsProvider = ({ children }) => {
     const diffTime = date.getTime() - today.getTime();
     const daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
-    // Use the role template from existing assignments
-    const roleTemplate = assignments[0].assignments.map(assignment => ({
-      role: assignment.role,
-      person: ""
-    }));
-    
     const newService = {
       date: date,
       dateString: dateString,
-      title: "Sunday Service",
+      title: date.toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      }),
       daysRemaining: daysRemaining,
       status: daysRemaining < 0 ? "past" : "upcoming",
-      assignments: [...roleTemplate]
+      assignments: [...DEFAULT_ROLES]
     };
     
     // Add the new service and sort by date
@@ -209,6 +209,17 @@ export const AssignmentsProvider = ({ children }) => {
       const updated = [...prev, newService];
       return updated.sort((a, b) => new Date(a.dateString) - new Date(b.dateString));
     });
+  };
+
+  // Function to reset assignments to default roles
+  const resetAssignments = () => {
+    const sundays = getUpcomingSundays(52);
+    const resetData = sundays.map((sunday) => ({
+      ...sunday,
+      title: "Sunday Service",
+      assignments: [...DEFAULT_ROLES],
+    }));
+    setAssignments(resetData);
   };
 
   const value = {
@@ -220,7 +231,9 @@ export const AssignmentsProvider = ({ children }) => {
     addMoreFutureDates,
     saveAssignments,
     removeDate,
-    addSpecificDate
+    addSpecificDate,
+    resetAssignments,
+    defaultRoles: DEFAULT_ROLES
   };
 
   return (
