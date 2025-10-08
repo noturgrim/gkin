@@ -140,7 +140,7 @@ export const AssignmentsProvider = ({ children }) => {
       const sunday = new Date(nextDate);
       sunday.setDate(nextDate.getDate() + (i * 7));
       
-      const dateString = sunday.toISOString().split('T')[0];
+      const dateString = `${sunday.getFullYear()}-${String(sunday.getMonth() + 1).padStart(2, '0')}-${String(sunday.getDate()).padStart(2, '0')}`;
       const today = new Date();
       const diffTime = sunday.getTime() - today.getTime();
       const daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));

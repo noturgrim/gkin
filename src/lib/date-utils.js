@@ -48,7 +48,8 @@ export function getUpcomingSundays(count = 8) {
 
     sundays.push({
       date: sunday,
-      dateString: sunday.toISOString().split("T")[0], // YYYY-MM-DD format
+      // Format date as YYYY-MM-DD without timezone conversion
+      dateString: `${sunday.getFullYear()}-${String(sunday.getMonth() + 1).padStart(2, '0')}-${String(sunday.getDate()).padStart(2, '0')}`,
       title: sunday.toLocaleDateString("en-US", {
         month: "long",
         day: "numeric",

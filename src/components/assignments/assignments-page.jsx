@@ -116,7 +116,7 @@ export function AssignmentsPage() {
         // Adjust to the next Sunday
         const adjustment = 7 - date.getUTCDay();
         date.setUTCDate(date.getUTCDate() + adjustment);
-        const sundayDate = date.toISOString().split('T')[0];
+        const sundayDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
         addSpecificDate(sundayDate);
       } else {
         addSpecificDate(dateToAdd);
