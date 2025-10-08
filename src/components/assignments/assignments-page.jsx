@@ -42,9 +42,13 @@ export function AssignmentsPage() {
   const handleSaveChanges = async () => {
     setIsSaving(true);
     try {
-      await saveAssignments();
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
+      if (currentService && selectedWeek) {
+        await saveAssignments(selectedWeek, currentService.assignments);
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 3000);
+      } else {
+        console.error("No current service or selected week found");
+      }
     } catch (error) {
       console.error("Error saving assignments:", error);
     } finally {

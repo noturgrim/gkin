@@ -51,12 +51,14 @@ const authRoutes = require('./routes/auth');
 const chatRoutes = require('./routes/chat');
 const passcodeRoutes = require('./routes/passcode');
 const adminRoutes = require('./routes/admin');
+const assignmentsRoutes = require('./routes/assignments');
 
 // Use routes
 app.use('/api/auth', authRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/passcodes', passcodeRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/assignments', assignmentsRoutes);
 
 // Default route
 app.get('/', (req, res) => {

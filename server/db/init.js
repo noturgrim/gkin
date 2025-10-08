@@ -10,10 +10,12 @@ async function initializeDatabase() {
     // Read schema SQL files
     const schemaSQL = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
     const passcodesSchemaSQL = fs.readFileSync(path.join(__dirname, 'passcodes_schema.sql'), 'utf8');
+    const assignmentsSchemaSQL = fs.readFileSync(path.join(__dirname, 'assignments_schema.sql'), 'utf8');
     
     // Execute schema SQL
     await db.query(schemaSQL);
     await db.query(passcodesSchemaSQL);
+    await db.query(assignmentsSchemaSQL);
     console.log('Database schema created successfully');
     
     // Check if role_passcodes table is empty
