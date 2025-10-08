@@ -87,56 +87,21 @@ export const AssignmentsProvider = ({ children }) => {
       
       const data = await assignmentsService.getAssignments();
       
-      // If no assignments exist in database, create default ones
-      if (!data || data.length === 0) {
-        await initializeDefaultAssignments();
-      } else {
+      if (data && data.length > 0) {
         // Transform backend data to frontend format
         const transformedAssignments = transformBackendData(data);
         setAssignments(transformedAssignments);
+      } else {
+        // No data in database - just set empty assignments
+        setAssignments([]);
       }
     } catch (err) {
       console.error('Error loading assignments:', err);
       setError('Failed to load assignments');
-      // Don't fallback to default assignments if not authenticated
-      if (isAuthenticated()) {
-        await initializeDefaultAssignments();
-      }
+      // On error, also set empty assignments
+      setAssignments([]);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const initializeDefaultAssignments = async () => {
-    // Don't attempt to initialize if not authenticated
-    if (!isAuthenticated()) {
-      console.log('User not authenticated, skipping default assignments initialization');
-      return;
-    }
-
-    try {
-      // Generate assignments for 52 weeks
-      const sundays = getUpcomingSundays(52);
-      
-      const defaultAssignments = sundays.map((sunday) => ({
-        ...sunday,
-        title: "Sunday Service",
-        assignments: [...DEFAULT_ROLES],
-      }));
-
-      setAssignments(defaultAssignments);
-
-      // Save the default assignments to backend
-      for (const assignment of defaultAssignments) {
-        try {
-          await assignmentsService.saveAssignments(assignment.dateString, assignment.assignments);
-        } catch (err) {
-          console.warn(`Failed to save default assignment for ${assignment.dateString}:`, err);
-        }
-      }
-    } catch (err) {
-      console.error('Error initializing default assignments:', err);
-      setError('Failed to initialize assignments');
     }
   };
 
@@ -187,23 +152,60 @@ export const AssignmentsProvider = ({ children }) => {
     try {
       // Update local state immediately for responsiveness
       setAssignments(prevAssignments => {
-        return prevAssignments.map(service => {
-          if (service.dateString === dateString) {
-            const updatedAssignments = [...service.assignments];
-            if (updatedAssignments[roleIndex]) {
-              updatedAssignments[roleIndex] = {
-                ...updatedAssignments[roleIndex],
-                person: newPerson
+        // Check if service exists
+        const existingService = prevAssignments.find(s => s.dateString === dateString);
+        
+        if (existingService) {
+          // Service exists, update the assignment
+          return prevAssignments.map(service => {
+            if (service.dateString === dateString) {
+              const updatedAssignments = [...service.assignments];
+              if (updatedAssignments[roleIndex]) {
+                updatedAssignments[roleIndex] = {
+                  ...updatedAssignments[roleIndex],
+                  person: newPerson
+                };
+              }
+              
+              return {
+                ...service,
+                assignments: updatedAssignments
               };
             }
-            
-            return {
-              ...service,
-              assignments: updatedAssignments
+            return service;
+          });
+        } else {
+          // Service doesn't exist, create it with default roles and update the specified one
+          const date = new Date(dateString + 'T00:00:00Z');
+          const today = new Date();
+          const diffTime = date.getTime() - today.getTime();
+          const daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          
+          const assignments = [...DEFAULT_ROLES];
+          if (assignments[roleIndex]) {
+            assignments[roleIndex] = {
+              ...assignments[roleIndex],
+              person: newPerson
             };
           }
-          return service;
-        });
+          
+          const newService = {
+            date,
+            dateString,
+            title: date.toLocaleDateString("en-US", {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            }),
+            daysRemaining,
+            status: daysRemaining < 0 ? "past" : "upcoming",
+            assignments
+          };
+          
+          // Add new service and sort by date
+          const updated = [...prevAssignments, newService];
+          return updated.sort((a, b) => new Date(a.dateString) - new Date(b.dateString));
+        }
       });
 
       // Note: No backend save here - only save when "Save Changes" is clicked
@@ -220,18 +222,50 @@ export const AssignmentsProvider = ({ children }) => {
     try {
       // Update local state
       setAssignments(prevAssignments => {
-        return prevAssignments.map(service => {
-          if (service.dateString === dateString) {
-            return {
-              ...service,
-              assignments: [
-                ...service.assignments,
-                { role: roleName.trim(), person: "" }
-              ]
-            };
-          }
-          return service;
-        });
+        // Check if service exists
+        const existingService = prevAssignments.find(s => s.dateString === dateString);
+        
+        if (existingService) {
+          // Service exists, just add the role
+          return prevAssignments.map(service => {
+            if (service.dateString === dateString) {
+              return {
+                ...service,
+                assignments: [
+                  ...service.assignments,
+                  { role: roleName.trim(), person: "" }
+                ]
+              };
+            }
+            return service;
+          });
+        } else {
+          // Service doesn't exist, create it with default roles + new role
+          const date = new Date(dateString + 'T00:00:00Z');
+          const today = new Date();
+          const diffTime = date.getTime() - today.getTime();
+          const daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          
+          const newService = {
+            date,
+            dateString,
+            title: date.toLocaleDateString("en-US", {
+              month: "long",
+              day: "numeric", 
+              year: "numeric",
+            }),
+            daysRemaining,
+            status: daysRemaining < 0 ? "past" : "upcoming",
+            assignments: [
+              ...DEFAULT_ROLES,
+              { role: roleName.trim(), person: "" }
+            ]
+          };
+          
+          // Add new service and sort by date
+          const updated = [...prevAssignments, newService];
+          return updated.sort((a, b) => new Date(a.dateString) - new Date(b.dateString));
+        }
       });
 
       // Note: No backend save here - only save when "Save Changes" is clicked
@@ -266,24 +300,35 @@ export const AssignmentsProvider = ({ children }) => {
 
   // Function to get assignments for a specific date
   const getAssignmentsForDate = (dateString) => {
-    if (!dateString || !assignments || assignments.length === 0) {
+    if (!dateString) {
       return null;
     }
     
-    // Try exact match first
+    // Try to find exact match in existing assignments
     const exactMatch = assignments.find(s => s.dateString === dateString);
     if (exactMatch) {
       return exactMatch;
     }
     
-    // If no exact match, try to find the closest upcoming Sunday
-    const targetDate = new Date(dateString);
-    const closestSunday = assignments.find(s => {
-      const serviceDate = new Date(s.dateString);
-      return serviceDate >= targetDate;
-    });
+    // If no exact match, create a default service for this Sunday
+    // Every Sunday should have a service by default
+    const date = new Date(dateString + 'T00:00:00Z');
+    const today = new Date();
+    const diffTime = date.getTime() - today.getTime();
+    const daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
-    return closestSunday || null;
+    return {
+      date,
+      dateString,
+      title: date.toLocaleDateString("en-US", {
+        month: "long", 
+        day: "numeric",
+        year: "numeric",
+      }),
+      daysRemaining,
+      status: daysRemaining < 0 ? "past" : "upcoming",
+      assignments: [...DEFAULT_ROLES] // Always create with default roles
+    };
   };
 
   // Function to add more future dates

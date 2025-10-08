@@ -18,10 +18,13 @@ export function AssignmentsPage() {
   const [selectedWeek, setSelectedWeek] = useState(getDefaultSelectedWeek());
   const [newRoleName, setNewRoleName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   const {
     assignments,
+    loading,
+    error,
     updateAssignment,
     addRole,
     removeRole,
@@ -56,11 +59,25 @@ export function AssignmentsPage() {
     }
   };
 
+  // Reset assignments with loading state
+  const handleResetAssignments = async () => {
+    if (window.confirm("Are you sure you want to clear all assignments? This action cannot be undone.")) {
+      setIsResetting(true);
+      try {
+        await resetAssignments();
+      } catch (error) {
+        console.error("Error resetting assignments:", error);
+      } finally {
+        setIsResetting(false);
+      }
+    }
+  };
+
   // Add new role
   const handleAddRole = (e) => {
     e.preventDefault();
     if (newRoleName.trim()) {
-      addRole(newRoleName.trim());
+      addRole(selectedWeek, newRoleName.trim());
       setNewRoleName("");
     }
   };
@@ -68,7 +85,11 @@ export function AssignmentsPage() {
   // Remove role with confirmation
   const handleRemoveRole = (roleIndex) => {
     if (window.confirm("Are you sure you want to remove this role from all services?")) {
-      removeRole(roleIndex);
+      // Get the role name from the current service
+      if (currentService && currentService.assignments && currentService.assignments[roleIndex]) {
+        const roleName = currentService.assignments[roleIndex].role;
+        removeRole(selectedWeek, roleName);
+      }
     }
   };
 
@@ -112,6 +133,66 @@ export function AssignmentsPage() {
     return null;
   }
 
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-3 md:p-6">
+        <div className="max-w-7xl mx-auto">
+          <Header
+            title="Service Assignments"
+            subtitle="Manage assignments for weekly church services"
+            user={user}
+            onLogout={() => {
+              localStorage.removeItem("currentUser");
+              navigate("/login");
+            }}
+            showUserInfo={true}
+            showLogout={true}
+          />
+          <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4 mt-6">
+            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-gray-600 text-lg">Loading assignments...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-3 md:p-6">
+        <div className="max-w-7xl mx-auto">
+          <Header
+            title="Service Assignments"
+            subtitle="Manage assignments for weekly church services"
+            user={user}
+            onLogout={() => {
+              localStorage.removeItem("currentUser");
+              navigate("/login");
+            }}
+            showUserInfo={true}
+            showLogout={true}
+          />
+          <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4 mt-6">
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+              <span className="text-red-600 text-xl">⚠</span>
+            </div>
+            <p className="text-red-600 text-lg">Error loading assignments</p>
+            <p className="text-gray-600 text-sm">{error}</p>
+            <Button
+              onClick={() => window.location.reload()}
+              className="mt-4"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Try Again
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 p-3 md:p-6">
       <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
@@ -142,24 +223,45 @@ export function AssignmentsPage() {
           <div className="flex gap-2">
             <Button
               variant="outline"
-              onClick={resetAssignments}
-              className="flex items-center justify-center gap-1 h-12 px-4 border-2 border-orange-300 text-orange-600 hover:text-orange-700 hover:border-orange-400 text-base font-medium"
+              onClick={handleResetAssignments}
+              disabled={isResetting || loading}
+              className="flex items-center justify-center gap-1 h-12 px-4 border-2 border-orange-300 text-orange-600 hover:text-orange-700 hover:border-orange-400 text-base font-medium disabled:opacity-50"
               title="Clear all person assignments and reset to default roles only"
             >
-              <RefreshCw className="w-5 h-5" /> 
-              <span className="hidden sm:inline">Clear Assignments</span>
-              <span className="sm:hidden">Clear</span>
+              {isResetting ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
+                  <span className="hidden sm:inline">Resetting...</span>
+                  <span className="sm:hidden">Reset...</span>
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-5 h-5" /> 
+                  <span className="hidden sm:inline">Clear Assignments</span>
+                  <span className="sm:hidden">Clear</span>
+                </>
+              )}
             </Button>
 
             <Button
               variant="default"
               onClick={handleSaveChanges}
-              disabled={isSaving}
-              className="flex items-center justify-center gap-1 h-12 px-4 bg-blue-600 hover:bg-blue-700 text-white text-base font-medium"
+              disabled={isSaving || loading}
+              className="flex items-center justify-center gap-1 h-12 px-4 bg-blue-600 hover:bg-blue-700 text-white text-base font-medium disabled:opacity-50"
             >
-              <Save className="w-5 h-5" />
-              <span className="hidden sm:inline">{isSaving ? "Saving..." : "Save Changes"}</span>
-              <span className="sm:hidden">{isSaving ? "..." : "Save"}</span>
+              {isSaving ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span className="hidden sm:inline">Saving...</span>
+                  <span className="sm:hidden">Save...</span>
+                </>
+              ) : (
+                <>
+                  <Save className="w-5 h-5" />
+                  <span className="hidden sm:inline">Save Changes</span>
+                  <span className="sm:hidden">Save</span>
+                </>
+              )}
             </Button>
           </div>
         </div>
