@@ -191,6 +191,7 @@ function Dashboard() {
                   service={currentService}
                   currentUserRole={user.role}
                   onStartAction={handleStartAction}
+                  dateString={selectedWeek}
                 />
               </CardContent>
             </Card>

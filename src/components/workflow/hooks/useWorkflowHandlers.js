@@ -26,6 +26,8 @@ export const useWorkflowHandlers = () => {
     setIsQrCodeModalOpen,
     setIsMusicUploadModalOpen,
     onStartAction,
+    updateTaskStatus,
+    dateString,
   } = useWorkflow();
 
   // Handle QR code upload simulation
@@ -33,6 +35,15 @@ export const useWorkflowHandlers = () => {
     if (stage === "upload") {
       // Open the QR code upload modal instead of directly changing status
       setIsQrCodeModalOpen(true);
+    } else if (stage === "complete") {
+      // Mark the QR code task as completed
+      updateTaskStatus(
+        "qrcode",
+        "completed",
+        completedTasks?.documentLinks?.qrcode
+      );
+      setQrCodeStatus("completed");
+      onStartAction && onStartAction("qrcode");
     } else {
       onStartAction && onStartAction("qrcode");
     }
@@ -43,10 +54,22 @@ export const useWorkflowHandlers = () => {
     // Here you would handle the saved sermon
     console.log("Sermon submitted:", sermonData);
 
+    // Update the task status in the backend
+    updateTaskStatus(
+      "sermon",
+      "completed",
+      completedTasks?.documentLinks?.sermon,
+      "pastor"
+    );
+
     // Update the local completed tasks state
     setCompletedTasks((prev) => ({
       ...prev,
-      sermon: "completed",
+      sermon: {
+        status: "completed",
+        documentLink: prev?.documentLinks?.sermon,
+        assignedTo: "pastor",
+      },
       // Store the actual sermon data if needed
       sermonData: sermonData,
     }));

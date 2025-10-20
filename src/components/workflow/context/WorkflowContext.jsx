@@ -1,5 +1,6 @@
 // src/components/workflow/context/WorkflowContext.jsx
-import { createContext, useState, useContext } from "react";
+import { createContext, useState, useContext, useEffect } from "react";
+import workflowService from "../../../services/workflowService";
 
 const WorkflowContext = createContext();
 
@@ -10,16 +11,18 @@ export const WorkflowProvider = ({
   service,
   currentUserRole,
   onStartAction,
+  dateString,
 }) => {
+  // State for loading status
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   // State for QR code status
-  const [qrCodeStatus, setQrCodeStatus] = useState(
-    service?.taskStatuses?.qrcode || "pending"
-  );
+  const [qrCodeStatus, setQrCodeStatus] = useState("pending");
 
   // State for completed tasks
   const [completedTasks, setCompletedTasks] = useState({
-    ...service?.taskStatuses,
-    // Add default document links
+    // Default document links
     documentLinks: {
       concept:
         "https://docs.google.com/document/d/1GZkHMPLQnlxQQVQHPZavvPFRRRDCyaHABt_8KlhQxYE/edit",
@@ -59,6 +62,73 @@ export const WorkflowProvider = ({
   const [isSlidesUploadModalOpen, setIsSlidesUploadModalOpen] = useState(false);
   const [isQrCodeModalOpen, setIsQrCodeModalOpen] = useState(false);
   const [isMusicUploadModalOpen, setIsMusicUploadModalOpen] = useState(false);
+
+  // Load workflow tasks for the current service
+  useEffect(() => {
+    const fetchWorkflowTasks = async () => {
+      if (!dateString) return;
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await workflowService.getWorkflowTasks(dateString);
+
+        if (response && response.tasks) {
+          setCompletedTasks((prevState) => ({
+            ...prevState,
+            ...response.tasks,
+          }));
+
+          // Special handling for qrcode status
+          if (response.tasks.qrcode) {
+            setQrCodeStatus(response.tasks.qrcode.status);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching workflow tasks:", err);
+        setError("Failed to load workflow tasks");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWorkflowTasks();
+  }, [dateString]);
+
+  // Update task status in the backend
+  const updateTaskStatus = async (taskId, status, documentLink) => {
+    if (!dateString) return;
+
+    try {
+      await workflowService.updateTaskStatus(
+        dateString,
+        taskId,
+        status,
+        documentLink
+      );
+
+      // Update local state
+      setCompletedTasks((prevState) => ({
+        ...prevState,
+        [taskId]: {
+          ...prevState[taskId],
+          status,
+          documentLink,
+        },
+      }));
+
+      // Special handling for qrcode status
+      if (taskId === "qrcode") {
+        setQrCodeStatus(status);
+      }
+
+      return true;
+    } catch (err) {
+      console.error(`Error updating task ${taskId} status:`, err);
+      return false;
+    }
+  };
 
   // Helper function to check role
   const hasRole = (roleId) => {
@@ -106,13 +176,12 @@ export const WorkflowProvider = ({
     }
 
     // Check our local completedTasks state first
-    if (completedTasks && completedTasks[taskId]) {
-      return completedTasks[taskId];
-    }
-
-    // Fall back to service data if available
-    if (service && service.taskStatuses) {
-      return service.taskStatuses[taskId] || "pending";
+    if (
+      completedTasks &&
+      completedTasks[taskId] &&
+      completedTasks[taskId].status
+    ) {
+      return completedTasks[taskId].status;
     }
 
     return "pending";
@@ -135,6 +204,8 @@ export const WorkflowProvider = ({
 
   const value = {
     // States
+    loading,
+    error,
     qrCodeStatus,
     setQrCodeStatus,
     completedTasks,
@@ -185,11 +256,13 @@ export const WorkflowProvider = ({
     isTreasurer,
     getTaskStatus,
     isUserCategory,
+    updateTaskStatus,
 
     // External props
     onStartAction,
     service,
     currentUserRole,
+    dateString,
   };
 
   return (

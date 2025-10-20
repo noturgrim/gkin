@@ -93,8 +93,14 @@ const defaultTaskStyle = {
 };
 
 export const TaskCard = ({ task, categoryId }) => {
-  const { getTaskStatus, hasRole, completedTasks, setCompletedTasks } =
-    useWorkflow();
+  const { 
+    getTaskStatus, 
+    hasRole, 
+    completedTasks, 
+    setCompletedTasks,
+    updateTaskStatus,
+    dateString
+  } = useWorkflow();
   const {
     handleActionStart,
     handleViewDocument,
