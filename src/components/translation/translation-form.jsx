@@ -104,21 +104,21 @@ export function TranslationForm({ lyric, onClose, canTranslate }) {
 
   return (
     <Card className="overflow-hidden">
-      <div className="p-4 bg-blue-50 border-b border-blue-100 flex justify-between items-center">
-        <div className="flex items-center">
-          <Globe className="h-5 w-5 text-blue-600 mr-2" />
-          <h2 className="text-lg font-medium text-gray-800">
+      <div className="p-4 bg-blue-50 border-b border-blue-100 flex flex-wrap justify-between items-center">
+        <div className="flex items-center mb-2 sm:mb-0">
+          <Globe className="h-5 w-5 text-blue-600 mr-2 flex-shrink-0" />
+          <h2 className="text-lg font-medium text-gray-800 truncate">
             Translate Lyrics
           </h2>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 ml-auto">
           {getStatusBadge()}
           <Button
             variant="ghost"
             size="sm"
             onClick={onClose}
-            className="h-8 w-8 p-0"
+            className="h-8 w-8 p-0 flex-shrink-0"
             aria-label="Close"
           >
             <X className="h-4 w-4" />
@@ -126,7 +126,7 @@ export function TranslationForm({ lyric, onClose, canTranslate }) {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="p-4">
+      <form onSubmit={handleSubmit} className="p-4 overflow-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
           {/* Left column - Original */}
           <div className="space-y-4">
@@ -139,7 +139,7 @@ export function TranslationForm({ lyric, onClose, canTranslate }) {
                 <Label htmlFor="original-title" className="text-gray-600">
                   Song Title
                 </Label>
-                <div className="mt-1 p-2 border border-gray-200 rounded-md bg-gray-50">
+                <div className="mt-1 p-2 border border-gray-200 rounded-md bg-gray-50 break-words overflow-auto max-h-[100px]">
                   {lyric.title}
                 </div>
               </div>
@@ -148,7 +148,7 @@ export function TranslationForm({ lyric, onClose, canTranslate }) {
                 <Label htmlFor="original-lyrics" className="text-gray-600">
                   Lyrics
                 </Label>
-                <div className="mt-1 p-2 border border-gray-200 rounded-md bg-gray-50 min-h-[300px] whitespace-pre-line">
+                <div className="mt-1 p-2 border border-gray-200 rounded-md bg-gray-50 min-h-[300px] max-h-[500px] overflow-auto whitespace-pre-line break-words">
                   {lyric.lyrics}
                 </div>
               </div>
@@ -157,11 +157,14 @@ export function TranslationForm({ lyric, onClose, canTranslate }) {
 
           {/* Right column - Translation */}
           <div className="space-y-4">
-            <h3 className="font-medium text-gray-700 flex items-center">
-              Translation
+            <h3 className="font-medium text-gray-700 flex flex-wrap items-center">
+              <span className="mr-2">Translation</span>
               {lyric.translation?.translated_by && (
-                <span className="ml-2 text-xs text-gray-500 font-normal">
-                  by {lyric.translation.translated_by.name}
+                <span className="text-xs text-gray-500 font-normal inline-flex items-center">
+                  by{" "}
+                  <span className="ml-1 truncate max-w-[150px]">
+                    {lyric.translation.translated_by.name}
+                  </span>
                 </span>
               )}
             </h3>
@@ -175,9 +178,10 @@ export function TranslationForm({ lyric, onClose, canTranslate }) {
                   id="translated-title"
                   value={translatedTitle}
                   onChange={(e) => setTranslatedTitle(e.target.value)}
-                  className="mt-1"
+                  className="mt-1 overflow-ellipsis"
                   placeholder="Enter translated title"
                   disabled={!isEditable}
+                  spellCheck="true"
                 />
               </div>
 
@@ -189,9 +193,11 @@ export function TranslationForm({ lyric, onClose, canTranslate }) {
                   id="translated-lyrics"
                   value={translatedLyrics}
                   onChange={(e) => setTranslatedLyrics(e.target.value)}
-                  className="mt-1 min-h-[300px]"
+                  className="mt-1 min-h-[300px] max-h-[500px] overflow-auto resize-y"
                   placeholder="Enter translated lyrics"
                   disabled={!isEditable}
+                  spellCheck="true"
+                  wrap="soft"
                 />
               </div>
             </div>
