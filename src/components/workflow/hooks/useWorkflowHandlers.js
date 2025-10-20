@@ -18,6 +18,7 @@ export const useWorkflowHandlers = () => {
     qrcodeEdit: false,
     qrcodeDelete: false,
     sermonTranslation: false,
+    slidesSubmission: false,
   });
 
   const {
@@ -754,37 +755,67 @@ export const useWorkflowHandlers = () => {
     setIsSlidesUploadModalOpen(true);
   };
 
-  const handleSlidesUploadSubmit = (slidesData) => {
-    console.log("Slides upload submitted:", slidesData);
+  const handleSlidesUploadSubmit = async (slidesData) => {
+    console.log("Slides link submitted:", slidesData);
 
-    // Get the document link from completedTasks
-    const documentLink =
-      completedTasks?.documentLinks?.slides || slidesData?.documentLink;
+    try {
+      // Set loading state for slides submission
+      setLoadingStates((prev) => ({ ...prev, slidesSubmission: true }));
 
-    // Update the task status in the backend
-    updateTaskStatus("slides", "completed", documentLink, "beamer");
+      // Get the document link from the submitted data
+      const documentLink = slidesData?.documentLink;
 
-    // Update the local state to store the slides data
-    setCompletedTasks((prev) => ({
-      ...prev,
-      slides: {
-        status: "completed",
-        documentLink: documentLink,
-        assignedTo: "beamer",
-      },
-      slidesData: slidesData,
-    }));
+      if (!documentLink) {
+        toast.error("No document link provided");
+        return Promise.reject(new Error("No document link provided"));
+      }
 
-    // Close the modal
-    setIsSlidesUploadModalOpen(false);
+      // Get current timestamp for local updates
+      const updatedAt = new Date().toISOString();
 
-    // Update the service status if needed
-    if (onStartAction) {
-      onStartAction("slides-uploaded");
+      // Get the current user role
+      const userRole =
+        typeof currentUserRole === "string"
+          ? currentUserRole
+          : currentUserRole?.id || currentUserRole?.role?.id || "beamer";
+
+      // Update the task status in the backend
+      await updateTaskStatus("slides", "completed", documentLink, "beamer");
+
+      // Update the local state to store the slides data
+      setCompletedTasks((prev) => ({
+        ...prev,
+        slides: {
+          status: "completed",
+          documentLink: documentLink,
+          assignedTo: "beamer",
+          updatedAt: updatedAt,
+          updatedBy: userRole,
+          title: slidesData.title,
+        },
+        slidesData: slidesData,
+      }));
+
+      // Close the modal
+      setIsSlidesUploadModalOpen(false);
+
+      // Update the service status if needed
+      if (onStartAction) {
+        onStartAction("slides-uploaded");
+      }
+
+      // Show a success message using toast instead of alert
+      toast.success(`Slides link has been saved successfully!`);
+
+      return Promise.resolve();
+    } catch (error) {
+      console.error("Error saving slides link:", error);
+      toast.error("Failed to save slides link");
+      return Promise.reject(error);
+    } finally {
+      // Reset loading state
+      setLoadingStates((prev) => ({ ...prev, slidesSubmission: false }));
     }
-
-    // Show a success message
-    alert(`Presentation "${slidesData.title}" has been uploaded successfully!`);
   };
 
   // Handler for QR code upload submission

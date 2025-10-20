@@ -139,6 +139,7 @@ export const ModalManager = () => {
         isOpen={isSlidesUploadModalOpen}
         onClose={() => setIsSlidesUploadModalOpen(false)}
         onSubmit={handleSlidesUploadSubmit}
+        dateString={dateString}
       />
 
       <QrCodeUploadModal
