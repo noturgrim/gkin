@@ -12,6 +12,9 @@ export const useWorkflowHandlers = () => {
     sermonDocument: false,
     sermonEdit: false,
     sermonDelete: false,
+    qrcodeDocument: false,
+    qrcodeEdit: false,
+    qrcodeDelete: false,
   });
 
   const {
@@ -46,11 +49,19 @@ export const useWorkflowHandlers = () => {
     currentUserRole,
   } = useWorkflow();
 
-  // Handle QR code upload simulation
+  // Handle QR code upload actions
   const handleQrCodeAction = (stage) => {
     if (stage === "upload") {
-      // Open the QR code upload modal instead of directly changing status
-      setIsQrCodeModalOpen(true);
+      // Set loading state
+      setLoadingStates((prev) => ({ ...prev, qrcodeEdit: true }));
+
+      try {
+        // Open the QR code upload modal instead of directly changing status
+        setIsQrCodeModalOpen(true);
+      } finally {
+        // Reset loading state after modal is opened
+        setLoadingStates((prev) => ({ ...prev, qrcodeEdit: false }));
+      }
     } else if (stage === "complete") {
       // Mark the QR code task as completed
       updateTaskStatus(
@@ -341,10 +352,8 @@ export const useWorkflowHandlers = () => {
       // Open the document in a new tab
       window.open(documentUrl, "_blank");
 
-      // Don't show alert when clicking icon, only when clicking view button
-      if (!["concept", "sermon", "final", "slides"].includes(taskId)) {
-        alert(`Opening ${documentTypes[taskId] || taskId} in Google Drive`);
-      }
+      // Don't show any alerts when opening documents
+      // Alert removed as requested
     } else {
       // Show an alert when no document URL is available
       alert(
@@ -627,35 +636,61 @@ export const useWorkflowHandlers = () => {
     alert(`Presentation "${slidesData.title}" has been uploaded successfully!`);
   };
 
-  // Add a handler for QR code upload submission
-  const handleQrCodeUploadSubmit = (qrCodeData) => {
+  // Handler for QR code upload submission
+  const handleQrCodeUploadSubmit = async (qrCodeData) => {
     console.log("QR code upload submitted:", qrCodeData);
 
-    // Set the QR code status to active first
-    setQrCodeStatus("active");
+    // Set loading state for QR code document
+    setLoadingStates((prev) => ({ ...prev, qrcodeDocument: true }));
+    setQrCodeStatus("active"); // Show active status during upload
 
-    // Then simulate processing and set to completed
-    setTimeout(() => {
-      setQrCodeStatus("completed");
+    try {
+      // Update the task status in the backend using the same pattern as other documents
+      await updateTaskStatus(
+        "qrcode",
+        "completed",
+        qrCodeData.qrCodeLink, // Use the link from the form data
+        "admin" // Assign to admin role
+      );
 
-      // Update the completed tasks state
+      // Update the local completed tasks state with proper metadata
       setCompletedTasks((prev) => ({
         ...prev,
-        qrcode: "completed",
+        qrcode: {
+          status: "completed",
+          documentLink: qrCodeData.qrCodeLink,
+          assignedTo: "admin",
+          updatedAt: new Date().toISOString(),
+          updatedBy: currentUserRole
+            ? typeof currentUserRole === "string"
+              ? currentUserRole
+              : currentUserRole?.id || currentUserRole?.role?.id || "admin"
+            : "admin", // Fallback to admin if currentUserRole is not available
+        },
+        // Store the actual QR code data
         qrcodeData: qrCodeData,
       }));
 
-      // Close the modal
-      setIsQrCodeModalOpen(false);
+      // Update QR code status
+      setQrCodeStatus("completed");
 
       // Update the service status if needed
       if (onStartAction) {
         onStartAction("qrcode-uploaded");
       }
 
-      // Show a success message
-      alert(`QR Code "${qrCodeData.title}" has been uploaded successfully!`);
-    }, 1500); // Simulate a short processing time
+      // Close the modal - no alert needed
+      setIsQrCodeModalOpen(false);
+
+      return true;
+    } catch (error) {
+      console.error("Error saving QR code:", error);
+      setQrCodeStatus("pending"); // Reset to pending on error
+      return false;
+    } finally {
+      // Reset loading state
+      setLoadingStates((prev) => ({ ...prev, qrcodeDocument: false }));
+    }
   };
 
   const handleUploadMusic = () => {

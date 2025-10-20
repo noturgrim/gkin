@@ -2,24 +2,23 @@ import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
-import { Link, QrCode, X } from "lucide-react";
+import { Link, QrCode, X, Loader2, Calendar } from "lucide-react";
 
-export function QrCodeUploadModal({ isOpen, onClose, onSubmit }) {
+export function QrCodeUploadModal({ isOpen, onClose, onSubmit, dateString }) {
+  // State for loading
+  const [isSubmitting, setIsSubmitting] = useState(false);
   // State for form values
   const [formValues, setFormValues] = useState({
-    title: "",
     qrCodeLink: "",
-    description: "",
   });
 
   // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
       setFormValues({
-        title: "",
         qrCodeLink: "",
-        description: "",
       });
+      setIsSubmitting(false);
     }
   }, [isOpen]);
 
@@ -43,28 +42,60 @@ export function QrCodeUploadModal({ isOpen, onClose, onSubmit }) {
   };
 
   // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formValues.title.trim()) {
-      alert("Please enter a title for the QR code");
-      return;
-    }
-
+    // Form validation
+    let errorMessage = "";
     if (!formValues.qrCodeLink.trim()) {
-      alert("Please provide a link to the QR code");
+      errorMessage = "Please provide a link to the QR code";
+    } else if (!isValidUrl(formValues.qrCodeLink)) {
+      errorMessage = "Please provide a valid URL for the QR code";
+    }
+
+    if (errorMessage) {
+      // Display error without using alert
+      const errorElement = document.getElementById("qrcode-form-error");
+      if (errorElement) {
+        errorElement.textContent = errorMessage;
+        errorElement.style.display = "block";
+      }
       return;
     }
 
-    if (!isValidUrl(formValues.qrCodeLink)) {
-      alert("Please provide a valid URL for the QR code");
-      return;
+    // Clear any previous errors
+    const errorElement = document.getElementById("qrcode-form-error");
+    if (errorElement) {
+      errorElement.style.display = "none";
     }
 
-    onSubmit({
-      ...formValues,
-      uploadedAt: new Date().toISOString(),
-    });
+    // Set submitting state
+    setIsSubmitting(true);
+
+    try {
+      // Generate a title based on the date
+      const formattedDate = dateString
+        ? new Date(dateString).toLocaleDateString()
+        : new Date().toLocaleDateString();
+      const title = `QR Code for ${formattedDate} Service`;
+
+      // Submit the data
+      await onSubmit({
+        qrCodeLink: formValues.qrCodeLink,
+        title,
+        uploadedAt: new Date().toISOString(),
+      });
+
+      // Note: The modal will be closed by the parent component after successful submission
+    } catch (error) {
+      console.error("Error submitting QR code:", error);
+      if (errorElement) {
+        errorElement.textContent =
+          "An error occurred while saving the QR code. Please try again.";
+        errorElement.style.display = "block";
+      }
+      setIsSubmitting(false);
+    }
   };
 
   // Handle backdrop click
@@ -113,35 +144,27 @@ export function QrCodeUploadModal({ isOpen, onClose, onSubmit }) {
         </div>
 
         <form onSubmit={handleSubmit} className="p-4">
+          {/* Error message display */}
+          <div
+            id="qrcode-form-error"
+            className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm hidden"
+          ></div>
+
+          {/* Service date display */}
+          <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-md">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-emerald-600" />
+              <span className="font-medium text-emerald-800">
+                QR Code for{" "}
+                {dateString
+                  ? new Date(dateString).toLocaleDateString()
+                  : "Current"}{" "}
+                Service
+              </span>
+            </div>
+          </div>
+
           <div className="space-y-4">
-            <div>
-              <Label htmlFor="title" className="text-gray-700">
-                QR Code Title
-              </Label>
-              <Input
-                id="title"
-                name="title"
-                value={formValues.title}
-                onChange={handleChange}
-                className="border-gray-300 focus:border-emerald-500 focus:ring focus:ring-emerald-200 focus:ring-opacity-50"
-                placeholder="Enter QR code title (e.g., Donation QR Code)"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="description" className="text-gray-700">
-                Description (Optional)
-              </Label>
-              <Input
-                id="description"
-                name="description"
-                value={formValues.description}
-                onChange={handleChange}
-                className="border-gray-300 focus:border-emerald-500 focus:ring focus:ring-emerald-200 focus:ring-opacity-50"
-                placeholder="Enter a short description"
-              />
-            </div>
-
             <div>
               <Label htmlFor="qrCodeLink" className="text-gray-700 mb-2 block">
                 QR Code Link
@@ -157,10 +180,12 @@ export function QrCodeUploadModal({ isOpen, onClose, onSubmit }) {
                   onChange={handleChange}
                   className="pl-10 border-gray-300 focus:border-emerald-500 focus:ring focus:ring-emerald-200 focus:ring-opacity-50"
                   placeholder="Paste link to your QR code image (Google Drive, Dropbox, etc.)"
+                  required
                 />
               </div>
               <p className="text-xs text-gray-500 mt-2">
-                Please provide a direct link to the QR code image with public access enabled
+                Please provide a direct link to the QR code image with public
+                access enabled
               </p>
             </div>
           </div>
@@ -170,15 +195,23 @@ export function QrCodeUploadModal({ isOpen, onClose, onSubmit }) {
               type="button"
               onClick={onClose}
               className="bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
             <Button
               type="submit"
               className="bg-emerald-600 hover:bg-emerald-700 text-white"
-              disabled={!formValues.qrCodeLink.trim() || !formValues.title.trim()}
+              disabled={isSubmitting || !formValues.qrCodeLink.trim()}
             >
-              Save QR Code Link
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save QR Code Link"
+              )}
             </Button>
           </div>
         </form>

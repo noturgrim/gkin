@@ -55,6 +55,7 @@ export const ModalManager = () => {
     setIsEditDocumentLinkModalOpen,
     documentToEdit,
     setDocumentToEdit,
+    dateString,
   } = useWorkflow();
 
   const {
@@ -147,6 +148,7 @@ export const ModalManager = () => {
         isOpen={isQrCodeModalOpen}
         onClose={() => setIsQrCodeModalOpen(false)}
         onSubmit={handleQrCodeUploadSubmit}
+        dateString={dateString}
       />
 
       <MusicUploadModal

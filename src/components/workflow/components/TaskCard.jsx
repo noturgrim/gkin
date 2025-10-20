@@ -429,21 +429,54 @@ export const TaskCard = ({ task, categoryId }) => {
             size="sm"
             className={primaryButtonClass}
             onClick={() => handleQrCodeAction(isActive ? "complete" : "upload")}
+            disabled={
+              loadingStates?.qrcodeEdit || loadingStates?.qrcodeDocument
+            }
           >
-            {isActive ? "Finish Upload" : task.actionLabel}
+            {loadingStates?.qrcodeEdit || loadingStates?.qrcodeDocument ? (
+              <>
+                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                {loadingStates?.qrcodeDocument ? "Saving..." : "Loading..."}
+              </>
+            ) : isActive ? (
+              "Finish Upload"
+            ) : (
+              task.actionLabel
+            )}
           </Button>
         )}
 
         {/* QR Code viewing when completed */}
         {isQrCodeTask && isCompleted && (
-          <Button
-            size="sm"
-            variant="outline"
-            className={viewButtonClass}
-            onClick={() => handleViewDocument("qrcode")}
-          >
-            View QR Code
-          </Button>
+          <div className="space-y-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className={viewButtonClass}
+              onClick={() => handleViewDocument("qrcode")}
+            >
+              View QR Code
+            </Button>
+
+            <Button
+              size="sm"
+              className={`w-full border text-xs py-1.5 h-9 rounded-md font-medium hover:shadow transition-all border-gray-300 text-gray-700 hover:bg-gray-50`}
+              onClick={() => handleEditDocumentLink("qrcode")}
+              disabled={loadingStates?.documentEdit}
+            >
+              {loadingStates?.documentEdit && task.id === "qrcode" ? (
+                <>
+                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                <>
+                  <Link className="w-3 h-3 mr-1" />
+                  Edit Link
+                </>
+              )}
+            </Button>
+          </div>
         )}
 
         {/* Lyrics translation task */}
