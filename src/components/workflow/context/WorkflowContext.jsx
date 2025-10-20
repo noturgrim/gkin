@@ -68,6 +68,9 @@ export const WorkflowProvider = ({
       setLoading(true);
       setError(null);
 
+      // Reset QR code status when date changes
+      setQrCodeStatus("pending");
+
       try {
         const response = await workflowService.getWorkflowTasks(dateString);
 
@@ -81,6 +84,9 @@ export const WorkflowProvider = ({
           // Special handling for qrcode status
           if (response.tasks.qrcode) {
             setQrCodeStatus(response.tasks.qrcode.status);
+          } else {
+            // Reset QR code status to pending when there's no QR code task for this date
+            setQrCodeStatus("pending");
           }
         }
       } catch (err) {
