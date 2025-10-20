@@ -175,7 +175,7 @@ export const TaskCard = ({ task, categoryId }) => {
           } else if (task.id === "translate_lyrics") {
             // Redirect to translation page with translated tab active
             if (task.route) {
-              window.location.href = `${task.route}?tab=translated`;
+              window.location.href = `${task.route}?tab=translated&date=${dateString}`;
             }
           }
         }}
@@ -567,7 +567,7 @@ export const TaskCard = ({ task, categoryId }) => {
               className={primaryButtonClass}
               onClick={() => {
                 if (task.route) {
-                  window.location.href = task.route;
+                  window.location.href = `${task.route}?tab=translated&date=${dateString}`;
                 }
               }}
             >

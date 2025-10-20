@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { useTranslation } from "../../context/TranslationContext";
 import authService from "../../services/authService";
 import { toast } from "react-hot-toast";
-import { WeekSelector } from "../week-selector";
 import { TranslationForm } from "./translation-form";
 import { LyricsCard } from "./lyrics-card";
 import { LyricsInputModal } from "../lyrics-input-modal";
@@ -37,6 +36,7 @@ export function LyricsTranslationPage() {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const tabParam = queryParams.get("tab");
+  const dateParam = queryParams.get("date");
 
   const [selectedLyric, setSelectedLyric] = useState(null);
   const [activeTab, setActiveTab] = useState(
@@ -68,7 +68,8 @@ export function LyricsTranslationPage() {
   const filteredLyrics =
     activeTab === "pending" ? pendingLyrics : translatedLyrics;
 
-  // Handle date change
+  // This function is kept for compatibility but no longer exposed in the UI
+  // since we're now focusing on a specific date that comes from the URL or workflow
   const handleDateChange = (dateString) => {
     setSelectedWeek(dateString);
     if (dateString) {
@@ -135,10 +136,16 @@ export function LyricsTranslationPage() {
   // Fetch lyrics on component mount - only once
   useEffect(() => {
     if (!initialFetchDone.current) {
-      fetchAllLyrics();
+      if (dateParam) {
+        // If date is provided in URL, set it as selected week and fetch lyrics for that date
+        setSelectedWeek(dateParam);
+        fetchLyricsByDate(dateParam);
+      } else {
+        fetchAllLyrics();
+      }
       initialFetchDone.current = true;
     }
-  }, [fetchAllLyrics]);
+  }, [fetchAllLyrics, fetchLyricsByDate, dateParam]);
 
   // Add an effect to monitor selectedWeek changes
   useEffect(() => {
@@ -170,15 +177,23 @@ export function LyricsTranslationPage() {
             Lyrics Translation
           </h1>
           <p className="text-gray-600">
-            Translate song lyrics for upcoming services
+            {selectedWeek ? (
+              <>
+                Translate song lyrics for{" "}
+                <span className="font-medium">
+                  {new Date(selectedWeek).toLocaleDateString("en-US", {
+                    weekday: "long",
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </span>{" "}
+                service
+              </>
+            ) : (
+              "Translate song lyrics for upcoming service"
+            )}
           </p>
-        </div>
-
-        <div className="mt-4 md:mt-0 w-full md:w-auto">
-          <WeekSelector
-            selectedWeek={selectedWeek}
-            onWeekChange={handleDateChange}
-          />
         </div>
       </div>
 
