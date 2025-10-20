@@ -9,7 +9,16 @@ import { LyricsInputModal } from "../lyrics-input-modal";
 import { Button } from "../ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Badge } from "../ui/badge";
-import { Loader2, Globe, Music, Check, AlertCircle, Plus } from "lucide-react";
+import {
+  Loader2,
+  Globe,
+  Music,
+  Check,
+  AlertCircle,
+  Plus,
+  ArrowLeft,
+} from "lucide-react";
+import { Link } from "react-router-dom";
 
 export function LyricsTranslationPage() {
   const [user, setUser] = useState(authService.getCurrentUser());
@@ -36,20 +45,21 @@ export function LyricsTranslationPage() {
     selectedWeek,
   });
 
+  // Calculate counts for each tab
+  const pendingLyrics = (lyrics || []).filter(
+    (lyric) => !lyric.translation || lyric.translation.status === "pending"
+  );
+
+  const translatedLyrics = (lyrics || []).filter(
+    (lyric) =>
+      lyric.translation &&
+      (lyric.translation.status === "completed" ||
+        lyric.translation.status === "approved")
+  );
+
   // Filter lyrics based on active tab
-  const filteredLyrics = (lyrics || []).filter((lyric) => {
-    if (activeTab === "pending") {
-      return !lyric.translation || lyric.translation.status === "pending";
-    } else if (activeTab === "translated") {
-      // Include both completed and approved translations in the "Translated" tab
-      return (
-        lyric.translation &&
-        (lyric.translation.status === "completed" ||
-          lyric.translation.status === "approved")
-      );
-    }
-    return true;
-  });
+  const filteredLyrics =
+    activeTab === "pending" ? pendingLyrics : translatedLyrics;
 
   // Handle date change
   const handleDateChange = (dateString) => {
@@ -133,6 +143,19 @@ export function LyricsTranslationPage() {
 
   return (
     <div className="container mx-auto px-4 py-6">
+      {/* Back to Dashboard Button */}
+      <div className="mb-4">
+        <Link to="/dashboard">
+          <Button
+            variant="ghost"
+            className="flex items-center gap-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 -ml-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Dashboard
+          </Button>
+        </Link>
+      </div>
+
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2 mb-2">
@@ -174,14 +197,15 @@ export function LyricsTranslationPage() {
                   <TabsList className="grid grid-cols-2 h-8">
                     <TabsTrigger value="pending" className="text-xs">
                       Pending
-                      {filteredLyrics.length > 0 && activeTab === "pending" && (
-                        <Badge variant="secondary" className="ml-2">
-                          {filteredLyrics.length}
-                        </Badge>
-                      )}
+                      <Badge variant="secondary" className="ml-2">
+                        {pendingLyrics.length}
+                      </Badge>
                     </TabsTrigger>
                     <TabsTrigger value="translated" className="text-xs">
                       Translated
+                      <Badge variant="secondary" className="ml-2">
+                        {translatedLyrics.length}
+                      </Badge>
                     </TabsTrigger>
                   </TabsList>
                 </div>
