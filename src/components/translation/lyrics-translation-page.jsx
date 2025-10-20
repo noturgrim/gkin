@@ -18,7 +18,7 @@ import {
   Plus,
   ArrowLeft,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 export function LyricsTranslationPage() {
   const [user, setUser] = useState(authService.getCurrentUser());
@@ -33,8 +33,15 @@ export function LyricsTranslationPage() {
     submitLyrics,
   } = useTranslation();
 
+  // Get query parameters from URL
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const tabParam = queryParams.get("tab");
+
   const [selectedLyric, setSelectedLyric] = useState(null);
-  const [activeTab, setActiveTab] = useState("pending");
+  const [activeTab, setActiveTab] = useState(
+    tabParam === "translated" ? "translated" : "pending"
+  );
   const [isLyricsModalOpen, setIsLyricsModalOpen] = useState(false);
   const [isSubmittingLyrics, setIsSubmittingLyrics] = useState(false);
 

@@ -173,14 +173,17 @@ export const TaskCard = ({ task, categoryId }) => {
           if (["concept", "sermon", "final", "slides"].includes(task.id)) {
             handleViewDocument(task.id);
           } else if (task.id === "translate_lyrics") {
-            handleViewTranslatedLyrics();
+            // Redirect to translation page with translated tab active
+            if (task.route) {
+              window.location.href = `${task.route}?tab=translated`;
+            }
           }
         }}
         title={
           ["concept", "sermon", "final", "slides"].includes(task.id)
             ? "Click to open in Google Drive"
             : task.id === "translate_lyrics"
-            ? "Click to view translated lyrics"
+            ? "Click to go to lyrics translation page"
             : ""
         }
       >
