@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
-import { Mail } from "lucide-react";
+import { Mail, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { Textarea } from "./ui/textarea";
 import { useWorkflow } from "./workflow/context/WorkflowContext";
 
@@ -25,6 +25,11 @@ export function SendToPastorModal({ isOpen, onClose, onSubmit, documentType }) {
     message: `Dear Pastor,\n\nPlease find attached the ${documentTitle} for the upcoming service.\n\nKind regards,\nLiturgy Team`,
   });
 
+  // Loading and feedback states
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [feedbackStatus, setFeedbackStatus] = useState(null); // 'success', 'error', or null
+  const [feedbackMessage, setFeedbackMessage] = useState("");
+
   // Reset form when modal opens with a new document type
   useEffect(() => {
     if (isOpen) {
@@ -33,6 +38,10 @@ export function SendToPastorModal({ isOpen, onClose, onSubmit, documentType }) {
         subject: `[GKIN] ${documentTitle} for Review`,
         message: `Dear Pastor,\n\nPlease find attached the ${documentTitle} for the upcoming service.\n\nKind regards,\nLiturgy Team`,
       });
+      // Reset feedback states
+      setIsSubmitting(false);
+      setFeedbackStatus(null);
+      setFeedbackMessage("");
     }
   }, [isOpen, documentTitle]);
 
@@ -46,23 +55,55 @@ export function SendToPastorModal({ isOpen, onClose, onSubmit, documentType }) {
   };
 
   // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Add the document type to the data being sent
-    const dataToSubmit = {
-      ...formValues,
-      documentType,
-      // Add link to the document from our simulation
-      documentLink:
-        documentType === "concept"
+    // Reset feedback state
+    setFeedbackStatus(null);
+    setFeedbackMessage("");
+
+    // Set loading state
+    setIsSubmitting(true);
+
+    try {
+      // Get the actual document link from completedTasks
+      const documentLink =
+        completedTasks[documentType]?.documentLink ||
+        completedTasks?.documentLinks?.[documentType] ||
+        (documentType === "concept"
           ? "https://docs.google.com/document/d/1example-concept-document/edit"
           : documentType === "final"
           ? "https://docs.google.com/document/d/1example-final-document/edit"
-          : "https://docs.google.com/document/d/1example-document/edit",
-    };
+          : "https://docs.google.com/document/d/1example-document/edit");
 
-    onSubmit(dataToSubmit);
+      // Add the document type and link to the data being sent
+      const dataToSubmit = {
+        ...formValues,
+        documentType,
+        documentLink,
+      };
+
+      // Call the submit handler and wait for it to complete
+      await onSubmit(dataToSubmit);
+
+      // Show success feedback
+      setFeedbackStatus("success");
+      setFeedbackMessage(`Email sent to ${formValues.email} successfully!`);
+
+      // Close the modal after a short delay
+      setTimeout(() => {
+        onClose();
+      }, 2000);
+    } catch (error) {
+      // Show error feedback
+      setFeedbackStatus("error");
+      setFeedbackMessage(
+        error.message || "Failed to send email. Please try again."
+      );
+    } finally {
+      // Reset loading state
+      setIsSubmitting(false);
+    }
   };
 
   // Handle backdrop click
@@ -191,20 +232,57 @@ export function SendToPastorModal({ isOpen, onClose, onSubmit, documentType }) {
           </div>
         </form>
 
+        {/* Feedback message area */}
+        {feedbackStatus && (
+          <div
+            className={`mx-4 p-3 rounded-md ${
+              feedbackStatus === "success"
+                ? "bg-green-50 border border-green-200"
+                : "bg-red-50 border border-red-200"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              {feedbackStatus === "success" ? (
+                <CheckCircle className="h-5 w-5 text-green-500" />
+              ) : (
+                <AlertCircle className="h-5 w-5 text-red-500" />
+              )}
+              <p
+                className={`text-sm ${
+                  feedbackStatus === "success"
+                    ? "text-green-700"
+                    : "text-red-700"
+                }`}
+              >
+                {feedbackMessage}
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="flex justify-end gap-2 p-4 bg-gray-50 border-t border-gray-200 rounded-b-lg">
           <Button
             type="button"
             onClick={onClose}
             className="bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+            disabled={isSubmitting}
           >
             Cancel
           </Button>
           <Button
             type="submit"
             onClick={handleSubmit}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
+            className="bg-blue-600 hover:bg-blue-700 text-white min-w-[100px]"
+            disabled={isSubmitting}
           >
-            Send Email
+            {isSubmitting ? (
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Sending...</span>
+              </div>
+            ) : (
+              "Send Email"
+            )}
           </Button>
         </div>
       </div>

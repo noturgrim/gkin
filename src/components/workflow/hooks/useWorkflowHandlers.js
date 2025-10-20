@@ -213,19 +213,17 @@ export const useWorkflowHandlers = () => {
         documentLink: documentLink,
       });
 
-      // Show success message
-      alert(`Document sent to ${emailData.email}!`);
-
-      // Close the modal
-      setIsSendToPastorModalOpen(false);
-
       // Update the status if needed
       if (onStartAction) {
         onStartAction(`${emailData.documentType}-sent-to-pastor`);
       }
+
+      // Return success - the modal will handle showing feedback
+      return true;
     } catch (error) {
       console.error("Error sending email:", error);
-      alert(`Failed to send email: ${error.message}`);
+      // Propagate the error to the modal
+      throw error;
     }
   };
 
