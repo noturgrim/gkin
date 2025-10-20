@@ -59,7 +59,10 @@ export const WorkflowProvider = ({
   const [isMusicUploadModalOpen, setIsMusicUploadModalOpen] = useState(false);
   const [isEditDocumentLinkModalOpen, setIsEditDocumentLinkModalOpen] =
     useState(false);
+  const [isEditMusicLinksModalOpen, setIsEditMusicLinksModalOpen] =
+    useState(false);
   const [documentToEdit, setDocumentToEdit] = useState(null);
+  const [musicLinksToEdit, setMusicLinksToEdit] = useState(null);
 
   // Load workflow tasks for the current service
   useEffect(() => {
@@ -350,8 +353,12 @@ export const WorkflowProvider = ({
     setIsMusicUploadModalOpen,
     isEditDocumentLinkModalOpen,
     setIsEditDocumentLinkModalOpen,
+    isEditMusicLinksModalOpen,
+    setIsEditMusicLinksModalOpen,
     documentToEdit,
     setDocumentToEdit,
+    musicLinksToEdit,
+    setMusicLinksToEdit,
 
     // Helper functions
     hasRole,

@@ -47,7 +47,9 @@ export const useWorkflowHandlers = () => {
     setIsQrCodeModalOpen,
     setIsMusicUploadModalOpen,
     setIsEditDocumentLinkModalOpen,
+    setIsEditMusicLinksModalOpen,
     setDocumentToEdit,
+    setMusicLinksToEdit,
     onStartAction,
     updateTaskStatus,
     deleteDocumentLink,
@@ -385,6 +387,11 @@ export const useWorkflowHandlers = () => {
   const handleViewDocument = (taskId) => {
     console.log(`Viewing document: ${taskId}`);
 
+    // Special handling for music task which might have multiple links
+    if (taskId === "music" && completedTasks?.music?.musicLinks?.length > 0) {
+      return handleViewMusicLinks();
+    }
+
     // Get the document name for the alert
     const documentTypes = {
       concept: "Concept Document",
@@ -431,6 +438,41 @@ export const useWorkflowHandlers = () => {
 
     // If you need to call the parent handler
     onStartAction && onStartAction(`view-${taskId}`);
+  };
+
+  // Handle viewing multiple music links
+  const handleViewMusicLinks = () => {
+    console.log("Viewing music links");
+
+    // Get the music links from the task status data
+    const musicLinks = completedTasks?.music?.musicLinks || [];
+
+    if (musicLinks.length === 0) {
+      // No links available, show error message
+      alert("No music links available.");
+      return;
+    }
+
+    if (musicLinks.length === 1) {
+      // Only one link, open it directly
+      window.open(musicLinks[0].url, "_blank");
+
+      // If you need to call the parent handler
+      onStartAction && onStartAction(`view-music`);
+      return;
+    }
+
+    // Multiple links available, open the first one and show a message about the others
+    window.open(musicLinks[0].url, "_blank");
+
+    // Show a message with all available links
+    toast.success(
+      "Multiple music links available. Click on each link in the card to open them.",
+      { duration: 5000 }
+    );
+
+    // If you need to call the parent handler
+    onStartAction && onStartAction(`view-music`);
   };
 
   // Handle pastor editing document
@@ -957,7 +999,7 @@ export const useWorkflowHandlers = () => {
   };
 
   // Handle opening the edit document link modal
-  const handleEditDocumentLink = (taskId) => {
+  const handleEditDocumentLink = async (taskId) => {
     console.log(`Opening edit document link modal for: ${taskId}`);
 
     // Set loading state
@@ -967,7 +1009,76 @@ export const useWorkflowHandlers = () => {
       // Get the current document link and metadata
       const documentData = completedTasks[taskId] || {};
 
-      // Set the document to edit
+      // Special handling for music task
+      if (taskId === "music") {
+        // Try to get music links from the API
+        try {
+          const response = await musicLinksService.getMusicLinks(dateString);
+          const musicLinks = response.musicLinks || [];
+
+          // If we have links from the API, use them
+          if (musicLinks.length > 0) {
+            setMusicLinksToEdit({
+              musicLinks: musicLinks.map((link) => ({
+                name: link.name || "",
+                url: link.url || "",
+              })),
+              title: documentData.title || "",
+              notes: documentData.notes || "",
+              metadata: {
+                updatedAt: documentData.updatedAt,
+                updatedBy: documentData.updatedBy,
+              },
+            });
+
+            // Open the music links modal
+            setIsEditMusicLinksModalOpen(true);
+            return;
+          }
+        } catch (error) {
+          console.error("Error fetching music links:", error);
+          // Fall back to using local state if API call fails
+        }
+
+        // If we have music links in the local state, use them
+        if (documentData.musicLinks && documentData.musicLinks.length > 0) {
+          setMusicLinksToEdit({
+            musicLinks: documentData.musicLinks,
+            title: documentData.title || "",
+            notes: documentData.notes || "",
+            metadata: {
+              updatedAt: documentData.updatedAt,
+              updatedBy: documentData.updatedBy,
+            },
+          });
+
+          // Open the music links modal
+          setIsEditMusicLinksModalOpen(true);
+          return;
+        }
+
+        // If we don't have music links, create a default one with the document link
+        setMusicLinksToEdit({
+          musicLinks: [
+            {
+              name: "Primary Music Link",
+              url: documentData.documentLink || "",
+            },
+          ],
+          title: documentData.title || "",
+          notes: documentData.notes || "",
+          metadata: {
+            updatedAt: documentData.updatedAt,
+            updatedBy: documentData.updatedBy,
+          },
+        });
+
+        // Open the music links modal
+        setIsEditMusicLinksModalOpen(true);
+        return;
+      }
+
+      // For non-music tasks, use the regular document link modal
       setDocumentToEdit({
         taskId,
         documentLink: documentData.documentLink || "",
@@ -1041,6 +1152,121 @@ export const useWorkflowHandlers = () => {
     }
   };
 
+  // Handle saving music links
+  const handleSaveMusicLinks = async (musicData) => {
+    console.log("Saving music links:", musicData);
+
+    // Set loading state
+    setLoadingStates((prev) => ({ ...prev, documentSave: true }));
+
+    try {
+      // Get the primary link (first link) for the database
+      const primaryLink =
+        musicData.musicLinks && musicData.musicLinks.length > 0
+          ? musicData.musicLinks[0].url
+          : "";
+
+      if (!primaryLink) {
+        toast.error("No music links provided");
+        return Promise.reject(new Error("No music links provided"));
+      }
+
+      // Save music links to the API
+      await musicLinksService.saveMusicLinks(
+        dateString,
+        musicData.musicLinks,
+        musicData.title,
+        musicData.notes
+      );
+
+      // Get current timestamp for local updates
+      const updatedAt = new Date().toISOString();
+
+      // Get the current user role
+      const userRole =
+        typeof currentUserRole === "string"
+          ? currentUserRole
+          : currentUserRole?.id || currentUserRole?.role?.id || "music";
+
+      // Update local state
+      setCompletedTasks((prev) => ({
+        ...prev,
+        music: {
+          ...prev.music,
+          status: "completed",
+          documentLink: primaryLink,
+          updatedAt: updatedAt,
+          updatedBy: userRole,
+          title: musicData.title,
+          musicLinks: musicData.musicLinks,
+          notes: musicData.notes,
+        },
+      }));
+
+      // Close the modal
+      setIsEditMusicLinksModalOpen(false);
+
+      // Show success message
+      toast.success("Music links saved successfully!");
+
+      return true;
+    } catch (error) {
+      console.error("Error saving music links:", error);
+      toast.error("Failed to save music links");
+      return false;
+    } finally {
+      setLoadingStates((prev) => ({ ...prev, documentSave: false }));
+    }
+  };
+
+  // Handle deleting music links
+  const handleDeleteMusicLinks = async () => {
+    console.log("Deleting music links");
+
+    // Set loading state
+    setLoadingStates((prev) => ({ ...prev, documentDelete: true }));
+
+    try {
+      // Delete music links from the API
+      await musicLinksService.deleteMusicLinks(dateString);
+
+      // Update local state
+      setCompletedTasks((prev) => {
+        const newState = { ...prev };
+        if (newState.music) {
+          newState.music = {
+            ...newState.music,
+            status: "pending",
+            documentLink: null,
+            musicLinks: [],
+            title: "",
+            notes: "",
+          };
+        }
+        return newState;
+      });
+
+      // Close the modal
+      setIsEditMusicLinksModalOpen(false);
+
+      // Show success message
+      toast.success("Music links deleted successfully!");
+
+      // Call onStartAction to update any UI that depends on task status
+      if (onStartAction) {
+        onStartAction("music-deleted");
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error deleting music links:", error);
+      toast.error("Failed to delete music links");
+      return false;
+    } finally {
+      setLoadingStates((prev) => ({ ...prev, documentDelete: false }));
+    }
+  };
+
   return {
     handleQrCodeAction,
     handleSermonSubmit,
@@ -1053,6 +1279,7 @@ export const useWorkflowHandlers = () => {
     handleSermonUploadSubmit,
     handleActionStart,
     handleViewDocument,
+    handleViewMusicLinks,
     handlePastorEdit,
     handlePastorNotifyTeams,
     handlePastorNotifySubmit,
@@ -1073,6 +1300,8 @@ export const useWorkflowHandlers = () => {
     handleEditDocumentLink,
     handleSaveDocumentLink,
     handleDeleteDocumentLink,
+    handleSaveMusicLinks,
+    handleDeleteMusicLinks,
     loadingStates,
   };
 };

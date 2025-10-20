@@ -11,6 +11,7 @@ import { SlidesUploadModal } from "../../slides-upload-modal";
 import { QrCodeUploadModal } from "../../qr-code-upload-modal";
 import { MusicUploadModal } from "../../music-upload-modal";
 import { EditDocumentLinkModal } from "./EditDocumentLinkModal";
+import { EditMusicLinksModal } from "./EditMusicLinksModal";
 
 import { useWorkflow } from "../context/WorkflowContext";
 import { useWorkflowHandlers } from "../hooks/useWorkflowHandlers";
@@ -52,8 +53,12 @@ export const ModalManager = () => {
     setIsMusicUploadModalOpen,
     isEditDocumentLinkModalOpen,
     setIsEditDocumentLinkModalOpen,
+    isEditMusicLinksModalOpen,
+    setIsEditMusicLinksModalOpen,
     documentToEdit,
     setDocumentToEdit,
+    musicLinksToEdit,
+    setMusicLinksToEdit,
     dateString,
   } = useWorkflow();
 
@@ -72,6 +77,8 @@ export const ModalManager = () => {
     handleMusicUploadSubmit,
     handleSaveDocumentLink,
     handleDeleteDocumentLink,
+    handleSaveMusicLinks,
+    handleDeleteMusicLinks,
     loadingStates,
   } = useWorkflowHandlers();
 
@@ -167,6 +174,21 @@ export const ModalManager = () => {
         onSave={handleSaveDocumentLink}
         onDelete={handleDeleteDocumentLink}
         metadata={documentToEdit?.metadata}
+      />
+
+      <EditMusicLinksModal
+        isOpen={isEditMusicLinksModalOpen}
+        onClose={() => {
+          setIsEditMusicLinksModalOpen(false);
+          setMusicLinksToEdit(null);
+        }}
+        initialLinks={musicLinksToEdit?.musicLinks}
+        title={musicLinksToEdit?.title}
+        notes={musicLinksToEdit?.notes}
+        onSave={handleSaveMusicLinks}
+        onDelete={handleDeleteMusicLinks}
+        metadata={musicLinksToEdit?.metadata}
+        dateString={dateString}
       />
     </>
   );

@@ -117,6 +117,7 @@ export const TaskCard = ({ task, categoryId }) => {
   const {
     handleActionStart,
     handleViewDocument,
+    handleViewMusicLinks,
     handleSendToPastor,
     handleSendToMusic,
     handlePastorEdit,
@@ -735,7 +736,7 @@ export const TaskCard = ({ task, categoryId }) => {
                     size="sm"
                     variant="outline"
                     className={viewButtonClass}
-                    onClick={() => handleViewDocument("music")}
+                    onClick={handleViewMusicLinks}
                   >
                     View Music
                   </Button>
