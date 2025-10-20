@@ -11,6 +11,7 @@ import { SermonTranslationModal } from "../../sermon-translation-modal";
 import { SlidesUploadModal } from "../../slides-upload-modal";
 import { QrCodeUploadModal } from "../../qr-code-upload-modal";
 import { MusicUploadModal } from "../../music-upload-modal";
+import { EditDocumentLinkModal } from "./EditDocumentLinkModal";
 
 import { useWorkflow } from "../context/WorkflowContext";
 import { useWorkflowHandlers } from "../hooks/useWorkflowHandlers";
@@ -50,6 +51,10 @@ export const ModalManager = () => {
     completedTasks,
     isMusicUploadModalOpen,
     setIsMusicUploadModalOpen,
+    isEditDocumentLinkModalOpen,
+    setIsEditDocumentLinkModalOpen,
+    documentToEdit,
+    setDocumentToEdit,
   } = useWorkflow();
 
   const {
@@ -65,6 +70,8 @@ export const ModalManager = () => {
     handleSlidesUploadSubmit,
     handleQrCodeUploadSubmit,
     handleMusicUploadSubmit,
+    handleSaveDocumentLink,
+    handleDeleteDocumentLink,
   } = useWorkflowHandlers();
 
   return (
@@ -146,6 +153,19 @@ export const ModalManager = () => {
         isOpen={isMusicUploadModalOpen}
         onClose={() => setIsMusicUploadModalOpen(false)}
         onSubmit={handleMusicUploadSubmit}
+      />
+
+      <EditDocumentLinkModal
+        isOpen={isEditDocumentLinkModalOpen}
+        onClose={() => {
+          setIsEditDocumentLinkModalOpen(false);
+          setDocumentToEdit(null);
+        }}
+        documentType={documentToEdit?.taskId}
+        initialLink={documentToEdit?.documentLink}
+        onSave={handleSaveDocumentLink}
+        onDelete={handleDeleteDocumentLink}
+        metadata={documentToEdit?.metadata}
       />
     </>
   );

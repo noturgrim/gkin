@@ -58,6 +58,21 @@ const workflowService = {
       throw error;
     }
   },
+
+  /**
+   * Delete a workflow task completely
+   * @param {string} dateString - Service date in YYYY-MM-DD format
+   * @param {string} taskId - Task identifier
+   * @returns {Promise} Promise with delete result
+   */
+  deleteWorkflowTask: async (dateString, taskId) => {
+    try {
+      return await api.delete(`/workflow/${dateString}/${taskId}`);
+    } catch (error) {
+      console.error("Error deleting workflow task:", error);
+      throw error;
+    }
+  },
 };
 
 export default workflowService;

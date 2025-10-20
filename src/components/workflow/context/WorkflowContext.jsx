@@ -56,6 +56,9 @@ export const WorkflowProvider = ({
   const [isSlidesUploadModalOpen, setIsSlidesUploadModalOpen] = useState(false);
   const [isQrCodeModalOpen, setIsQrCodeModalOpen] = useState(false);
   const [isMusicUploadModalOpen, setIsMusicUploadModalOpen] = useState(false);
+  const [isEditDocumentLinkModalOpen, setIsEditDocumentLinkModalOpen] =
+    useState(false);
+  const [documentToEdit, setDocumentToEdit] = useState(null);
 
   // Load workflow tasks for the current service
   useEffect(() => {
@@ -91,30 +94,53 @@ export const WorkflowProvider = ({
   }, [dateString]);
 
   // Update task status in the backend
-  const updateTaskStatus = async (taskId, status, documentLink) => {
+  const updateTaskStatus = async (taskId, status, documentLink, assignedTo) => {
     if (!dateString) return;
 
     try {
-      await workflowService.updateTaskStatus(
+      const response = await workflowService.updateTaskStatus(
         dateString,
         taskId,
         status,
-        documentLink
+        documentLink,
+        assignedTo
       );
 
-      // Update local state
+      // Get current timestamp for local updates
+      const updatedAt = new Date().toISOString();
+      const userRole =
+        typeof currentUserRole === "string"
+          ? currentUserRole
+          : currentUserRole?.id || currentUserRole?.role?.id || "user";
+
+      // Update local state with metadata
       setCompletedTasks((prevState) => ({
         ...prevState,
         [taskId]: {
           ...prevState[taskId],
           status,
           documentLink,
+          assignedTo: assignedTo || prevState[taskId]?.assignedTo,
+          updatedAt,
+          updatedBy: userRole,
         },
       }));
 
       // Special handling for qrcode status
       if (taskId === "qrcode") {
         setQrCodeStatus(status);
+      }
+
+      // Fetch the updated data to ensure we have the correct server-side metadata
+      const refreshedData = await workflowService.getWorkflowTasks(dateString);
+      if (refreshedData && refreshedData.tasks && refreshedData.tasks[taskId]) {
+        setCompletedTasks((prevState) => ({
+          ...prevState,
+          [taskId]: {
+            ...prevState[taskId],
+            ...refreshedData.tasks[taskId],
+          },
+        }));
       }
 
       return true;
@@ -161,6 +187,39 @@ export const WorkflowProvider = ({
   const isPastor = hasRole("pastor");
   const isLiturgyMaker = hasRole("liturgy");
   const isTreasurer = hasRole("treasurer");
+
+  // Completely delete a workflow task
+  const deleteDocumentLink = async (taskId) => {
+    if (!dateString) return false;
+
+    try {
+      // Use the delete endpoint to completely remove the task from the database
+      await workflowService.deleteWorkflowTask(dateString, taskId);
+
+      // Update local state by removing the task
+      setCompletedTasks((prevState) => {
+        // Create a new state object without the task
+        const newState = { ...prevState };
+
+        // If the task exists in the state, remove it completely
+        if (newState[taskId]) {
+          delete newState[taskId];
+        }
+
+        return newState;
+      });
+
+      // Special handling for qrcode status
+      if (taskId === "qrcode") {
+        setQrCodeStatus("pending");
+      }
+
+      return true;
+    } catch (err) {
+      console.error(`Error deleting workflow task ${taskId}:`, err);
+      return false;
+    }
+  };
 
   // Task status function
   const getTaskStatus = (taskId) => {
@@ -242,6 +301,10 @@ export const WorkflowProvider = ({
     setIsQrCodeModalOpen,
     isMusicUploadModalOpen,
     setIsMusicUploadModalOpen,
+    isEditDocumentLinkModalOpen,
+    setIsEditDocumentLinkModalOpen,
+    documentToEdit,
+    setDocumentToEdit,
 
     // Helper functions
     hasRole,
@@ -251,6 +314,7 @@ export const WorkflowProvider = ({
     getTaskStatus,
     isUserCategory,
     updateTaskStatus,
+    deleteDocumentLink,
 
     // External props
     onStartAction,

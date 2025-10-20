@@ -36,8 +36,10 @@ const getWorkflowTasks = async (req, res) => {
         wt.status, 
         wt.document_link, 
         wt.assigned_to,
+        wt.updated_at,
         u.username as completed_by_name,
-        u.avatar_url as completed_by_avatar
+        u.avatar_url as completed_by_avatar,
+        u.role as updated_by_role
       FROM workflow_tasks wt
       LEFT JOIN users u ON wt.completed_by = u.id
       WHERE wt.service_assignment_id = $1`,
@@ -51,6 +53,11 @@ const getWorkflowTasks = async (req, res) => {
         status: task.status,
         documentLink: task.document_link,
         assignedTo: task.assigned_to,
+        updatedAt: task.updated_at,
+        updatedBy:
+          task.updated_by_role ||
+          task.assigned_to ||
+          (task.completed_by_name ? "user" : null),
         completedBy: task.completed_by_name
           ? {
               name: task.completed_by_name,
@@ -185,8 +192,67 @@ const getAllWorkflowTasks = async (req, res) => {
   }
 };
 
+/**
+ * Delete a workflow task
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object
+ */
+const deleteWorkflowTask = async (req, res) => {
+  const client = await db.getClient();
+
+  try {
+    const { dateString, taskId } = req.params;
+
+    if (!dateString || !taskId) {
+      return res
+        .status(400)
+        .json({ message: "dateString and taskId are required" });
+    }
+
+    await client.query("BEGIN");
+
+    // First get the service_assignment_id for the given date
+    const serviceResult = await client.query(
+      "SELECT id FROM service_assignments WHERE date_string = $1",
+      [dateString]
+    );
+
+    if (serviceResult.rows.length === 0) {
+      return res.status(404).json({ message: "Service not found" });
+    }
+
+    const serviceId = serviceResult.rows[0].id;
+
+    // Delete the task
+    const deleteResult = await client.query(
+      "DELETE FROM workflow_tasks WHERE service_assignment_id = $1 AND task_id = $2 RETURNING id",
+      [serviceId, taskId]
+    );
+
+    await client.query("COMMIT");
+
+    // Check if any row was deleted
+    if (deleteResult.rows.length === 0) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    res.json({
+      message: "Task deleted successfully",
+      taskId,
+      dateString,
+    });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("Error deleting workflow task:", error);
+    res.status(500).json({ message: "Internal server error" });
+  } finally {
+    client.release();
+  }
+};
+
 module.exports = {
   getWorkflowTasks,
   updateTaskStatus,
   getAllWorkflowTasks,
+  deleteWorkflowTask,
 };

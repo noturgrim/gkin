@@ -9,6 +9,10 @@ import {
   Edit,
   ArrowRight,
   Upload,
+  Link,
+  Clock,
+  User,
+  Loader2,
 } from "lucide-react";
 import { useWorkflow } from "../context/WorkflowContext";
 import { useWorkflowHandlers } from "../hooks/useWorkflowHandlers";
@@ -93,13 +97,13 @@ const defaultTaskStyle = {
 };
 
 export const TaskCard = ({ task, categoryId }) => {
-  const { 
-    getTaskStatus, 
-    hasRole, 
-    completedTasks, 
+  const {
+    getTaskStatus,
+    hasRole,
+    completedTasks,
     setCompletedTasks,
     updateTaskStatus,
-    dateString
+    dateString,
   } = useWorkflow();
   const {
     handleActionStart,
@@ -116,6 +120,8 @@ export const TaskCard = ({ task, categoryId }) => {
     handleUploadSermon,
     handleUploadSlides,
     handleUploadMusic,
+    handleEditDocumentLink,
+    loadingStates,
   } = useWorkflowHandlers();
 
   const status = getTaskStatus(task.id);
@@ -220,6 +226,37 @@ export const TaskCard = ({ task, categoryId }) => {
       {/* Task name */}
       <div className="font-medium text-sm mb-2">{task.name}</div>
 
+      {/* Document metadata (if available) */}
+      {completedTasks[task.id]?.documentLink &&
+        ["concept", "sermon", "final", "qrcode", "slides", "music"].includes(
+          task.id
+        ) && (
+          <div className="w-full text-xs text-gray-500 mb-2 px-1">
+            {completedTasks[task.id]?.updatedAt && (
+              <div className="flex items-center justify-center gap-1 mb-1">
+                <Clock className="w-3 h-3" />
+                <span>
+                  {new Date(
+                    completedTasks[task.id].updatedAt
+                  ).toLocaleDateString(undefined, {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </span>
+              </div>
+            )}
+            {completedTasks[task.id]?.updatedBy && (
+              <div className="flex items-center justify-center gap-1">
+                <User className="w-3 h-3" />
+                <span className="capitalize">
+                  {completedTasks[task.id].updatedBy}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
       {/* Status badge - moved to top for better visibility */}
       {!isActive && !isCompleted && (
         <Badge className={`mb-3 px-3 py-1 text-xs ${taskStyle.badge}`}>
@@ -277,9 +314,19 @@ export const TaskCard = ({ task, categoryId }) => {
                   size="sm"
                   className={primaryButtonClass}
                   onClick={() => handleActionStart(task.id)}
+                  disabled={loadingStates?.conceptDocument}
                 >
-                  <Edit className="w-3 h-3 mr-1" />
-                  {task.actionLabel}
+                  {task.id === "concept" && loadingStates?.conceptDocument ? (
+                    <>
+                      <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <Edit className="w-3 h-3 mr-1" />
+                      {task.actionLabel}
+                    </>
+                  )}
                 </Button>
 
                 <Button
@@ -306,13 +353,34 @@ export const TaskCard = ({ task, categoryId }) => {
             {isCompleted && (
               <div className="space-y-2">
                 {!(task.id === "sermon" && hasRole("pastor")) && (
-                  <Button
-                    size="sm"
-                    className={viewButtonClass}
-                    onClick={() => handleViewDocument(task.id)}
-                  >
-                    {task.id === "sermon" ? "View Sermon" : "View Document"}
-                  </Button>
+                  <div className="space-y-2">
+                    <Button
+                      size="sm"
+                      className={viewButtonClass}
+                      onClick={() => handleViewDocument(task.id)}
+                    >
+                      {task.id === "sermon" ? "View Sermon" : "View Document"}
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      className={`w-full border text-xs py-1.5 h-9 rounded-md font-medium hover:shadow transition-all border-gray-300 text-gray-700 hover:bg-gray-50`}
+                      onClick={() => handleEditDocumentLink(task.id)}
+                      disabled={loadingStates?.documentEdit}
+                    >
+                      {loadingStates?.documentEdit && task.id === "concept" ? (
+                        <>
+                          <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                          Loading...
+                        </>
+                      ) : (
+                        <>
+                          <Link className="w-3 h-3 mr-1" />
+                          Edit Link
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 )}
 
                 {/* Pastor special options */}
@@ -424,14 +492,25 @@ export const TaskCard = ({ task, categoryId }) => {
             )}
 
             {isCompleted && (
-              <Button
-                size="sm"
-                variant="outline"
-                className={viewButtonClass}
-                onClick={() => handleViewDocument("slides")}
-              >
-                View Slides
-              </Button>
+              <div className="space-y-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className={viewButtonClass}
+                  onClick={() => handleViewDocument("slides")}
+                >
+                  View Slides
+                </Button>
+
+                <Button
+                  size="sm"
+                  className={`w-full border text-xs py-1.5 h-9 rounded-md font-medium hover:shadow transition-all border-gray-300 text-gray-700 hover:bg-gray-50`}
+                  onClick={() => handleEditDocumentLink("slides")}
+                >
+                  <Link className="w-3 h-3 mr-1" />
+                  Edit Link
+                </Button>
+              </div>
             )}
           </>
         )}
@@ -451,14 +530,25 @@ export const TaskCard = ({ task, categoryId }) => {
             )}
 
             {isCompleted && (
-              <Button
-                size="sm"
-                variant="outline"
-                className={viewButtonClass}
-                onClick={() => handleViewDocument("music")}
-              >
-                View Music
-              </Button>
+              <div className="space-y-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className={viewButtonClass}
+                  onClick={() => handleViewDocument("music")}
+                >
+                  View Music
+                </Button>
+
+                <Button
+                  size="sm"
+                  className={`w-full border text-xs py-1.5 h-9 rounded-md font-medium hover:shadow transition-all border-gray-300 text-gray-700 hover:bg-gray-50`}
+                  onClick={() => handleEditDocumentLink("music")}
+                >
+                  <Link className="w-3 h-3 mr-1" />
+                  Edit Link
+                </Button>
+              </div>
             )}
           </>
         )}

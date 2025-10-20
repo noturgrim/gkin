@@ -1,7 +1,16 @@
 // src/components/workflow/hooks/useWorkflowHandlers.js
+import { useState } from "react";
 import { useWorkflow } from "../context/WorkflowContext";
 
 export const useWorkflowHandlers = () => {
+  // Loading states
+  const [loadingStates, setLoadingStates] = useState({
+    documentEdit: false,
+    documentDelete: false,
+    documentSave: false,
+    conceptDocument: false,
+  });
+
   const {
     setQrCodeStatus,
     completedTasks,
@@ -25,8 +34,11 @@ export const useWorkflowHandlers = () => {
     setIsSlidesUploadModalOpen,
     setIsQrCodeModalOpen,
     setIsMusicUploadModalOpen,
+    setIsEditDocumentLinkModalOpen,
+    setDocumentToEdit,
     onStartAction,
     updateTaskStatus,
+    deleteDocumentLink,
     dateString,
   } = useWorkflow();
 
@@ -87,45 +99,62 @@ export const useWorkflowHandlers = () => {
   };
 
   // This function will handle document submission from the modal
-  const handleDocumentSubmit = (documentData) => {
+  const handleDocumentSubmit = async (documentData) => {
     // Here you would handle the saved document
     console.log("Document submitted:", documentData);
 
-    // Get the document link from completedTasks or from the submitted data
-    const documentLink =
-      completedTasks?.documentLinks?.[documentData.documentType] ||
-      documentData?.documentLink;
-
-    // Update the task status in the backend
-    updateTaskStatus(
-      documentData.documentType,
-      "completed",
-      documentLink,
-      "liturgy"
-    );
-
-    // Update the local completed tasks state
-    setCompletedTasks((prev) => ({
-      ...prev,
-      [documentData.documentType]: {
-        status: "completed",
-        documentLink: documentLink,
-        assignedTo: "liturgy",
-      },
-      // Store the actual document data if needed
-      [`${documentData.documentType}Data`]: documentData,
-    }));
-
-    // Close the document modal
-    setIsDocumentModalOpen(false);
-
-    // Update the service status for this task if needed
-    if (onStartAction) {
-      onStartAction(`${documentData.documentType}-completed`);
+    // Set loading state for concept document specifically
+    if (documentData.documentType === "concept") {
+      setLoadingStates((prev) => ({ ...prev, conceptDocument: true }));
     }
 
-    // Show a success message
-    alert(`${documentData.documentTitle} has been saved successfully!`);
+    try {
+      // Get the document link from completedTasks or from the submitted data
+      const documentLink =
+        completedTasks?.documentLinks?.[documentData.documentType] ||
+        documentData?.documentLink;
+
+      // Update the task status in the backend
+      await updateTaskStatus(
+        documentData.documentType,
+        "completed",
+        documentLink,
+        "liturgy"
+      );
+
+      // Update the local completed tasks state
+      setCompletedTasks((prev) => ({
+        ...prev,
+        [documentData.documentType]: {
+          status: "completed",
+          documentLink: documentLink,
+          assignedTo: "liturgy",
+          updatedAt: new Date().toISOString(),
+          updatedBy: "liturgy",
+        },
+        // Store the actual document data if needed
+        [`${documentData.documentType}Data`]: documentData,
+      }));
+
+      // Update the service status for this task if needed
+      if (onStartAction) {
+        onStartAction(`${documentData.documentType}-completed`);
+      }
+
+      // Return success - no alert needed as the modal already shows loading state
+      return true;
+    } catch (error) {
+      console.error(
+        `Error saving ${documentData.documentType} document:`,
+        error
+      );
+      return false;
+    } finally {
+      // Reset loading state
+      if (documentData.documentType === "concept") {
+        setLoadingStates((prev) => ({ ...prev, conceptDocument: false }));
+      }
+    }
   };
 
   // Handle sending document to pastor
@@ -618,6 +647,97 @@ export const useWorkflowHandlers = () => {
     alert(`Music file "${musicData.title}" has been uploaded successfully!`);
   };
 
+  // Handle opening the edit document link modal
+  const handleEditDocumentLink = (taskId) => {
+    console.log(`Opening edit document link modal for: ${taskId}`);
+
+    // Set loading state
+    setLoadingStates((prev) => ({ ...prev, documentEdit: true }));
+
+    try {
+      // Get the current document link and metadata
+      const documentData = completedTasks[taskId] || {};
+
+      // Set the document to edit
+      setDocumentToEdit({
+        taskId,
+        documentLink: documentData.documentLink || "",
+        metadata: {
+          updatedAt: documentData.updatedAt,
+          updatedBy: documentData.updatedBy,
+        },
+      });
+
+      // Open the modal
+      setIsEditDocumentLinkModalOpen(true);
+    } finally {
+      setLoadingStates((prev) => ({ ...prev, documentEdit: false }));
+    }
+  };
+
+  // Handle saving an edited document link
+  const handleSaveDocumentLink = async (taskId, newLink) => {
+    console.log(`Saving document link for: ${taskId}`, newLink);
+
+    // Set loading state
+    setLoadingStates((prev) => ({ ...prev, documentSave: true }));
+
+    try {
+      // Get current status
+      const currentStatus = completedTasks[taskId]?.status || "pending";
+      const assignedTo = completedTasks[taskId]?.assignedTo;
+
+      // Update the task with the new link
+      const success = await updateTaskStatus(
+        taskId,
+        currentStatus,
+        newLink,
+        assignedTo
+      );
+
+      if (success) {
+        // Show success message
+        alert(`Document link for ${taskId} has been updated successfully!`);
+      } else {
+        // Show error message
+        alert(`Failed to update document link for ${taskId}.`);
+      }
+
+      return success;
+    } finally {
+      setLoadingStates((prev) => ({ ...prev, documentSave: false }));
+    }
+  };
+
+  // Handle completely deleting a workflow task
+  const handleDeleteDocumentLink = async (taskId) => {
+    console.log(`Completely deleting workflow task: ${taskId}`);
+
+    // Set loading state
+    setLoadingStates((prev) => ({ ...prev, documentDelete: true }));
+
+    try {
+      const success = await deleteDocumentLink(taskId);
+
+      if (success) {
+        // Show success message
+        alert(`Task ${taskId} has been completely deleted from the database!`);
+
+        // Call onStartAction to update any UI that depends on task status
+        if (onStartAction) {
+          onStartAction(`${taskId}-deleted`);
+        }
+      } else {
+        // Show error message
+        alert(`Failed to delete task ${taskId}.`);
+      }
+
+      return success;
+    } finally {
+      setLoadingStates((prev) => ({ ...prev, documentDelete: false }));
+    }
+  };
+
   return {
     handleQrCodeAction,
     handleSermonSubmit,
@@ -647,5 +767,9 @@ export const useWorkflowHandlers = () => {
     handleQrCodeUploadSubmit,
     handleUploadMusic,
     handleMusicUploadSubmit,
+    handleEditDocumentLink,
+    handleSaveDocumentLink,
+    handleDeleteDocumentLink,
+    loadingStates,
   };
 };

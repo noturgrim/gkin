@@ -66,7 +66,7 @@ export function DocumentCreatorModal({
   };
 
   // Function to handle completion
-  const handleComplete = () => {
+  const handleComplete = async () => {
     if (!selectedService) {
       alert("Please select a service date");
       return;
@@ -79,30 +79,39 @@ export function DocumentCreatorModal({
 
     setIsSubmitting(true);
 
-    // Get the formatted title for the document
-    const selectedServiceObj = upcomingServices.find(
-      (service) => service.dateString === selectedService
-    );
+    try {
+      // Get the formatted title for the document
+      const selectedServiceObj = upcomingServices.find(
+        (service) => service.dateString === selectedService
+      );
 
-    const documentTitle = `${selectedServiceObj?.title || selectedService} - ${
-      documentType === "concept"
-        ? "Concept Doc"
-        : documentType === "sermon"
-        ? "Sermon Doc"
-        : "Final Doc"
-    }`;
+      const documentTitle = `${
+        selectedServiceObj?.title || selectedService
+      } - ${
+        documentType === "concept"
+          ? "Concept Doc"
+          : documentType === "sermon"
+          ? "Sermon Doc"
+          : "Final Doc"
+      }`;
 
-    // Submit the data to parent component
-    setTimeout(() => {
-      onSubmit({
+      // Submit the data to parent component
+      const result = await onSubmit({
         serviceDate: selectedService,
         documentLink: driveLink,
         documentTitle,
         documentType,
       });
+
+      // If successful, close the modal
+      if (result !== false) {
+        onClose();
+      }
+    } catch (error) {
+      console.error("Error submitting document:", error);
+    } finally {
       setIsSubmitting(false);
-      onClose();
-    }, 1000);
+    }
   };
 
   // If modal is not open, don't render anything

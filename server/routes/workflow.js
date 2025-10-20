@@ -20,4 +20,7 @@ router.get("/:dateString", workflowController.getWorkflowTasks);
 // Update a task status
 router.put("/:dateString/:taskId", workflowController.updateTaskStatus);
 
+// Delete a task
+router.delete("/:dateString/:taskId", workflowController.deleteWorkflowTask);
+
 module.exports = router;
