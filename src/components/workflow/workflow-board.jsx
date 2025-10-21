@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { WorkflowProvider } from "./context/WorkflowContext";
 import { workflowCategories } from "./constants/workflow-categories";
 import { CategorySection } from "./components/CategorySection";
-import { DemoPanel } from "./components/DemoPanel";
 import { ModalManager } from "./components/ModalManager";
 
 export function WorkflowBoard({
@@ -64,9 +63,6 @@ export function WorkflowBoard({
                 </span>
               </h3>
             </div>
-
-            {/* Demo panels for different roles */}
-            <DemoPanel />
 
             {/* Workflow categories */}
             {workflowCategories.map((category) => (
