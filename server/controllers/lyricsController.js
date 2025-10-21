@@ -1,4 +1,50 @@
 const db = require("../config/db");
+const { emitActivityUpdate } = require("../index");
+
+/**
+ * Log an activity to the activity_log table
+ * @param {Object} client - Database client for transaction
+ * @param {Object} activity - Activity details
+ * @returns {Promise<Object>} The created activity log
+ */
+const logActivity = async (client, activity) => {
+  try {
+    const result = await client.query(
+      `INSERT INTO activity_log 
+        (user_id, user_name, user_role, activity_type, title, description, details, entity_id, date_string, icon, color) 
+       VALUES 
+        ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+       RETURNING *`,
+      [
+        activity.userId,
+        activity.userName,
+        activity.userRole,
+        activity.type,
+        activity.title,
+        activity.description,
+        activity.details || null,
+        activity.entityId || null,
+        activity.dateString || null,
+        activity.icon || "ArrowRight",
+        activity.color || "blue",
+      ]
+    );
+
+    // Get the created activity with all fields
+    const createdActivity = result.rows[0];
+
+    // Emit the activity via WebSocket for real-time updates
+    if (createdActivity) {
+      emitActivityUpdate(createdActivity);
+    }
+
+    return createdActivity;
+  } catch (error) {
+    console.error("Error logging activity:", error);
+    // Don't throw, just log the error - we don't want activity logging to break the main functionality
+    return null;
+  }
+};
 
 /**
  * Get all lyrics that need translation
@@ -174,10 +220,28 @@ const submitLyrics = async (req, res) => {
       );
     }
 
+    // Log activity for adding songs to translate
+    if (req.user && insertedSongs.length > 0) {
+      await logActivity(client, {
+        userId: req.user.id,
+        userName: req.user.username,
+        userRole: req.user.role,
+        type: "lyrics",
+        title: "Songs Added for Translation",
+        description: `${insertedSongs.length} song(s) added for ${dateString} service`,
+        details: insertedSongs.map((song) => song.title).join(", "),
+        entityId: "lyrics",
+        dateString,
+        icon: "Music",
+        color: "green",
+      });
+    }
+
     await client.query("COMMIT");
 
     res.status(201).json({
       message: "Lyrics submitted successfully",
+      feedback: `${insertedSongs.length} song(s) have been added for translation. Thank you!`,
       dateString,
       songs: insertedSongs,
     });
@@ -288,13 +352,97 @@ const submitTranslation = async (req, res) => {
          WHERE service_assignment_id = $2 AND task_id = 'translate_lyrics'`,
         [req.user.id, serviceId]
       );
+
+      // Get the service date for the activity log
+      const serviceDateResult = await client.query(
+        "SELECT date_string FROM service_assignments WHERE id = $1",
+        [serviceId]
+      );
+
+      const dateString =
+        serviceDateResult.rows.length > 0
+          ? serviceDateResult.rows[0].date_string
+          : null;
+
+      // Log activity for completing all translations
+      if (req.user && dateString) {
+        await logActivity(client, {
+          userId: req.user.id,
+          userName: req.user.username,
+          userRole: req.user.role,
+          type: "workflow",
+          title: "All Songs Translated",
+          description: `All songs for ${dateString} service have been translated`,
+          entityId: "translate_lyrics",
+          dateString,
+          icon: "CheckCircle",
+          color: "green",
+        });
+      }
+    }
+
+    // Get the original song title for the activity log
+    const originalSongResult = await client.query(
+      "SELECT title FROM lyrics_originals WHERE id = $1",
+      [originalId]
+    );
+
+    const songTitle =
+      originalSongResult.rows.length > 0
+        ? originalSongResult.rows[0].title
+        : "Unknown song";
+
+    // Get the service date for the activity log
+    const serviceDateResult = await client.query(
+      "SELECT sa.date_string FROM service_assignments sa JOIN lyrics_originals lo ON sa.id = lo.service_assignment_id WHERE lo.id = $1",
+      [originalId]
+    );
+
+    const dateString =
+      serviceDateResult.rows.length > 0
+        ? serviceDateResult.rows[0].date_string
+        : null;
+
+    // Log activity for completing song translation
+    if (req.user) {
+      await logActivity(client, {
+        userId: req.user.id,
+        userName: req.user.username,
+        userRole: req.user.role,
+        type: "lyrics",
+        title: "Song Translation Completed",
+        description: `Translation completed for "${songTitle}"`,
+        details: `Original song: "${songTitle}"\nTranslated title: "${translatedTitle}"`,
+        entityId: originalId,
+        dateString,
+        icon: "FileText",
+        color: "green",
+      });
     }
 
     await client.query("COMMIT");
 
+    // Get the count of remaining untranslated songs
+    const remainingResult = await client.query(
+      "SELECT COUNT(*) FROM lyrics_originals WHERE service_assignment_id = $1 AND status != 'translated'",
+      [serviceId]
+    );
+
+    const remainingCount = parseInt(remainingResult.rows[0].count);
+
+    // Create a feedback message based on whether all songs are translated or not
+    let feedbackMessage;
+    if (remainingCount === 0) {
+      feedbackMessage = `Great job! Translation for "${songTitle}" has been saved. All songs for this service have been translated!`;
+    } else {
+      feedbackMessage = `Translation for "${songTitle}" has been saved. ${remainingCount} song(s) still need translation.`;
+    }
+
     res.json({
       message: "Translation submitted successfully",
+      feedback: feedbackMessage,
       translation: translationResult.rows[0],
+      remainingCount,
     });
   } catch (error) {
     await client.query("ROLLBACK");
