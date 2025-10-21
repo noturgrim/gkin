@@ -49,10 +49,46 @@ export function NotificationProvider({ children }) {
     chatService.onMention(handleNewMention);
     chatService.onConnectionChange(handleConnectionChange);
 
+    // Add periodic refresh to ensure mentions are up-to-date
+    // This helps when users log in after mentions were created
+    const refreshInterval = setInterval(async () => {
+      if (authService.isAuthenticated()) {
+        try {
+          // Only refresh if we're not currently loading
+          if (!loading) {
+            const count = await chatService.getUnreadMentionCount();
+            if (count !== unreadCount) {
+              // If count changed, refresh mentions
+              await refreshMentions();
+            }
+          }
+        } catch (error) {
+          console.error('Error during periodic mention refresh:', error);
+        }
+      }
+    }, 30000); // Check every 30 seconds
+
     // Clean up on unmount
     return () => {
       chatService.offMention(handleNewMention);
       chatService.offConnectionChange(handleConnectionChange);
+      clearInterval(refreshInterval);
+    };
+  }, []);
+
+  // Also refresh mentions when component becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && authService.isAuthenticated()) {
+        // Page became visible, refresh mentions
+        refreshMentions();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
 
