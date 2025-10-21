@@ -18,6 +18,62 @@ export function WorkflowBoard({
 
   // State for loading indicator
   const [isLoading, setIsLoading] = useState(false);
+  
+  // State for refresh key to trigger data reload
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Smart polling - adjusts based on activity and focus
+  useEffect(() => {
+    let interval;
+    let isPageVisible = !document.hidden;
+    
+    const startPolling = (intervalTime = 10000) => {
+      if (interval) clearInterval(interval);
+      
+      interval = setInterval(() => {
+        if (!document.hidden) { // Only poll when page is visible
+          setRefreshKey(prev => prev + 1);
+        }
+      }, intervalTime);
+    };
+
+    // Start with 10-second polling
+    startPolling(10000);
+
+    // Handle page visibility changes
+    const handleVisibilityChange = () => {
+      isPageVisible = !document.hidden;
+      if (isPageVisible) {
+        // Page became visible, refresh immediately and use faster polling
+        setRefreshKey(prev => prev + 1);
+        startPolling(10000); // 10 seconds when active
+      } else {
+        // Page hidden, use slower polling to save resources
+        startPolling(30000); // 30 seconds when hidden
+      }
+    };
+
+    // Handle window focus for immediate refresh
+    const handleFocus = () => {
+      if (!document.hidden) {
+        setRefreshKey(prev => prev + 1);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      if (interval) clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
+
+  // Manual refresh function
+  const handleRefresh = () => {
+    setRefreshKey(prev => prev + 1);
+  };
 
   useEffect(() => {
     // For debugging purposes only
@@ -42,8 +98,21 @@ export function WorkflowBoard({
       currentUserRole={normalizedRole}
       onStartAction={onStartAction}
       dateString={dateString}
+      refreshKey={refreshKey}
     >
       <div className="space-y-3 md:space-y-4">
+        {/* Refresh button */}
+        <div className="flex justify-end">
+          <button 
+            onClick={handleRefresh}
+            className="text-sm text-blue-600 hover:text-blue-800 transition-colors duration-200 flex items-center space-x-1"
+            title="Refresh workflow data"
+          >
+            <span>🔄</span>
+            <span>Refresh</span>
+          </button>
+        </div>
+
         {/* Loading indicator */}
         {isLoading ? (
           <div className="flex items-center justify-center py-8">

@@ -14,6 +14,7 @@ export const WorkflowProvider = ({
   currentUserRole,
   onStartAction,
   dateString,
+  refreshKey,
 }) => {
   // State for loading status
   const [loading, setLoading] = useState(true);
@@ -183,7 +184,7 @@ export const WorkflowProvider = ({
     };
 
     fetchWorkflowTasks();
-  }, [dateString]);
+  }, [dateString, refreshKey]);
 
   // Load music links for the current service date
   useEffect(() => {
