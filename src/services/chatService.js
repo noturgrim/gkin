@@ -41,7 +41,7 @@ class ChatService {
       }
 
       // Connect to the socket server with a unique client ID
-      console.log('Connecting to socket server at:', env.API_URL.replace('/api', ''));
+      // console.log('Connecting to socket server at:', env.API_URL.replace('/api', ''));
       
       try {
         this.socket = io(env.API_URL.replace('/api', ''), {
@@ -63,7 +63,7 @@ class ChatService {
       // Set up event listeners
       if (this.socket) {
         this.socket.on('connect', () => {
-          console.log('Socket connected:', this.socket.id);
+          // console.log('Socket connected:', this.socket.id);
           this.connected = true;
           
           // Rooms are now auto-joined on the server side
@@ -78,7 +78,7 @@ class ChatService {
         this.socket.on('connect_error', (error) => {
           console.warn('Socket connection error:', error.message);
           // We'll continue without WebSockets - the app can still function with REST API
-          console.log('Continuing without WebSocket connection');
+          // console.log('Continuing without WebSocket connection');
           this.connected = false;
           resolve(null); // Resolve with null to indicate no socket connection
         });
@@ -89,7 +89,7 @@ class ChatService {
 
       if (this.socket) {
         this.socket.on('disconnect', () => {
-          console.log('Socket disconnected');
+          // console.log('Socket disconnected');
           this.connected = false;
           
           // Notify listeners

@@ -71,7 +71,7 @@ const apiRequest = async (
     let result;
     try {
       const text = await response.text();
-      console.log(`Raw API response from ${url}:`, text.substring(0, 500));
+      // console.log(`Raw API response from ${url}:`, text.substring(0, 500));
 
       try {
         result = JSON.parse(text);
@@ -92,7 +92,7 @@ const apiRequest = async (
         );
         // If it's an auth endpoint, don't redirect
         if (!endpoint.includes("/auth/")) {
-          console.log("Redirecting to login due to authentication error");
+          // console.log("Redirecting to login due to authentication error");
           // Clear user data
           localStorage.removeItem("currentUser");
           // Use timeout to avoid state updates during render

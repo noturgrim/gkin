@@ -10,7 +10,7 @@ export function WeekSelector({ selectedWeek, onWeekChange, customWeeks }) {
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
 
-  console.log('WeekSelector initialized with month:', currentMonth, 'year:', currentYear);
+  // console.log('WeekSelector initialized with month:', currentMonth, 'year:', currentYear);
 
   // Generate comprehensive Sunday list using existing date-utils and extending it
   const generateComprehensiveSundays = () => {
@@ -65,18 +65,18 @@ export function WeekSelector({ selectedWeek, onWeekChange, customWeeks }) {
 
   // Initialize all Sundays
   useEffect(() => {
-    console.log('useEffect called with customWeeks:', customWeeks);
+    // console.log('useEffect called with customWeeks:', customWeeks);
     
     if (customWeeks && customWeeks.length > 0) {
-      console.log('Using custom weeks:', customWeeks.length);
+      // console.log('Using custom weeks:', customWeeks.length);
       setAllSundays(customWeeks);
     } else {
-      console.log('Generating comprehensive Sundays...');
+      // console.log('Generating comprehensive Sundays...');
       const comprehensiveSundays = generateComprehensiveSundays();
       
-      console.log('Total Generated Sundays:', comprehensiveSundays.length);
-      console.log('First 5 Sundays:', comprehensiveSundays.slice(0, 5).map(s => s.dateString));
-      console.log('Last 5 Sundays:', comprehensiveSundays.slice(-5).map(s => s.dateString));
+      // console.log('Total Generated Sundays:', comprehensiveSundays.length);
+      // console.log('First 5 Sundays:', comprehensiveSundays.slice(0, 5).map(s => s.dateString));
+      // console.log('Last 5 Sundays:', comprehensiveSundays.slice(-5).map(s => s.dateString));
       
       // Debug: Show what months we actually generated
       const monthCounts = {};
@@ -85,7 +85,7 @@ export function WeekSelector({ selectedWeek, onWeekChange, customWeeks }) {
         const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
         monthCounts[monthKey] = (monthCounts[monthKey] || 0) + 1;
       });
-      console.log('Sundays by month:', monthCounts);
+      // console.log('Sundays by month:', monthCounts);
       
       setAllSundays(comprehensiveSundays);
     }
@@ -114,16 +114,16 @@ export function WeekSelector({ selectedWeek, onWeekChange, customWeeks }) {
       return sundayMonth === currentMonth && sundayYear === currentYear;
     });
     
-    console.log(`Current month: ${currentMonth}, year: ${currentYear}`);
-    console.log('All Sundays:', allSundays.length);
-    console.log('Sample all Sundays:', allSundays.slice(0, 3).map(s => ({
-      dateString: s.dateString,
-      month: new Date(s.dateString + 'T00:00:00').getMonth(),
-      year: new Date(s.dateString + 'T00:00:00').getFullYear()
-    })));
-    console.log('ALL Sunday dates:', allSundays.map(s => s.dateString));
-    console.log('Filtered Sundays for current month:', filtered.length);
-    console.log('Sample filtered:', filtered.slice(0, 3));
+    // console.log(`Current month: ${currentMonth}, year: ${currentYear}`);
+    // console.log('All Sundays:', allSundays.length);
+    // console.log('Sample all Sundays:', allSundays.slice(0, 3).map(s => ({
+    //   dateString: s.dateString,
+    //   month: new Date(s.dateString + 'T00:00:00').getMonth(),
+    //   year: new Date(s.dateString + 'T00:00:00').getFullYear()
+    // })));
+    // console.log('ALL Sunday dates:', allSundays.map(s => s.dateString));
+    // console.log('Filtered Sundays for current month:', filtered.length);
+    // console.log('Sample filtered:', filtered.slice(0, 3));
     
     return filtered;
   };

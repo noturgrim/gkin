@@ -1,5 +1,4 @@
 const db = require("../config/db");
-const { emitActivityUpdate } = require("../index");
 
 /**
  * Log an activity to the activity_log table
@@ -33,10 +32,8 @@ const logActivity = async (client, activity) => {
     // Get the created activity with all fields
     const createdActivity = result.rows[0];
 
-    // Emit the activity via WebSocket for real-time updates
-    if (createdActivity) {
-      emitActivityUpdate(createdActivity);
-    }
+    // Activity updates are handled via polling on the frontend
+    // No need for real-time WebSocket emission
 
     return createdActivity;
   } catch (error) {

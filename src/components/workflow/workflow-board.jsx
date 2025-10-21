@@ -22,9 +22,9 @@ export function WorkflowBoard({
 
   useEffect(() => {
     // For debugging purposes only
-    console.log("Current user role object:", currentUserRole);
-    console.log("Current user role (normalized):", normalizedRole);
-    console.log("Current date string:", dateString);
+    // console.log("Current user role object:", currentUserRole);
+    // console.log("Current user role (normalized):", normalizedRole);
+    // console.log("Current date string:", dateString);
   }, [currentUserRole, normalizedRole, dateString]);
 
   // Show loading state when date changes
