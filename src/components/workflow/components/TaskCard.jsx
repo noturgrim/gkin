@@ -122,8 +122,9 @@ export const TaskCard = ({ task, categoryId }) => {
     
     if (sendStatus.hasSent) {
       return {
-        text: `Last sent by ${sendStatus.lastSentBy}`,
+        text: recipientType === 'pastor' ? "Send to Pastor" : "Send to Music",
         isSent: true,
+        subtitle: `Last sent by ${sendStatus.lastSentBy}`,
         className: "" // Remove the disabling class
       };
     }
@@ -131,6 +132,7 @@ export const TaskCard = ({ task, categoryId }) => {
     return {
       text: recipientType === 'pastor' ? "Send to Pastor" : "Send to Music",
       isSent: false,
+      subtitle: null,
       className: ""
     };
   };
@@ -392,7 +394,7 @@ export const TaskCard = ({ task, categoryId }) => {
                     !hasDocumentLink(task.id)
                       ? "opacity-50 cursor-not-allowed"
                       : getSendButtonInfo(task.id, 'pastor').className
-                  }`}
+                  } ${getSendButtonInfo(task.id, 'pastor').isSent ? 'relative' : ''}`}
                   onClick={() => {
                     if (hasDocumentLink(task.id)) {
                       handleSendToPastor(task.id);
@@ -402,11 +404,19 @@ export const TaskCard = ({ task, categoryId }) => {
                   title={
                     !hasDocumentLink(task.id)
                       ? "No document link available"
-                      : getSendButtonInfo(task.id, 'pastor').text
+                      : getSendButtonInfo(task.id, 'pastor').subtitle || getSendButtonInfo(task.id, 'pastor').text
                   }
                 >
                   <ArrowRight className="w-3 h-3 mr-1" />
-                  {getSendButtonInfo(task.id, 'pastor').text}
+                  <div className="flex flex-col items-center leading-tight">
+                    <span className="text-xs font-medium">{getSendButtonInfo(task.id, 'pastor').text}</span>
+                    {getSendButtonInfo(task.id, 'pastor').subtitle && (
+                      <span className="text-[10px] opacity-75">{getSendButtonInfo(task.id, 'pastor').subtitle}</span>
+                    )}
+                  </div>
+                  {getSendButtonInfo(task.id, 'pastor').isSent && (
+                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-400 rounded-full"></div>
+                  )}
                 </Button>
 
                 <Button
@@ -415,7 +425,7 @@ export const TaskCard = ({ task, categoryId }) => {
                     !hasDocumentLink(task.id)
                       ? "opacity-50 cursor-not-allowed"
                       : getSendButtonInfo(task.id, 'music').className
-                  }`}
+                  } ${getSendButtonInfo(task.id, 'music').isSent ? 'relative' : ''}`}
                   onClick={() => {
                     if (hasDocumentLink(task.id)) {
                       handleSendToMusic(task.id);
@@ -425,11 +435,19 @@ export const TaskCard = ({ task, categoryId }) => {
                   title={
                     !hasDocumentLink(task.id)
                       ? "No document link available"
-                      : getSendButtonInfo(task.id, 'music').text
+                      : getSendButtonInfo(task.id, 'music').subtitle || getSendButtonInfo(task.id, 'music').text
                   }
                 >
                   <Music className="w-3 h-3 mr-1" />
-                  {getSendButtonInfo(task.id, 'music').text}
+                  <div className="flex flex-col items-center leading-tight">
+                    <span className="text-xs font-medium">{getSendButtonInfo(task.id, 'music').text}</span>
+                    {getSendButtonInfo(task.id, 'music').subtitle && (
+                      <span className="text-[10px] opacity-75">{getSendButtonInfo(task.id, 'music').subtitle}</span>
+                    )}
+                  </div>
+                  {getSendButtonInfo(task.id, 'music').isSent && (
+                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-400 rounded-full"></div>
+                  )}
                 </Button>
               </div>
             )}
@@ -456,7 +474,7 @@ export const TaskCard = ({ task, categoryId }) => {
                             !hasDocumentLink(task.id)
                               ? "opacity-50 cursor-not-allowed"
                               : getSendButtonInfo(task.id, 'pastor').className
-                          }`}
+                          } ${getSendButtonInfo(task.id, 'pastor').isSent ? 'relative' : ''}`}
                           onClick={() => {
                             if (hasDocumentLink(task.id)) {
                               handleSendToPastor(task.id);
@@ -466,11 +484,19 @@ export const TaskCard = ({ task, categoryId }) => {
                           title={
                             !hasDocumentLink(task.id)
                               ? "No document link available"
-                              : getSendButtonInfo(task.id, 'pastor').text
+                              : getSendButtonInfo(task.id, 'pastor').subtitle || getSendButtonInfo(task.id, 'pastor').text
                           }
                         >
                           <ArrowRight className="w-3 h-3 mr-1" />
-                          {getSendButtonInfo(task.id, 'pastor').text}
+                          <div className="flex flex-col items-center leading-tight">
+                            <span className="text-xs font-medium">{getSendButtonInfo(task.id, 'pastor').text}</span>
+                            {getSendButtonInfo(task.id, 'pastor').subtitle && (
+                              <span className="text-[10px] opacity-75">{getSendButtonInfo(task.id, 'pastor').subtitle}</span>
+                            )}
+                          </div>
+                          {getSendButtonInfo(task.id, 'pastor').isSent && (
+                            <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-400 rounded-full"></div>
+                          )}
                         </Button>
 
                         <Button
@@ -479,7 +505,7 @@ export const TaskCard = ({ task, categoryId }) => {
                             !hasDocumentLink(task.id)
                               ? "opacity-50 cursor-not-allowed"
                               : getSendButtonInfo(task.id, 'music').className
-                          }`}
+                          } ${getSendButtonInfo(task.id, 'music').isSent ? 'relative' : ''}`}
                           onClick={() => {
                             if (hasDocumentLink(task.id)) {
                               handleSendToMusic(task.id);
@@ -489,11 +515,19 @@ export const TaskCard = ({ task, categoryId }) => {
                           title={
                             !hasDocumentLink(task.id)
                               ? "No document link available"
-                              : getSendButtonInfo(task.id, 'music').text
+                              : getSendButtonInfo(task.id, 'music').subtitle || getSendButtonInfo(task.id, 'music').text
                           }
                         >
                           <Music className="w-3 h-3 mr-1" />
-                          {getSendButtonInfo(task.id, 'music').text}
+                          <div className="flex flex-col items-center leading-tight">
+                            <span className="text-xs font-medium">{getSendButtonInfo(task.id, 'music').text}</span>
+                            {getSendButtonInfo(task.id, 'music').subtitle && (
+                              <span className="text-[10px] opacity-75">{getSendButtonInfo(task.id, 'music').subtitle}</span>
+                            )}
+                          </div>
+                          {getSendButtonInfo(task.id, 'music').isSent && (
+                            <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-400 rounded-full"></div>
+                          )}
                         </Button>
                       </>
                     )}
