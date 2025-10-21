@@ -22,21 +22,16 @@ export const AssignmentsProvider = ({ children }) => {
 
   // Load assignments from backend on component mount
   useEffect(() => {
-    // Only load assignments if user is authenticated
+    // Check authentication and load assignments
     const checkAuthAndLoad = () => {
-      const user = localStorage.getItem('currentUser');
-      if (user) {
-        try {
-          const parsedUser = JSON.parse(user);
-          if (parsedUser.token) {
-            loadAssignments();
-          }
-        } catch (err) {
-          console.error('Error parsing user data:', err);
-        }
+      if (isAuthenticated()) {
+        loadAssignments();
+      } else {
+        setLoading(false); // Stop loading if not authenticated
       }
     };
 
+    // Initial check
     checkAuthAndLoad();
 
     // Listen for storage changes (when user logs in/out)
@@ -48,17 +43,38 @@ export const AssignmentsProvider = ({ children }) => {
         } else {
           // User logged out
           setAssignments([]);
+          setLoading(false);
           setError(null);
         }
       }
     };
 
+    // Listen for a custom event that we can trigger from the same tab
+    const handleAuthChange = () => {
+      checkAuthAndLoad();
+    };
+
     window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('authStateChanged', handleAuthChange);
     
     return () => {
       window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('authStateChanged', handleAuthChange);
     };
   }, []);
+
+  // Separate effect to handle race condition after login
+  useEffect(() => {
+    if (assignments.length === 0 && !loading && isAuthenticated()) {
+      const delayedCheck = setTimeout(() => {
+        if (isAuthenticated() && assignments.length === 0) {
+          loadAssignments();
+        }
+      }, 500);
+
+      return () => clearTimeout(delayedCheck);
+    }
+  }, [assignments.length, loading]);
 
   // Helper function to check if user is authenticated
   const isAuthenticated = () => {
@@ -77,7 +93,7 @@ export const AssignmentsProvider = ({ children }) => {
   const loadAssignments = async () => {
     // Don't attempt to load if not authenticated
     if (!isAuthenticated()) {
-      console.log('User not authenticated, skipping assignments load');
+      setLoading(false);
       return;
     }
 

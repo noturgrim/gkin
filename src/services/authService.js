@@ -22,6 +22,9 @@ const authService = {
       // Save user data to localStorage
       localStorage.setItem('currentUser', JSON.stringify(response));
       
+      // Dispatch custom event to notify components of auth state change
+      window.dispatchEvent(new CustomEvent('authStateChanged'));
+      
       return response;
     } catch (error) {
       console.error('Login error:', error);
