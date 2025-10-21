@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Clock, User, Mail, Eye, EyeOff, ChevronLeft, ChevronRight } from "lucide-react";
 import emailHistoryService from "../services/emailHistoryService";
 
-export function EmailHistory({ documentType, serviceDate, isOpen }) {
+export function EmailHistory({ documentType, serviceDate, recipientType, isOpen }) {
   const [emails, setEmails] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -19,23 +19,27 @@ export function EmailHistory({ documentType, serviceDate, isOpen }) {
     if (isOpen && documentType && showHistory) {
       fetchEmailHistory(1); // Always start from page 1 when opening
     }
-  }, [isOpen, documentType, serviceDate, showHistory]);
+  }, [isOpen, documentType, serviceDate, recipientType, showHistory]);
 
-  // Reset pagination when documentType or serviceDate changes
+  // Reset pagination when documentType, serviceDate, or recipientType changes
   useEffect(() => {
     setCurrentPage(1);
     setEmails([]);
     setTotalEmails(0);
     setHasMore(false);
-  }, [documentType, serviceDate]);
+  }, [documentType, serviceDate, recipientType]);
 
   const fetchEmailHistory = async (page = 1) => {
     setLoading(true);
     setError(null);
     
     try {
-      // Use the simple service with service date filtering instead of pagination
-      const response = await emailHistoryService.getEmailHistoryByDocumentSimple(documentType, serviceDate);
+      // Use the simple service with service date and recipient type filtering instead of pagination
+      const response = await emailHistoryService.getEmailHistoryByDocumentSimple(
+        documentType, 
+        serviceDate, 
+        recipientType
+      );
       
       // The simple service returns { data: { emails: [...] } }
       const emailData = response?.data?.emails || [];

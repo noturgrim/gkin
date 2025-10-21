@@ -138,7 +138,7 @@ const getEmailHistory = async (req, res) => {
 const getEmailHistoryByDocument = async (req, res) => {
   try {
     const { documentType } = req.params;
-    const { serviceDate } = req.query;
+    const { serviceDate, recipientType } = req.query;
 
     // Validate documentType parameter
     if (!documentType) {
@@ -165,11 +165,20 @@ const getEmailHistoryByDocument = async (req, res) => {
     `;
 
     const queryParams = [documentType];
+    let paramIndex = 2;
 
     // Add service date filter if provided
     if (serviceDate) {
-      query += ` AND service_date = $2`;
+      query += ` AND service_date = $${paramIndex}`;
       queryParams.push(serviceDate);
+      paramIndex++;
+    }
+
+    // Add recipient type filter if provided
+    if (recipientType) {
+      query += ` AND recipient_type = $${paramIndex}`;
+      queryParams.push(recipientType);
+      paramIndex++;
     }
 
     query += ` ORDER BY sent_at DESC`;
@@ -180,6 +189,7 @@ const getEmailHistoryByDocument = async (req, res) => {
     res.json({
       documentType,
       serviceDate: serviceDate || null,
+      recipientType: recipientType || null,
       emails: result.rows || []
     });
   } catch (error) {
@@ -191,6 +201,7 @@ const getEmailHistoryByDocument = async (req, res) => {
       return res.json({
         documentType: req.params.documentType,
         serviceDate: req.query.serviceDate || null,
+        recipientType: req.query.recipientType || null,
         emails: []
       });
     }

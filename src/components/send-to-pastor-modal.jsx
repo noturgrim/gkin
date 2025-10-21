@@ -282,7 +282,12 @@ export function SendToPastorModal({ isOpen, onClose, onSubmit, documentType }) {
               </div>
 
               {/* Email History */}
-              <EmailHistory documentType={documentType} serviceDate={dateString} isOpen={isOpen} />
+              <EmailHistory 
+                documentType={documentType} 
+                serviceDate={dateString} 
+                recipientType="pastor"
+                isOpen={isOpen} 
+              />
             </div>
           </form>
         </div>

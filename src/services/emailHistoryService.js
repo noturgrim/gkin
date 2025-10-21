@@ -94,27 +94,35 @@ const emailHistoryService = {
    * Get email history for a specific document type (simple version, no pagination)
    * @param {string} documentType - The document type to filter by
    * @param {string} [serviceDate] - Optional service date to filter by
+   * @param {string} [recipientType] - Optional recipient type to filter by ('pastor', 'music', etc.)
    * @returns {Promise} Promise with email history data for the document
    */
-  getEmailHistoryByDocumentSimple: async (documentType, serviceDate = null) => {
+  getEmailHistoryByDocumentSimple: async (documentType, serviceDate = null, recipientType = null) => {
     try {
       let url = `/email-history/document/${documentType}`;
       
-      // Add service date as query parameter if provided
+      // Add query parameters if provided
+      const queryParams = new URLSearchParams();
       if (serviceDate) {
-        const queryParams = new URLSearchParams();
         queryParams.append('serviceDate', serviceDate);
+      }
+      if (recipientType) {
+        queryParams.append('recipientType', recipientType);
+      }
+      
+      if (queryParams.toString()) {
         url += `?${queryParams.toString()}`;
       }
       
       const response = await api.get(url);
       
       // The api.get() returns the parsed JSON directly, not wrapped in { data: ... }
-      // So response should be: { documentType: "concept", emails: [...], serviceDate?: "..." }
+      // So response should be: { documentType: "concept", emails: [...], serviceDate?: "...", recipientType?: "..." }
       const result = {
         data: {
           documentType: response.documentType || documentType,
           serviceDate: response.serviceDate || serviceDate,
+          recipientType: response.recipientType || recipientType,
           emails: response.emails || []
         }
       };
@@ -128,6 +136,7 @@ const emailHistoryService = {
           data: {
             documentType,
             serviceDate,
+            recipientType,
             emails: []
           }
         };

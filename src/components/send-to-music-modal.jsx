@@ -283,7 +283,12 @@ export function SendToMusicModal({ isOpen, onClose, onSubmit, documentType }) {
               </div>
 
               {/* Email History */}
-              <EmailHistory documentType={documentType} serviceDate={dateString} isOpen={isOpen} />
+              <EmailHistory 
+                documentType={documentType} 
+                serviceDate={dateString} 
+                recipientType="music"
+                isOpen={isOpen} 
+              />
             </div>
           </form>
         </div>
