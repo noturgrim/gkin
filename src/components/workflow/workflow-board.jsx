@@ -54,16 +54,6 @@ export function WorkflowBoard({
           </div>
         ) : (
           <>
-            {/* Date display */}
-            <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 mb-4">
-              <h3 className="text-sm font-medium text-blue-700">
-                Workflow for:{" "}
-                <span className="font-bold">
-                  {dateString || "No date selected"}
-                </span>
-              </h3>
-            </div>
-
             {/* Workflow categories */}
             {workflowCategories.map((category) => (
               <CategorySection key={category.id} category={category} />

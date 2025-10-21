@@ -180,7 +180,12 @@ function Dashboard() {
             <Card>
               <CardHeader className="p-4 md:p-6">
                 <CardTitle className="text-lg md:text-xl">
-                  Workflow Progress
+                  Workflow Progress for {selectedWeek ? new Date(selectedWeek).toLocaleDateString('en-US', { 
+                    weekday: 'long',
+                    month: 'short', 
+                    day: 'numeric', 
+                    year: 'numeric' 
+                  }) : 'No date selected'} service
                 </CardTitle>
                 <CardDescription className="text-xs md:text-sm">
                   Track document progress through all stages
