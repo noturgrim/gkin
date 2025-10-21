@@ -139,8 +139,8 @@ function Dashboard() {
     <div className="min-h-screen bg-gray-50 p-3 md:p-6">
       <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
         <Header
-          title="Liturgy Workflow"
-          subtitle="Manage document workflow for weekly services"
+          title="GKIN RWDH Dienst Dashboard"
+          subtitle="Manage tasks for every service"
           user={user}
           onLogout={handleLogout}
           showGoogleDrive={true}
