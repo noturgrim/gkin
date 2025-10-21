@@ -161,21 +161,27 @@ const getAllWorkflowTasks = async (req, res) => {
     const result = await db.query(
       `SELECT 
         sa.date_string,
-        json_object_agg(
-          wt.task_id, 
-          json_build_object(
-            'status', wt.status,
-            'documentLink', wt.document_link,
-            'assignedTo', wt.assigned_to,
-            'completedBy', CASE WHEN u.id IS NOT NULL THEN 
-              json_build_object('name', u.username, 'avatar', u.avatar_url)
-            ELSE NULL END
+        COALESCE(
+          (SELECT json_object_agg(
+            wt.task_id, 
+            json_build_object(
+              'status', wt.status,
+              'documentLink', wt.document_link,
+              'assignedTo', wt.assigned_to,
+              'updatedAt', wt.updated_at,
+              'completedBy', CASE WHEN u.id IS NOT NULL THEN 
+                json_build_object('name', u.username, 'avatar', u.avatar_url)
+              ELSE NULL END
+            )
           )
+          FROM workflow_tasks wt
+          LEFT JOIN users u ON wt.completed_by = u.id
+          WHERE wt.service_assignment_id = sa.id
+          AND wt.task_id IS NOT NULL
+          GROUP BY sa.id),
+          '{}'::json
         ) as tasks
       FROM service_assignments sa
-      LEFT JOIN workflow_tasks wt ON sa.id = wt.service_assignment_id
-      LEFT JOIN users u ON wt.completed_by = u.id
-      GROUP BY sa.date_string
       ORDER BY sa.date_string`
     );
 

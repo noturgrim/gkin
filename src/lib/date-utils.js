@@ -1,6 +1,45 @@
 // src/lib/date-utils.js
 // Shared date utility functions to ensure consistent dates across components
 
+/**
+ * Format a date as a relative time string (e.g. "2 hours ago")
+ * @param {Date} date - The date to format
+ * @returns {string} Formatted relative time string
+ */
+export function formatDistanceToNow(date) {
+  const now = new Date();
+  const diffInSeconds = Math.floor((now - date) / 1000);
+
+  // Less than a minute
+  if (diffInSeconds < 60) {
+    return "just now";
+  }
+
+  // Less than an hour
+  if (diffInSeconds < 3600) {
+    const minutes = Math.floor(diffInSeconds / 60);
+    return `${minutes} ${minutes === 1 ? "minute" : "minutes"} ago`;
+  }
+
+  // Less than a day
+  if (diffInSeconds < 86400) {
+    const hours = Math.floor(diffInSeconds / 3600);
+    return `${hours} ${hours === 1 ? "hour" : "hours"} ago`;
+  }
+
+  // Less than a week
+  if (diffInSeconds < 604800) {
+    const days = Math.floor(diffInSeconds / 86400);
+    return `${days} ${days === 1 ? "day" : "days"} ago`;
+  }
+
+  // Format as date for older items
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
+
 // Get the next N Sundays starting from today or the current/next Sunday
 export function getUpcomingSundays(count = 8) {
   const sundays = [];
@@ -49,7 +88,9 @@ export function getUpcomingSundays(count = 8) {
     sundays.push({
       date: sunday,
       // Format date as YYYY-MM-DD without timezone conversion
-      dateString: `${sunday.getFullYear()}-${String(sunday.getMonth() + 1).padStart(2, '0')}-${String(sunday.getDate()).padStart(2, '0')}`,
+      dateString: `${sunday.getFullYear()}-${String(
+        sunday.getMonth() + 1
+      ).padStart(2, "0")}-${String(sunday.getDate()).padStart(2, "0")}`,
       title: sunday.toLocaleDateString("en-US", {
         month: "long",
         day: "numeric",
