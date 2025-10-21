@@ -9,7 +9,7 @@ import { EmailHistory } from "./EmailHistory";
 
 export function SendToMusicModal({ isOpen, onClose, onSubmit, documentType }) {
   // Import the WorkflowContext to get the actual document link
-  const { completedTasks, dateString } = useWorkflow();
+  const { completedTasks, dateString, triggerEmailStatusRefresh } = useWorkflow();
 
   // Default values
   const documentTypes = {
@@ -92,6 +92,9 @@ export function SendToMusicModal({ isOpen, onClose, onSubmit, documentType }) {
 
       // Show success feedback
       setFeedbackStatus("success");
+      
+      // Trigger email status refresh to update button states
+      triggerEmailStatusRefresh();
       
       // Create success message including CC recipients if any
       let successMessage = `Email sent to ${formValues.email}`;

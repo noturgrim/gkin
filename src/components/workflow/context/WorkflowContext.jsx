@@ -20,6 +20,9 @@ export const WorkflowProvider = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // State for triggering email status refresh
+  const [emailStatusRefreshTrigger, setEmailStatusRefreshTrigger] = useState(0);
+
   // State for QR code status
   const [qrCodeStatus, setQrCodeStatus] = useState("pending");
 
@@ -384,6 +387,11 @@ export const WorkflowProvider = ({
     return "pending";
   };
 
+  // Function to trigger email status refresh
+  const triggerEmailStatusRefresh = () => {
+    setEmailStatusRefreshTrigger(prev => prev + 1);
+  };
+
   // Check if the current user can work on this category
   const isUserCategory = (roleStr) => {
     if (!roleStr || !currentUserRole) return false;
@@ -475,6 +483,8 @@ export const WorkflowProvider = ({
     service,
     currentUserRole,
     dateString,
+    emailStatusRefreshTrigger,
+    triggerEmailStatusRefresh,
   };
 
   return (

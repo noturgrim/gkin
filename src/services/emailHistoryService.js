@@ -91,6 +91,47 @@ const emailHistoryService = {
   },
 
   /**
+   * Check if emails have been sent for a specific document type and service date
+   * @param {string} documentType - The document type to check
+   * @param {string} serviceDate - The service date to check
+   * @param {string} recipientType - The recipient type to check ('pastor', 'music', etc.)
+   * @returns {Promise} Promise with send status data
+   */
+  getEmailSendStatus: async (documentType, serviceDate, recipientType) => {
+    try {
+      const response = await emailHistoryService.getEmailHistoryByDocumentSimple(
+        documentType, 
+        serviceDate, 
+        recipientType
+      );
+      
+      const emails = response?.data?.emails || [];
+      
+      // Find the most recent successful email
+      const lastSentEmail = emails.find(email => email.status === 'sent');
+      
+      return {
+        data: {
+          hasSent: !!lastSentEmail,
+          lastSentBy: lastSentEmail?.sender_username || null,
+          lastSentAt: lastSentEmail?.sent_at || null,
+          emailCount: emails.filter(email => email.status === 'sent').length
+        }
+      };
+    } catch (error) {
+      console.error(`Error checking email send status for ${documentType}:`, error);
+      return {
+        data: {
+          hasSent: false,
+          lastSentBy: null,
+          lastSentAt: null,
+          emailCount: 0
+        }
+      };
+    }
+  },
+
+  /**
    * Get email history for a specific document type (simple version, no pagination)
    * @param {string} documentType - The document type to filter by
    * @param {string} [serviceDate] - Optional service date to filter by
