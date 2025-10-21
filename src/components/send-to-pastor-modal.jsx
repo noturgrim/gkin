@@ -21,6 +21,7 @@ export function SendToPastorModal({ isOpen, onClose, onSubmit, documentType }) {
   // State for form values
   const [formValues, setFormValues] = useState({
     email: "user2003@andrewscreem.com", // Default pastor email (using your personal email)
+    cc: "", // CC field
     subject: `[GKIN] ${documentTitle} for Review`,
     message: `Dear Pastor,\n\nPlease find attached the ${documentTitle} for the upcoming service.\n\nKind regards,\nLiturgy Team`,
   });
@@ -35,6 +36,7 @@ export function SendToPastorModal({ isOpen, onClose, onSubmit, documentType }) {
     if (isOpen) {
       setFormValues({
         email: "user2003@andrewscreem.com",
+        cc: "",
         subject: `[GKIN] ${documentTitle} for Review`,
         message: `Dear Pastor,\n\nPlease find attached the ${documentTitle} for the upcoming service.\n\nKind regards,\nLiturgy Team`,
       });
@@ -129,28 +131,34 @@ export function SendToPastorModal({ isOpen, onClose, onSubmit, documentType }) {
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto"
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
       onClick={handleBackdropClick}
     >
       <div
-        className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 my-8 animate-fadeIn"
-        style={{ maxHeight: "calc(100vh - 4rem)" }}
+        className="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-auto border border-gray-200 flex flex-col"
+        style={{ maxHeight: "90vh" }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-800">
-            <Mail className="w-5 h-5 text-blue-600" />
-            Send {documentTitle} to Pastor
+        {/* Header - Fixed */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-blue-50 rounded-t-xl flex-shrink-0">
+          <h2 className="text-xl font-semibold flex items-center gap-3 text-gray-800">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Mail className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <div className="text-lg">Send {documentTitle} to Pastor</div>
+              <div className="text-sm text-gray-500 font-normal">Share document for review</div>
+            </div>
           </h2>
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+            className="w-10 h-10 flex items-center justify-center rounded-full text-gray-400 hover:bg-white hover:text-gray-600 transition-colors"
             aria-label="Close"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
+              width="20"
+              height="20"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -164,107 +172,142 @@ export function SendToPastorModal({ isOpen, onClose, onSubmit, documentType }) {
           </button>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="p-4 overflow-y-auto"
-          style={{ maxHeight: "calc(100vh - 8rem)" }}
-        >
-          <div className="space-y-4">
-            <div className="grid gap-2">
-              <Label htmlFor="email" className="text-gray-700">
-                Pastor's Email
-              </Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                value={formValues.email}
-                onChange={handleChange}
-                className="border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                required
-              />
-            </div>
+        {/* Scrollable Content */}
+        <div className="overflow-y-auto flex-1">
+          <form onSubmit={handleSubmit} className="p-6">
+            <div className="space-y-6">
+              {/* Email Fields Row */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <Mail className="w-4 h-4" />
+                    Pastor's Email
+                  </Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={formValues.email}
+                    onChange={handleChange}
+                    className="h-11 border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-200"
+                    required
+                  />
+                </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="subject" className="text-gray-700">
-                Subject
-              </Label>
-              <Input
-                id="subject"
-                name="subject"
-                value={formValues.subject}
-                onChange={handleChange}
-                className="border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                required
-              />
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cc" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                    </svg>
+                    CC (optional)
+                  </Label>
+                  <Input
+                    id="cc"
+                    name="cc"
+                    type="email"
+                    value={formValues.cc}
+                    onChange={handleChange}
+                    placeholder="Additional recipients (comma-separated)"
+                    className="h-11 border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-200"
+                  />
+                </div>
+              </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="message" className="text-gray-700">
-                Message
-              </Label>
-              <Textarea
-                id="message"
-                name="message"
-                rows={6}
-                value={formValues.message}
-                onChange={handleChange}
-                className="border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                required
-              />
-            </div>
+              {/* Subject Field */}
+              <div className="space-y-2">
+                <Label htmlFor="subject" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-1l-4 4z" />
+                  </svg>
+                  Subject
+                </Label>
+                <Input
+                  id="subject"
+                  name="subject"
+                  value={formValues.subject}
+                  onChange={handleChange}
+                  className="h-11 border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-200"
+                  required
+                />
+              </div>
 
-            {/* Document link preview */}
-            <div className="bg-blue-50 p-4 rounded-md border border-blue-200">
-              <h3 className="text-sm font-medium text-blue-800 mb-2">
-                Document Link (will be included in the email)
-              </h3>
-              <div className="text-blue-600 text-sm break-all bg-white p-2 rounded border border-blue-100">
-                {completedTasks[documentType]?.documentLink ||
-                  completedTasks?.documentLinks?.[documentType] ||
-                  (documentType === "concept"
-                    ? "https://docs.google.com/document/d/1example-concept-document/edit"
-                    : documentType === "final"
-                    ? "https://docs.google.com/document/d/1example-final-document/edit"
-                    : "https://docs.google.com/document/d/1example-document/edit")}
+              {/* Message Field */}
+              <div className="space-y-2">
+                <Label htmlFor="message" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Message
+                </Label>
+                <Textarea
+                  id="message"
+                  name="message"
+                  rows={6}
+                  value={formValues.message}
+                  onChange={handleChange}
+                  className="border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 resize-none"
+                  required
+                />
+              </div>
+
+              {/* Document Link Preview */}
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <h3 className="text-sm font-medium text-blue-800 mb-2 flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                  </svg>
+                  Document Link (will be included in the email)
+                </h3>
+                <div className="text-sm text-blue-700 break-all bg-white p-3 rounded border border-blue-200">
+                  {completedTasks[documentType]?.documentLink ||
+                    completedTasks?.documentLinks?.[documentType] ||
+                    (documentType === "concept"
+                      ? "https://docs.google.com/document/d/1example-concept-document/edit"
+                      : documentType === "final"
+                      ? "https://docs.google.com/document/d/1example-final-document/edit"
+                      : "https://docs.google.com/document/d/1example-document/edit")}
+                </div>
               </div>
             </div>
-          </div>
-        </form>
+          </form>
+        </div>
 
         {/* Feedback message area */}
         {feedbackStatus && (
-          <div
-            className={`mx-4 p-3 rounded-md ${
-              feedbackStatus === "success"
-                ? "bg-green-50 border border-green-200"
-                : "bg-red-50 border border-red-200"
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              {feedbackStatus === "success" ? (
-                <CheckCircle className="h-5 w-5 text-green-500" />
-              ) : (
-                <AlertCircle className="h-5 w-5 text-red-500" />
-              )}
-              <p
-                className={`text-sm ${
-                  feedbackStatus === "success"
-                    ? "text-green-700"
-                    : "text-red-700"
-                }`}
-              >
-                {feedbackMessage}
-              </p>
+          <div className="px-6 py-4 border-t border-gray-200">
+            <div
+              className={`p-4 rounded-lg border ${
+                feedbackStatus === "success"
+                  ? "bg-green-50 border-green-200"
+                  : "bg-red-50 border-red-200"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                {feedbackStatus === "success" ? (
+                  <CheckCircle className="h-5 w-5 text-green-500" />
+                ) : (
+                  <AlertCircle className="h-5 w-5 text-red-500" />
+                )}
+                <p
+                  className={`text-sm font-medium ${
+                    feedbackStatus === "success"
+                      ? "text-green-800"
+                      : "text-red-800"
+                  }`}
+                >
+                  {feedbackMessage}
+                </p>
+              </div>
             </div>
           </div>
         )}
 
-        <div className="flex justify-end gap-2 p-4 bg-gray-50 border-t border-gray-200 rounded-b-lg">
+        {/* Footer - Fixed */}
+        <div className="flex flex-col sm:flex-row justify-end gap-3 p-6 bg-gray-50 border-t border-gray-200 rounded-b-xl flex-shrink-0">
           <Button
             type="button"
             onClick={onClose}
-            className="bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+            className="order-2 sm:order-1 bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 h-11 px-6"
             disabled={isSubmitting}
           >
             Cancel
@@ -272,7 +315,7 @@ export function SendToPastorModal({ isOpen, onClose, onSubmit, documentType }) {
           <Button
             type="submit"
             onClick={handleSubmit}
-            className="bg-blue-600 hover:bg-blue-700 text-white min-w-[100px]"
+            className="order-1 sm:order-2 bg-blue-600 hover:bg-blue-700 text-white min-w-[120px] h-11 px-6"
             disabled={isSubmitting}
           >
             {isSubmitting ? (
@@ -281,7 +324,10 @@ export function SendToPastorModal({ isOpen, onClose, onSubmit, documentType }) {
                 <span>Sending...</span>
               </div>
             ) : (
-              "Send Email"
+              <div className="flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                <span>Send Email</span>
+              </div>
             )}
           </Button>
         </div>

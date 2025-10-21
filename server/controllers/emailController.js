@@ -7,7 +7,7 @@ const nodemailer = require("nodemailer");
  */
 const sendEmail = async (req, res) => {
   try {
-    const { to, subject, message, documentType, documentLink } = req.body;
+    const { to, cc, subject, message, documentType, documentLink } = req.body;
 
     if (!to || !subject || !message) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -34,13 +34,21 @@ const sendEmail = async (req, res) => {
 
     let info;
     try {
-      // Send the email
-      info = await transporter.sendMail({
+      // Prepare the email options
+      const mailOptions = {
         from: '"GKIN System" <user2003@andrewscreem.com>',
         to,
         subject,
         text: emailContent,
-      });
+      };
+
+      // Add CC if provided and not empty
+      if (cc && cc.trim()) {
+        mailOptions.cc = cc;
+      }
+
+      // Send the email
+      info = await transporter.sendMail(mailOptions);
 
       console.log("Email sent successfully: %s", info.messageId);
 
