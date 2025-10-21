@@ -219,6 +219,7 @@ export const useWorkflowHandlers = () => {
       // Make API call to send the email
       await emailService.sendEmail({
         to: emailData.email,
+        cc: emailData.cc,
         subject: emailData.subject,
         message: emailData.message,
         documentType: emailData.documentType,
@@ -274,6 +275,7 @@ export const useWorkflowHandlers = () => {
       // Make API call to send the email
       await emailService.sendEmail({
         to: emailData.email,
+        cc: emailData.cc,
         subject: emailData.subject,
         message: emailData.message,
         documentType: emailData.documentType,

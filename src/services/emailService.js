@@ -8,6 +8,7 @@ const emailService = {
    * Send an email
    * @param {Object} emailData - Email data
    * @param {string} emailData.to - Recipient email
+   * @param {string} [emailData.cc] - CC recipients (optional)
    * @param {string} emailData.subject - Email subject
    * @param {string} emailData.message - Email message
    * @param {string} emailData.documentType - Type of document being sent
