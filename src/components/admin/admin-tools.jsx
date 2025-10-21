@@ -166,74 +166,74 @@ export function AdminTools() {
       <div className="space-y-8">
         {/* Quick Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
+          <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-blue-600 text-sm font-medium">Total Messages</p>
-                <p className="text-2xl font-bold text-blue-900">
+                <p className="text-gray-600 text-sm font-medium">Total Messages</p>
+                <p className="text-2xl font-bold text-gray-900">
                   {stats ? stats.messageCount : '---'}
                 </p>
               </div>
-              <div className="bg-blue-200 p-3 rounded-lg">
-                <MessageSquare className="w-6 h-6 text-blue-700" />
+              <div className="bg-gray-100 p-3 rounded-lg">
+                <MessageSquare className="w-6 h-6 text-gray-600" />
               </div>
             </div>
           </div>
           
-          <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200">
+          <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-purple-600 text-sm font-medium">Total Mentions</p>
-                <p className="text-2xl font-bold text-purple-900">
+                <p className="text-gray-600 text-sm font-medium">Total Mentions</p>
+                <p className="text-2xl font-bold text-gray-900">
                   {stats ? stats.mentionCount : '---'}
                 </p>
               </div>
-              <div className="bg-purple-200 p-3 rounded-lg">
-                <AlertTriangle className="w-6 h-6 text-purple-700" />
+              <div className="bg-gray-100 p-3 rounded-lg">
+                <AlertTriangle className="w-6 h-6 text-gray-600" />
               </div>
             </div>
           </div>
           
-          <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border border-green-200">
+          <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-green-600 text-sm font-medium">Active Users</p>
-                <p className="text-2xl font-bold text-green-900">
+                <p className="text-gray-600 text-sm font-medium">Active Users</p>
+                <p className="text-2xl font-bold text-gray-900">
                   {stats && stats.topUsers ? stats.topUsers.length : '---'}
                 </p>
               </div>
-              <div className="bg-green-200 p-3 rounded-lg">
-                <Users className="w-6 h-6 text-green-700" />
+              <div className="bg-gray-100 p-3 rounded-lg">
+                <Users className="w-6 h-6 text-gray-600" />
               </div>
             </div>
           </div>
           
-          <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 border border-orange-200">
+          <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-orange-600 text-sm font-medium">System Status</p>
-                <p className="text-lg font-semibold text-orange-900">
+                <p className="text-gray-600 text-sm font-medium">System Status</p>
+                <p className="text-lg font-semibold text-gray-900">
                   {systemStatus?.server?.status === 'online' ? 'Online' : 
                    systemStatus?.server?.status ? 'Offline' : '---'}
                 </p>
               </div>
-              <div className="bg-orange-200 p-3 rounded-lg">
-                <Activity className="w-6 h-6 text-orange-700" />
+              <div className="bg-gray-100 p-3 rounded-lg">
+                <Activity className="w-6 h-6 text-gray-600" />
               </div>
             </div>
           </div>
         </div>
 
         {/* Message Management Section */}
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50">
-          <CardHeader className="bg-gradient-to-r from-red-50 to-red-100 border-b border-red-200">
-            <CardTitle className="text-xl font-bold text-red-800 flex items-center">
-              <div className="bg-red-200 p-2 rounded-lg mr-3">
-                <Trash2 className="w-5 h-5 text-red-700" />
+        <Card className="border-0 shadow-md bg-white">
+          <CardHeader className="bg-gray-50 border-b border-gray-200">
+            <CardTitle className="text-xl font-bold text-gray-900 flex items-center">
+              <div className="bg-red-100 p-2 rounded-lg mr-3">
+                <Trash2 className="w-5 h-5 text-red-600" />
               </div>
               Message Management
             </CardTitle>
-            <CardDescription className="text-red-700">
+            <CardDescription className="text-gray-600">
               Manage and clear system message data with advanced controls
             </CardDescription>
           </CardHeader>
@@ -331,15 +331,15 @@ export function AdminTools() {
         </Card>
 
         {/* Message Statistics Section */}
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-blue-50">
-          <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200">
-            <CardTitle className="text-xl font-bold text-blue-800 flex items-center">
-              <div className="bg-blue-200 p-2 rounded-lg mr-3">
-                <BarChart3 className="w-5 h-5 text-blue-700" />
+        <Card className="border-0 shadow-md bg-white">
+          <CardHeader className="bg-gray-50 border-b border-gray-200">
+            <CardTitle className="text-xl font-bold text-gray-900 flex items-center">
+              <div className="bg-blue-100 p-2 rounded-lg mr-3">
+                <BarChart3 className="w-5 h-5 text-blue-600" />
               </div>
               Message Analytics & Statistics
             </CardTitle>
-            <CardDescription className="text-blue-700">
+            <CardDescription className="text-gray-600">
               Comprehensive insights into system message data and user activity
             </CardDescription>
           </CardHeader>
@@ -350,16 +350,16 @@ export function AdminTools() {
                 variant="outline"
                 onClick={fetchMessageStats}
                 disabled={loading}
-                className="border-blue-300 hover:border-blue-400 hover:bg-blue-50 px-6 py-3 flex items-center gap-2"
+                className="border-gray-300 hover:border-gray-400 hover:bg-gray-50 px-6 py-3 flex items-center gap-2"
               >
                 {loading ? (
                   <>
-                    <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+                    <Loader2 className="h-5 w-5 animate-spin text-gray-600" />
                     <span>Loading Statistics...</span>
                   </>
                 ) : (
                   <>
-                    <RefreshCw className="h-5 w-5 text-blue-600" />
+                    <RefreshCw className="h-5 w-5 text-gray-600" />
                     <span>Refresh Analytics</span>
                   </>
                 )}
@@ -377,28 +377,28 @@ export function AdminTools() {
               <div className="space-y-6">
                 {/* Main Statistics Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="bg-white rounded-xl p-6 shadow-md border border-blue-100">
+                  <div className="bg-white rounded-lg p-6 shadow-md border border-gray-200">
                     <div className="text-center">
-                      <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <MessageSquare className="w-8 h-8 text-blue-600" />
+                      <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <MessageSquare className="w-8 h-8 text-gray-600" />
                       </div>
-                      <div className="text-4xl font-bold text-blue-700 mb-2">
+                      <div className="text-4xl font-bold text-gray-900 mb-2">
                         {stats.messageCount.toLocaleString()}
                       </div>
-                      <div className="text-blue-600 font-medium">Total Messages</div>
+                      <div className="text-gray-700 font-medium">Total Messages</div>
                       <div className="text-sm text-gray-500 mt-1">System-wide count</div>
                     </div>
                   </div>
                   
-                  <div className="bg-white rounded-xl p-6 shadow-md border border-purple-100">
+                  <div className="bg-white rounded-lg p-6 shadow-md border border-gray-200">
                     <div className="text-center">
-                      <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <AlertTriangle className="w-8 h-8 text-purple-600" />
+                      <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <AlertTriangle className="w-8 h-8 text-gray-600" />
                       </div>
-                      <div className="text-4xl font-bold text-purple-700 mb-2">
+                      <div className="text-4xl font-bold text-gray-900 mb-2">
                         {stats.mentionCount.toLocaleString()}
                       </div>
-                      <div className="text-purple-600 font-medium">Total Mentions</div>
+                      <div className="text-gray-700 font-medium">Total Mentions</div>
                       <div className="text-sm text-gray-500 mt-1">User notifications</div>
                     </div>
                   </div>
@@ -406,10 +406,10 @@ export function AdminTools() {
 
                 {/* Top Users Section */}
                 {stats.topUsers && stats.topUsers.length > 0 ? (
-                  <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
-                    <div className="bg-gradient-to-r from-gray-50 to-blue-50 px-6 py-4 border-b border-gray-200">
-                      <h4 className="text-lg font-bold text-gray-800 flex items-center">
-                        <TrendingUp className="w-5 h-5 mr-2 text-blue-600" />
+                  <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+                    <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                      <h4 className="text-lg font-bold text-gray-900 flex items-center">
+                        <TrendingUp className="w-5 h-5 mr-2 text-gray-600" />
                         Top Active Users
                       </h4>
                       <p className="text-sm text-gray-600 mt-1">Users ranked by message count</p>
@@ -427,13 +427,13 @@ export function AdminTools() {
                               key={index}
                               className={`flex items-center p-4 rounded-lg border ${
                                 isTopUser 
-                                  ? 'bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200' 
-                                  : 'bg-gray-50 border-gray-200'
+                                  ? 'bg-gray-50 border-gray-300' 
+                                  : 'bg-white border-gray-200'
                               }`}
                             >
                               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold mr-4 ${
                                 isTopUser 
-                                  ? 'bg-blue-600 text-white' 
+                                  ? 'bg-gray-700 text-white' 
                                   : 'bg-gray-400 text-white'
                               }`}>
                                 {index + 1}
@@ -445,7 +445,7 @@ export function AdminTools() {
                                     {user.username || "Unknown User"}
                                   </span>
                                   <span className={`font-bold ${
-                                    isTopUser ? 'text-blue-700' : 'text-gray-700'
+                                    isTopUser ? 'text-gray-900' : 'text-gray-700'
                                   }`}>
                                     {user.message_count.toLocaleString()}
                                   </span>
@@ -455,7 +455,7 @@ export function AdminTools() {
                                   <div
                                     className={`h-2 rounded-full transition-all duration-500 ${
                                       isTopUser 
-                                        ? 'bg-gradient-to-r from-blue-500 to-purple-500' 
+                                        ? 'bg-gray-600' 
                                         : 'bg-gray-400'
                                     }`}
                                     style={{ width: `${percentage}%` }}
@@ -469,7 +469,7 @@ export function AdminTools() {
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-white rounded-xl shadow-md border border-gray-200 p-8 text-center">
+                  <div className="bg-white rounded-lg shadow-md border border-gray-200 p-8 text-center">
                     <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                       <Database className="w-8 h-8 text-gray-400" />
                     </div>
@@ -510,15 +510,15 @@ export function AdminTools() {
     return (
       <div className="space-y-6">
         {/* System Status Card */}
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-green-50">
-          <CardHeader className="bg-gradient-to-r from-green-50 to-green-100 border-b border-green-200">
-            <CardTitle className="text-xl font-bold text-green-800 flex items-center">
-              <div className="bg-green-200 p-2 rounded-lg mr-3">
-                <Shield className="w-5 h-5 text-green-700" />
+        <Card className="border-0 shadow-md bg-white">
+          <CardHeader className="bg-gray-50 border-b border-gray-200">
+            <CardTitle className="text-xl font-bold text-gray-900 flex items-center">
+              <div className="bg-gray-100 p-2 rounded-lg mr-3">
+                <Shield className="w-5 h-5 text-gray-700" />
               </div>
               System Health & Status
             </CardTitle>
-            <CardDescription className="text-green-700">
+            <CardDescription className="text-gray-600">
               Real-time system performance and administrative monitoring
             </CardDescription>
           </CardHeader>
@@ -529,16 +529,16 @@ export function AdminTools() {
                 variant="outline"
                 onClick={fetchSystemStatus}
                 disabled={loading}
-                className="border-green-300 hover:border-green-400 hover:bg-green-50 px-6 py-3 flex items-center gap-2"
+                className="border-gray-300 hover:border-gray-400 hover:bg-gray-50 px-6 py-3 flex items-center gap-2"
               >
                 {loading ? (
                   <>
-                    <Loader2 className="h-5 w-5 animate-spin text-green-600" />
+                    <Loader2 className="h-5 w-5 animate-spin text-gray-600" />
                     <span>Checking Status...</span>
                   </>
                 ) : (
                   <>
-                    <RefreshCw className="h-5 w-5 text-green-600" />
+                    <RefreshCw className="h-5 w-5 text-gray-600" />
                     <span>Refresh Status</span>
                   </>
                 )}
@@ -632,33 +632,33 @@ export function AdminTools() {
         </Card>
 
         {/* Configuration Panel */}
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50">
-          <CardHeader className="bg-gradient-to-r from-gray-50 to-blue-50 border-b border-gray-200">
-            <CardTitle className="text-xl font-bold text-gray-800 flex items-center">
-              <div className="bg-gray-200 p-2 rounded-lg mr-3">
+        <Card className="border-0 shadow-md bg-white">
+          <CardHeader className="bg-gray-50 border-b border-gray-200">
+            <CardTitle className="text-xl font-bold text-gray-900 flex items-center">
+              <div className="bg-gray-100 p-2 rounded-lg mr-3">
                 <Settings className="w-5 h-5 text-gray-700" />
               </div>
               Advanced Configuration
             </CardTitle>
-            <CardDescription className="text-gray-700">
+            <CardDescription className="text-gray-600">
               System-wide settings and administrative controls
             </CardDescription>
           </CardHeader>
           
           <CardContent className="p-6">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
-              <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Settings className="w-8 h-8 text-blue-600" />
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+              <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Settings className="w-8 h-8 text-gray-600" />
               </div>
-              <h4 className="text-lg font-semibold text-blue-800 mb-2">Coming Soon</h4>
-              <p className="text-blue-700 mb-4">
+              <h4 className="text-lg font-semibold text-gray-800 mb-2">Coming Soon</h4>
+              <p className="text-gray-600 mb-4">
                 Advanced system settings and configuration options will be available in future updates.
               </p>
-              <div className="flex flex-wrap justify-center gap-2 text-sm text-blue-600">
-                <span className="bg-blue-200 px-3 py-1 rounded-full">User Management</span>
-                <span className="bg-blue-200 px-3 py-1 rounded-full">Security Settings</span>
-                <span className="bg-blue-200 px-3 py-1 rounded-full">System Preferences</span>
-                <span className="bg-blue-200 px-3 py-1 rounded-full">API Configuration</span>
+              <div className="flex flex-wrap justify-center gap-2 text-sm text-gray-600">
+                <span className="bg-gray-200 px-3 py-1 rounded-full">User Management</span>
+                <span className="bg-gray-200 px-3 py-1 rounded-full">Security Settings</span>
+                <span className="bg-gray-200 px-3 py-1 rounded-full">System Preferences</span>
+                <span className="bg-gray-200 px-3 py-1 rounded-full">API Configuration</span>
               </div>
             </div>
           </CardContent>
@@ -682,23 +682,23 @@ export function AdminTools() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
+    <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         {/* Header Section */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <Link
               to="/dashboard"
-              className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-all duration-200 py-2 px-4 rounded-lg hover:bg-white/50 backdrop-blur-sm border border-transparent hover:border-blue-200"
+              className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors py-2 px-4 rounded-lg hover:bg-white border border-gray-200"
             >
               <ArrowLeft className="w-5 h-5 mr-2" />
               <span className="font-medium">Back to Dashboard</span>
             </Link>
             
             <div className="flex items-center gap-3">
-              <div className="bg-white/70 backdrop-blur-sm rounded-lg px-4 py-2 border border-white/50">
+              <div className="bg-white rounded-lg px-4 py-2 border border-gray-200 shadow-sm">
                 <div className="flex items-center text-sm text-gray-600">
-                  <Shield className="w-4 h-4 mr-2 text-green-600" />
+                  <Shield className="w-4 h-4 mr-2 text-gray-500" />
                   <span>Administrator Access</span>
                 </div>
               </div>
@@ -706,7 +706,7 @@ export function AdminTools() {
           </div>
           
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent mb-3">
+            <h1 className="text-4xl font-bold text-gray-900 mb-3">
               Admin Control Center
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
@@ -717,15 +717,15 @@ export function AdminTools() {
 
         {/* Navigation Tabs */}
         <div className="mb-8">
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-2">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2">
             <div className="flex flex-col sm:flex-row gap-2">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
-                  className={`flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-xl text-sm font-medium transition-all duration-200 ${
+                  className={`flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-lg text-sm font-medium transition-all duration-200 ${
                     activeTab === tab.id
-                      ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg transform scale-[1.02]"
-                      : "text-gray-600 hover:text-gray-800 hover:bg-white/70"
+                      ? "bg-gray-900 text-white shadow-sm"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                   }`}
                   onClick={() => setActiveTab(tab.id)}
                 >
@@ -735,7 +735,7 @@ export function AdminTools() {
                   <div className="text-left hidden sm:block">
                     <div className="font-semibold">{tab.label}</div>
                     <div className={`text-xs ${
-                      activeTab === tab.id ? "text-blue-100" : "text-gray-500"
+                      activeTab === tab.id ? "text-gray-300" : "text-gray-500"
                     }`}>
                       {tab.description}
                     </div>
@@ -754,7 +754,7 @@ export function AdminTools() {
 
         {/* Footer */}
         <div className="mt-12 text-center">
-          <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-white/50">
+          <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center text-sm text-gray-600">
                 <Settings className="w-4 h-4 mr-2 text-gray-400" />
@@ -762,7 +762,7 @@ export function AdminTools() {
               </div>
               <Link
                 to="/dashboard"
-                className="inline-flex items-center text-gray-600 hover:text-blue-600 transition-colors duration-200 px-4 py-2 rounded-lg hover:bg-white/70"
+                className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors px-4 py-2 rounded-lg hover:bg-gray-50"
               >
                 <Home className="w-4 h-4 mr-2" />
                 <span>Return to Dashboard</span>
