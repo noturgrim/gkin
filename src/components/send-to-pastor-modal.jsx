@@ -5,6 +5,7 @@ import { Input } from "./ui/input";
 import { Mail, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { Textarea } from "./ui/textarea";
 import { useWorkflow } from "./workflow/context/WorkflowContext";
+import { EmailHistory } from "./EmailHistory";
 
 export function SendToPastorModal({ isOpen, onClose, onSubmit, documentType }) {
   // Import the WorkflowContext to get the actual document link
@@ -279,6 +280,9 @@ export function SendToPastorModal({ isOpen, onClose, onSubmit, documentType }) {
                       : "https://docs.google.com/document/d/1example-document/edit")}
                 </div>
               </div>
+
+              {/* Email History */}
+              <EmailHistory documentType={documentType} isOpen={isOpen} />
             </div>
           </form>
         </div>

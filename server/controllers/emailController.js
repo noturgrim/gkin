@@ -1,4 +1,5 @@
 const nodemailer = require("nodemailer");
+const { logEmail } = require("./emailHistoryController");
 
 /**
  * Send an email
@@ -12,6 +13,9 @@ const sendEmail = async (req, res) => {
     if (!to || !subject || !message) {
       return res.status(400).json({ message: "Missing required fields" });
     }
+
+    // Get user info from the auth middleware
+    const { id: senderId, role: senderRole, username: senderUsername } = req.user;
 
     // Create a transporter using the provided email credentials
     const transporter = nodemailer.createTransport({
@@ -33,6 +37,19 @@ const sendEmail = async (req, res) => {
     console.log("Attempting to send email to:", to);
 
     let info;
+    let emailLogData = {
+      senderId,
+      senderRole,
+      senderUsername,
+      to,
+      cc: cc || null,
+      subject,
+      message: emailContent,
+      documentType,
+      documentLink,
+      status: 'pending'
+    };
+
     try {
       // Prepare the email options
       const mailOptions = {
@@ -52,6 +69,13 @@ const sendEmail = async (req, res) => {
 
       console.log("Email sent successfully: %s", info.messageId);
 
+      // Update email log data with success info
+      emailLogData.messageId = info.messageId;
+      emailLogData.status = 'sent';
+
+      // Log the successful email to history
+      await logEmail(emailLogData);
+
       res.json({
         message: "Email sent successfully",
         messageId: info.messageId,
@@ -59,6 +83,16 @@ const sendEmail = async (req, res) => {
       return; // End the function here after successful email
     } catch (emailError) {
       console.error("SMTP Error:", emailError);
+      
+      // Log the failed email to history
+      emailLogData.status = 'failed';
+      emailLogData.errorMessage = emailError.message;
+      try {
+        await logEmail(emailLogData);
+      } catch (logError) {
+        console.error("Failed to log email error to history:", logError);
+      }
+
       // Log more details about the error
       if (emailError.code === "ECONNREFUSED") {
         console.error(

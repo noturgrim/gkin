@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const db = require("../config/db");
 const config = require("../config/config");
+const { migrateEmailHistory } = require("./migrate_email_history");
 
 async function initializeDatabase() {
   try {
@@ -40,6 +41,10 @@ async function initializeDatabase() {
       path.join(__dirname, "activity_schema.sql"),
       "utf8"
     );
+    const emailHistorySchemaSQL = fs.readFileSync(
+      path.join(__dirname, "email_history_schema.sql"),
+      "utf8"
+    );
 
     // Execute schema SQL
     await db.query(schemaSQL);
@@ -50,6 +55,10 @@ async function initializeDatabase() {
     await db.query(sermonTranslationsSchemaSQL);
     await db.query(musicLinksSchemaSQL);
     await db.query(activitySchemaSQL);
+    
+    // Use migration for email history to handle existing databases
+    await migrateEmailHistory();
+    
     console.log("Database schema created successfully");
 
     // Check if role_passcodes table is empty
