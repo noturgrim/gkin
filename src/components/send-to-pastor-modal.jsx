@@ -90,7 +90,18 @@ export function SendToPastorModal({ isOpen, onClose, onSubmit, documentType }) {
 
       // Show success feedback
       setFeedbackStatus("success");
-      setFeedbackMessage(`Email sent to ${formValues.email} successfully!`);
+      
+      // Create success message including CC recipients if any
+      let successMessage = `Email sent to ${formValues.email}`;
+      if (formValues.cc && formValues.cc.trim()) {
+        const ccEmails = formValues.cc.split(',').map(email => email.trim()).filter(email => email);
+        if (ccEmails.length > 0) {
+          successMessage += ` and CC'd to ${ccEmails.join(', ')}`;
+        }
+      }
+      successMessage += ' successfully!';
+      
+      setFeedbackMessage(successMessage);
 
       // Close the modal after a short delay
       setTimeout(() => {
