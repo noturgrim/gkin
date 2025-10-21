@@ -103,6 +103,19 @@ export const WorkflowProvider = ({
           console.log("No lyrics found or error fetching lyrics:", lyricsErr);
         }
 
+        // Check for sermon translations
+        let hasSermonTranslation = false;
+        try {
+          // Check if we have a completed sermon translation task
+          hasSermonTranslation = !!(
+            response.tasks &&
+            (response.tasks["translate-sermon"]?.status === "completed" ||
+              response.tasks["translate_sermon"]?.status === "completed")
+          );
+        } catch (sermonErr) {
+          console.log("Error checking sermon translation status:", sermonErr);
+        }
+
         if (response && response.tasks) {
           // Reset completedTasks and only include tasks for the current date
           const tasks = {
@@ -122,6 +135,33 @@ export const WorkflowProvider = ({
               updatedAt: new Date().toISOString(),
               updatedBy: "translator",
             };
+          }
+
+          // Normalize the sermon translation task ID to ensure consistency
+          // First, check if we have either format of the task ID
+          const hasHyphenatedTask = !!tasks["translate-sermon"];
+          const hasUnderscoreTask = !!tasks["translate_sermon"];
+
+          // If we have the hyphenated version, use it as the standard
+          if (hasHyphenatedTask) {
+            const taskData = tasks["translate-sermon"];
+            // Make sure both formats point to the same data
+            tasks["translate_sermon"] = taskData;
+          }
+          // If we only have the underscore version, copy it to the hyphenated version
+          else if (hasUnderscoreTask) {
+            const taskData = tasks["translate_sermon"];
+            tasks["translate-sermon"] = taskData;
+          }
+          // If we have sermon translation data from the API but no task, create it
+          else if (hasSermonTranslation) {
+            const translationTask = {
+              status: "completed",
+              updatedAt: new Date().toISOString(),
+              updatedBy: "translator",
+            };
+            tasks["translate-sermon"] = translationTask;
+            tasks["translate_sermon"] = translationTask;
           }
 
           setCompletedTasks(tasks);
@@ -318,6 +358,17 @@ export const WorkflowProvider = ({
     // Special handling for qrcode task to use local state
     if (taskId === "qrcode") {
       return qrCodeStatus;
+    }
+
+    // Handle both formats of sermon translation task ID
+    if (taskId === "translate-sermon" || taskId === "translate_sermon") {
+      // Check both formats and return completed if either is completed
+      if (
+        completedTasks?.["translate-sermon"]?.status === "completed" ||
+        completedTasks?.translate_sermon?.status === "completed"
+      ) {
+        return "completed";
+      }
     }
 
     // Check our local completedTasks state first

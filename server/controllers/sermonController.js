@@ -176,11 +176,20 @@ const submitSermonTranslation = async (req, res) => {
       ["translated", sermonId]
     );
 
-    // Update the workflow task
+    // Update the workflow task - ensure we update both possible task ID formats
+    // First try with hyphen format
     await client.query(
       `UPDATE workflow_tasks 
        SET status = 'completed', completed_by = $1, document_link = $2, updated_at = CURRENT_TIMESTAMP
        WHERE service_assignment_id = $3 AND task_id = 'translate-sermon'`,
+      [req.user.id, originalSermonLink, serviceId]
+    );
+
+    // Then try with underscore format to ensure compatibility
+    await client.query(
+      `UPDATE workflow_tasks 
+       SET status = 'completed', completed_by = $1, document_link = $2, updated_at = CURRENT_TIMESTAMP
+       WHERE service_assignment_id = $3 AND task_id = 'translate_sermon'`,
       [req.user.id, originalSermonLink, serviceId]
     );
 

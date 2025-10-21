@@ -80,6 +80,26 @@ app.get("/", (req, res) => {
 // Store active user connections
 const activeConnections = new Map();
 
+// Export io instance for use in other files
+module.exports.io = io;
+
+/**
+ * Emit an activity update to all connected clients
+ * @param {Object} activity - The activity object to emit
+ */
+const emitActivityUpdate = (activity) => {
+  try {
+    // Broadcast to all connected clients
+    io.emit("activity_update", activity);
+    console.log("Activity update emitted via WebSocket");
+  } catch (error) {
+    console.error("Error emitting activity update:", error);
+  }
+};
+
+// Export the emitActivityUpdate function for use in controllers
+module.exports.emitActivityUpdate = emitActivityUpdate;
+
 // Socket.io connection handler
 io.on("connection", (socket) => {
   console.log("New client connected:", socket.id);

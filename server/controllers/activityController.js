@@ -9,6 +9,7 @@ const getRecentActivity = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 10;
     const type = req.query.type;
+    const since = req.query.since;
 
     let query = `
       SELECT * 
@@ -17,11 +18,21 @@ const getRecentActivity = async (req, res) => {
 
     const params = [];
     let paramIndex = 1;
+    let whereAdded = false;
 
     // Add type filter if provided
     if (type) {
       query += ` WHERE activity_type = $${paramIndex}`;
       params.push(type);
+      paramIndex++;
+      whereAdded = true;
+    }
+
+    // Add since filter if provided
+    if (since) {
+      query += whereAdded ? ` AND` : ` WHERE`;
+      query += ` created_at > $${paramIndex}`;
+      params.push(since);
       paramIndex++;
     }
 

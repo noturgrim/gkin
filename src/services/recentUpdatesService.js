@@ -8,12 +8,17 @@ const recentUpdatesService = {
   /**
    * Get all recent updates from the activity log
    * @param {number} limit - Maximum number of updates to return
+   * @param {string} since - Optional ISO timestamp to get only updates since a specific time
    * @returns {Promise} Promise with all recent updates
    */
-  getAllRecentUpdates: async (limit = 5) => {
+  getAllRecentUpdates: async (limit = 5, since = null) => {
     try {
       // Fetch updates from the activity log
-      const activities = await activityService.getRecentActivity(limit);
+      const activities = await activityService.getRecentActivity(
+        limit,
+        null,
+        since
+      );
 
       // Transform activities into update objects
       return activities.map((activity) => ({

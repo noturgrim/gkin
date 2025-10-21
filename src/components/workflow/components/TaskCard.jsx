@@ -612,7 +612,10 @@ export const TaskCard = ({ task, categoryId }) => {
               Translate Sermon
             </Button>
 
-            {completedTasks?.["translate-sermon"] === "completed" && (
+            {(completedTasks?.["translate-sermon"]?.status === "completed" ||
+              completedTasks?.["translate_sermon"]?.status === "completed" ||
+              getTaskStatus("translate-sermon") === "completed" ||
+              getTaskStatus("translate_sermon") === "completed") && (
               <div className="space-y-2">
                 <Button
                   size="sm"

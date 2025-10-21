@@ -8,13 +8,19 @@ const activityService = {
    * Get recent activity logs
    * @param {number} limit - Maximum number of activities to return
    * @param {string} type - Optional activity type filter
+   * @param {string} since - Optional ISO timestamp to get only activities since a specific time
    * @returns {Promise} Promise with recent activities
    */
-  getRecentActivity: async (limit = 10, type = null) => {
+  getRecentActivity: async (limit = 10, type = null, since = null) => {
     try {
       let endpoint = `/activity?limit=${limit}`;
+
       if (type) {
         endpoint += `&type=${type}`;
+      }
+
+      if (since) {
+        endpoint += `&since=${encodeURIComponent(since)}`;
       }
 
       const response = await api.get(endpoint);

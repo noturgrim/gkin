@@ -760,10 +760,31 @@ export const useWorkflowHandlers = () => {
 
       console.log("Sermon translation response:", response);
 
-      // Update the local state to store the translations
+      // Explicitly update the workflow task status to ensure it's marked as completed
+      try {
+        await updateTaskStatus("translate-sermon", "completed", documentLink);
+        await updateTaskStatus("translate_sermon", "completed", documentLink);
+        console.log("Workflow task status explicitly updated to completed");
+      } catch (taskUpdateError) {
+        console.error("Error updating workflow task status:", taskUpdateError);
+        // Continue with the function even if this fails
+      }
+
+      // Update the local state to store the translations and set task status properly
       setCompletedTasks((prev) => ({
         ...prev,
-        "translate-sermon": "completed",
+        "translate-sermon": {
+          status: "completed",
+          updatedAt: new Date().toISOString(),
+          updatedBy: "translator",
+          documentLink,
+        },
+        translate_sermon: {
+          status: "completed",
+          updatedAt: new Date().toISOString(),
+          updatedBy: "translator",
+          documentLink,
+        },
         sermonTranslationData: {
           ...translationData,
           documentLink,

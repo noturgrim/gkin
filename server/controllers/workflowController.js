@@ -1,4 +1,5 @@
 const db = require("../config/db");
+const { emitActivityUpdate } = require("../index");
 
 /**
  * Log an activity to the activity_log table
@@ -24,7 +25,7 @@ const logActivity = async (client, activity) => {
         (user_id, user_name, user_role, activity_type, title, description, details, entity_id, date_string, icon, color) 
        VALUES 
         ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-       RETURNING id, created_at`,
+       RETURNING *`,
       [
         activity.userId,
         activity.userName,
@@ -40,7 +41,15 @@ const logActivity = async (client, activity) => {
       ]
     );
 
-    return result.rows[0];
+    // Get the created activity with all fields
+    const createdActivity = result.rows[0];
+
+    // Emit the activity via WebSocket for real-time updates
+    if (createdActivity) {
+      emitActivityUpdate(createdActivity);
+    }
+
+    return createdActivity;
   } catch (error) {
     console.error("Error logging activity:", error);
     // Don't throw, just log the error - we don't want activity logging to break the main functionality
