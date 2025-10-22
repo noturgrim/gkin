@@ -61,6 +61,16 @@ async function initializeDatabase() {
     await db.query(musicLinksSchemaSQL);
     await db.query(activitySchemaSQL);
     
+    // Add email column to users table if it doesn't exist
+    try {
+      await db.query(`
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255);
+      `);
+      console.log("Email column added to users table (if not exists)");
+    } catch (error) {
+      console.warn("Email column migration warning:", error.message);
+    }
+    
     // Use migration for email history to handle existing databases
     await migrateEmailHistory();
     
