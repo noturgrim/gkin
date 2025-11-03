@@ -1,23 +1,23 @@
-const { Pool } = require('pg');
-const config = require('../config/config');
+const { Pool } = require("pg");
+const config = require("../config/config");
 
 // Create a connection pool
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://gkindatabase_user:J00pVTWpwqb5f8t8VyK0I2IibiBds8Ri@dpg-d2niaif5r7bs73fl1c9g-a.oregon-postgres.render.com/gkindatabase',
+  connectionString: process.env.DATABASE_URL,
   ssl: {
-    rejectUnauthorized: false
-  }
+    rejectUnauthorized: false,
+  },
 });
 
 async function migrateUserEmail() {
   const client = await pool.connect();
-  
+
   try {
-    console.log('Starting user email migration...');
-    
+    console.log("Starting user email migration...");
+
     // Begin transaction
-    await client.query('BEGIN');
-    
+    await client.query("BEGIN");
+
     // Check if email column already exists
     const columnExists = await client.query(`
       SELECT EXISTS (
@@ -25,23 +25,22 @@ async function migrateUserEmail() {
         WHERE table_name = 'users' AND column_name = 'email'
       );
     `);
-    
+
     if (!columnExists.rows[0].exists) {
       // Add email column to users table
-      await client.query('ALTER TABLE users ADD COLUMN email VARCHAR(255)');
-      console.log('Added email column to users table');
+      await client.query("ALTER TABLE users ADD COLUMN email VARCHAR(255)");
+      console.log("Added email column to users table");
     } else {
-      console.log('Email column already exists in users table');
+      console.log("Email column already exists in users table");
     }
-    
+
     // Commit transaction
-    await client.query('COMMIT');
-    console.log('User email migration completed successfully');
-    
+    await client.query("COMMIT");
+    console.log("User email migration completed successfully");
   } catch (error) {
     // Rollback transaction on error
-    await client.query('ROLLBACK');
-    console.error('Error during user email migration:', error);
+    await client.query("ROLLBACK");
+    console.error("Error during user email migration:", error);
     throw error;
   } finally {
     // Release client
@@ -52,7 +51,7 @@ async function migrateUserEmail() {
 }
 
 // Run the migration
-migrateUserEmail().catch(err => {
-  console.error('Failed to migrate user email:', err);
+migrateUserEmail().catch((err) => {
+  console.error("Failed to migrate user email:", err);
   process.exit(1);
 });
