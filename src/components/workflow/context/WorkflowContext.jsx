@@ -105,6 +105,7 @@ export const WorkflowProvider = ({
         } catch (lyricsErr) {
           // If there's an error or no lyrics, we'll assume no translations
           console.log("No lyrics found or error fetching lyrics:", lyricsErr);
+          // Don't treat this as a fatal error, just continue with hasTranslatedLyrics = false
         }
 
         // Check for sermon translations

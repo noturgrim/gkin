@@ -29,6 +29,10 @@ const lyricsService = {
       return response;
     } catch (error) {
       console.error(`Error fetching lyrics for date ${dateString}:`, error);
+      // If it's a 404 error, return an empty result instead of throwing
+      if (error.message && error.message.includes("Service not found")) {
+        return { dateString, lyrics: [], message: "No service found for this date yet" };
+      }
       throw error;
     }
   },

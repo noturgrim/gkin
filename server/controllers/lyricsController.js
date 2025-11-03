@@ -106,8 +106,13 @@ const getLyricsByServiceDate = async (req, res) => {
       [dateString]
     );
 
+    // If no service exists yet, return an empty result instead of an error
     if (serviceResult.rows.length === 0) {
-      return res.status(404).json({ message: "Service not found" });
+      return res.json({
+        dateString,
+        lyrics: [],
+        message: "No service found for this date yet"
+      });
     }
 
     const serviceId = serviceResult.rows[0].id;
