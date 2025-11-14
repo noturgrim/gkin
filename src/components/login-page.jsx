@@ -20,6 +20,8 @@ import {
   Shield,
   Eye,
   EyeOff,
+  Check,
+  X,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import authService from "../services/authService";
@@ -107,6 +109,11 @@ export function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [sessionExpiredMessage, setSessionExpiredMessage] = useState(false);
+  const [touched, setTouched] = useState({
+    username: false,
+    passcode: false,
+    role: false,
+  });
 
   // Check if user is already logged in
   useEffect(() => {
@@ -191,17 +198,45 @@ export function LoginPage() {
     }
   };
 
+  const handleKeyPress = (e) => {
+    if (
+      e.key === "Enter" &&
+      selectedRole &&
+      username.trim() &&
+      passcode.trim()
+    ) {
+      handleLogin();
+    }
+  };
+
+  const getFieldError = (field) => {
+    if (!touched[field]) return null;
+
+    if (field === "username" && !username.trim()) {
+      return "Name is required";
+    }
+    if (field === "passcode" && !passcode.trim()) {
+      return "Passcode is required";
+    }
+    if (field === "role" && !selectedRole) {
+      return "Please select a role";
+    }
+    return null;
+  };
+
+  const isFormValid = selectedRole && username.trim() && passcode.trim();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo/Brand Header */}
-        <div className="flex justify-center mb-8">
-          <div className="bg-white p-3 rounded-xl shadow-md border border-gray-100 flex items-center gap-2">
-            <div className="bg-blue-600 text-white p-2 rounded-lg">
+        <div className="flex justify-center mb-10 animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="bg-white p-3.5 rounded-xl shadow-lg border border-gray-100 flex items-center gap-3 hover:shadow-xl transition-shadow duration-300">
+            <div className="bg-gradient-to-br from-blue-600 to-indigo-600 text-white p-2.5 rounded-lg">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
+                width="22"
+                height="22"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -213,16 +248,16 @@ export function LoginPage() {
                 <polyline points="9 22 9 12 15 12 15 22"></polyline>
               </svg>
             </div>
-            <h1 className="text-lg font-bold text-gray-800">GKIN RWDH</h1>
+            <h1 className="text-xl font-bold text-gray-800">GKIN RWDH</h1>
           </div>
         </div>
 
-        <Card className="border-0 shadow-lg overflow-hidden bg-white">
+        <Card className="border-0 shadow-xl overflow-hidden bg-white animate-in fade-in slide-in-from-bottom-4 duration-700">
           {/* Card Header with Decorative Element */}
           <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 h-2"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 h-2"></div>
             <CardHeader className="pt-8 pb-6 text-center bg-white">
-              <CardTitle className="text-2xl font-bold text-gray-900 mb-1">
+              <CardTitle className="text-2xl font-bold text-gray-900 mb-2">
                 Welcome Back
               </CardTitle>
               <CardDescription className="text-gray-600 text-base">
@@ -264,7 +299,7 @@ export function LoginPage() {
             </div>
           )}
 
-          <CardContent className="pt-6 pb-4 space-y-6 bg-white px-6">
+          <CardContent className="pt-6 pb-6 space-y-5 bg-white px-6">
             {/* Username Input with Modern Styling */}
             <div className="space-y-2">
               <label
@@ -292,19 +327,42 @@ export function LoginPage() {
                 <input
                   type="text"
                   id="username"
-                  className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-800"
+                  className={`w-full pl-4 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 text-gray-800 transition-all duration-200 ${
+                    getFieldError("username")
+                      ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                      : "border-gray-300 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400"
+                  }`}
                   placeholder="Enter your name"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
+                  onBlur={() => setTouched({ ...touched, username: true })}
+                  onKeyPress={handleKeyPress}
+                  autoComplete="name"
                 />
+                {getFieldError("username") && (
+                  <p className="text-red-600 text-xs mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {getFieldError("username")}
+                  </p>
+                )}
               </div>
             </div>
 
             {/* Error Message */}
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
-                <AlertCircle size={18} />
-                <span className="font-medium">{error}</span>
+              <div className="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-lg flex items-start gap-3 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
+                <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="font-semibold text-sm">Error</p>
+                  <p className="text-sm mt-0.5">{error}</p>
+                </div>
+                <button
+                  onClick={() => setError("")}
+                  className="text-red-600 hover:text-red-800 transition-colors"
+                  aria-label="Close error"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
             )}
 
@@ -342,17 +400,25 @@ export function LoginPage() {
                 <input
                   type={showPassword ? "text" : "password"}
                   id="passcode"
-                  className="w-full pl-4 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-800"
+                  className={`w-full pl-4 pr-12 py-3 border rounded-lg focus:outline-none focus:ring-2 text-gray-800 transition-all duration-200 ${
+                    getFieldError("passcode")
+                      ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                      : "border-gray-300 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400"
+                  }`}
                   placeholder="Enter your role passcode"
                   value={passcode}
                   onChange={(e) => setPasscode(e.target.value)}
+                  onBlur={() => setTouched({ ...touched, passcode: true })}
+                  onKeyPress={handleKeyPress}
+                  autoComplete="current-password"
                 />
                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="p-1 hover:bg-gray-100 rounded-md transition-colors"
+                    className="p-1.5 hover:bg-gray-100 rounded-md transition-all duration-200 hover:scale-110"
                     title={showPassword ? "Hide password" : "Show password"}
+                    tabIndex={-1}
                   >
                     {showPassword ? (
                       <EyeOff className="w-5 h-5 text-gray-500" />
@@ -361,6 +427,12 @@ export function LoginPage() {
                     )}
                   </button>
                 </div>
+                {getFieldError("passcode") && (
+                  <p className="text-red-600 text-xs mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {getFieldError("passcode")}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -390,12 +462,21 @@ export function LoginPage() {
                 {roles.map((role) => (
                   <div
                     key={role.id}
-                    className={`flex items-center p-3 rounded-xl cursor-pointer border-2 transition-colors hover:shadow-md ${
+                    className={`flex items-center p-3 rounded-xl cursor-pointer border-2 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${
                       selectedRole?.id === role.id
-                        ? `${role.borderColor} ${role.bgColor} shadow-md`
+                        ? `${role.borderColor} ${role.bgColor} shadow-md scale-[1.02]`
                         : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                     }`}
                     onClick={() => setSelectedRole(role)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyPress={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setSelectedRole(role);
+                      }
+                    }}
+                    aria-label={`Select ${role.name} role`}
                   >
                     <div
                       className={`w-10 h-10 rounded-xl ${role.color} flex items-center justify-center shadow-sm`}
@@ -440,21 +521,25 @@ export function LoginPage() {
                 />
                 <label
                   htmlFor="remember-me"
-                  className="relative flex items-center cursor-pointer"
+                  className="relative flex items-center cursor-pointer group"
                 >
                   <div
-                    className={`w-5 h-5 rounded-md border-2 transition-colors ${
+                    className={`w-5 h-5 rounded-md border-2 transition-all duration-200 flex items-center justify-center ${
                       rememberMe
-                        ? "bg-blue-600 border-blue-600"
-                        : "bg-white border-gray-300 hover:border-gray-400"
+                        ? "bg-blue-600 border-blue-600 scale-110"
+                        : "bg-white border-gray-300 hover:border-blue-400 group-hover:scale-105"
                     }`}
-                  ></div>
+                  >
+                    {rememberMe && (
+                      <Check className="w-3.5 h-3.5 text-white animate-in zoom-in duration-200" />
+                    )}
+                  </div>
                 </label>
               </div>
               <div className="flex-1">
                 <label
                   htmlFor="remember-me"
-                  className="text-sm font-medium text-gray-700 cursor-pointer leading-5"
+                  className="text-sm font-medium text-gray-700 cursor-pointer leading-5 hover:text-blue-600 transition-colors duration-200"
                 >
                   Remember my details for next time
                 </label>
@@ -465,7 +550,7 @@ export function LoginPage() {
             </div>
           </CardContent>
 
-          <CardFooter className="flex justify-end pt-4 pb-6 bg-white px-6">
+          <CardFooter className="flex justify-end pt-6 pb-8 bg-white px-6">
             <Button
               onClick={handleLogin}
               disabled={
@@ -490,7 +575,7 @@ export function LoginPage() {
                     ? "bg-indigo-600 hover:bg-indigo-700"
                     : "bg-emerald-600 hover:bg-emerald-700"
                   : "bg-gray-600 hover:bg-gray-700"
-              } text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-shadow disabled:opacity-50 disabled:cursor-not-allowed`}
+              } text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0`}
             >
               {isLoading ? (
                 <>
