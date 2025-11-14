@@ -112,7 +112,7 @@ export function NotificationCenter() {
             isMobile
               ? "fixed left-1/2 transform -translate-x-1/2 bottom-16"
               : "absolute right-0"
-          } mt-2 z-50 w-[320px] max-w-[95vw]`}
+          } mt-2 z-[9999] w-[320px] max-w-[95vw]`}
         >
           <NotificationPanel isMobile={isMobile} />
         </div>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
-import { FileText } from "lucide-react";
+import { FileText, Sparkles } from "lucide-react";
 import { NotificationCenter, NotificationPanel } from "./notification-center";
 
 export function Header({
@@ -45,21 +45,55 @@ export function Header({
     <header
       className={`${headerBg} px-4 py-4 md:py-6 lg:px-6 ${className} relative z-50`}
     >
+      {/* Decorative Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
+        {variant !== "default" ? (
+          <>
+            {/* Gradient Orbs for colored variants */}
+            <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+            <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
+            <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-white/5 rounded-full blur-xl"></div>
+          </>
+        ) : (
+          <>
+            {/* Subtle pattern for default variant */}
+            <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-50/30 rounded-full blur-3xl"></div>
+            <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-indigo-50/20 rounded-full blur-2xl"></div>
+          </>
+        )}
+      </div>
+
       {/* Mobile Layout */}
-      <div className="flex flex-col gap-3 md:hidden">
+      <div className="flex flex-col gap-3 md:hidden relative">
         {/* Top row: Title and menu button */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1
-              className={`text-lg font-bold tracking-tight ${textColors.title}`}
+          <div className="flex items-center gap-2">
+            {/* Icon next to title */}
+            <div
+              className={`w-8 h-8 rounded-lg ${
+                variant !== "default"
+                  ? "bg-white/20 backdrop-blur-sm border border-white/30"
+                  : "bg-gradient-to-br from-blue-500 to-indigo-600 shadow-md"
+              } flex items-center justify-center`}
             >
-              {title}
-            </h1>
-            {subtitle && (
-              <p className={`text-xs mt-0.5 ${textColors.subtitle}`}>
-                {subtitle}
-              </p>
-            )}
+              <FileText
+                className={`w-4 h-4 ${
+                  variant !== "default" ? "text-white" : "text-white"
+                }`}
+              />
+            </div>
+            <div>
+              <h1
+                className={`text-lg font-bold tracking-tight ${textColors.title} flex items-center gap-1`}
+              >
+                {title}
+              </h1>
+              {subtitle && (
+                <p className={`text-xs mt-0.5 ${textColors.subtitle}`}>
+                  {subtitle}
+                </p>
+              )}
+            </div>
           </div>
           {/* User menu button */}
           {showUserInfo && (
@@ -95,7 +129,7 @@ export function Header({
         {/* Actions row */}
         <div className="flex items-center gap-2">
           {showNotifications && (
-            <div className="transition-transform hover:scale-105 duration-200">
+            <div className="relative z-[100] transition-transform hover:scale-105 duration-200">
               <NotificationCenter />
             </div>
           )}
@@ -194,36 +228,77 @@ export function Header({
       </div>
 
       {/* Desktop Layout */}
-      <div className="hidden md:flex items-center justify-between gap-4">
-        {/* Left: Title and subtitle */}
-        <div>
-          <h1
-            className={`text-2xl font-bold tracking-tight ${textColors.title}`}
+      <div className="hidden md:flex items-center justify-between gap-4 relative">
+        {/* Left: Title and subtitle with icon */}
+        <div className="flex items-center gap-3">
+          {/* Decorative Icon */}
+          <div
+            className={`w-12 h-12 rounded-xl ${
+              variant !== "default"
+                ? "bg-white/20 backdrop-blur-sm border border-white/30 shadow-lg"
+                : "bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg"
+            } flex items-center justify-center relative group`}
           >
-            {title}
-          </h1>
-          {subtitle && (
-            <p className={`text-sm mt-0.5 ${textColors.subtitle}`}>
-              {subtitle}
-            </p>
-          )}
+            <FileText
+              className={`w-6 h-6 ${
+                variant !== "default" ? "text-white" : "text-white"
+              } transition-transform group-hover:scale-110 duration-200`}
+            />
+            {/* Subtle glow effect */}
+            <div className="absolute inset-0 rounded-xl bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+          </div>
+
+          <div>
+            <div className="flex items-center gap-2">
+              <h1
+                className={`text-2xl font-bold tracking-tight ${textColors.title}`}
+              >
+                {title}
+              </h1>
+              {/* Optional badge/accent */}
+              {variant !== "default" && (
+                <div className="px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm border border-white/30">
+                  <Sparkles className="w-3 h-3 text-white" />
+                </div>
+              )}
+            </div>
+            {subtitle && (
+              <p
+                className={`text-sm mt-1 ${textColors.subtitle} flex items-center gap-1.5`}
+              >
+                <span
+                  className={`w-1 h-1 rounded-full ${
+                    variant !== "default" ? "bg-white/60" : "bg-gray-400"
+                  }`}
+                ></span>
+                {subtitle}
+              </p>
+            )}
+          </div>
         </div>
+        {/* Vertical separator */}
+        <div
+          className={`h-12 w-px ${
+            variant !== "default" ? "bg-white/20" : "bg-gray-200"
+          }`}
+        ></div>
+
         {/* Right: Actions */}
         <div className="flex items-center gap-4">
           {showNotifications && (
-            <div className="transition-transform hover:scale-105 duration-200">
+            <div className="relative z-[100] transition-transform hover:scale-105 duration-200">
               <NotificationCenter />
             </div>
           )}
 
           {/* Combined User Info & Logout */}
           {showUserInfo && user && (
-            <div className="relative">
+            <div className="relative z-[100]">
               <div
-                className="flex items-center gap-3 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-full border border-gray-200/80 cursor-pointer hover:shadow-md hover:border-gray-300/80 transition-all duration-200"
+                className="flex items-center gap-3 bg-white/95 backdrop-blur-sm px-4 py-2.5 rounded-full border border-gray-200/80 cursor-pointer hover:shadow-lg hover:border-gray-300/80 hover:bg-white transition-all duration-200 group"
                 onClick={() => setShowUserDropdown(!showUserDropdown)}
               >
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-semibold shadow-md">
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-semibold shadow-md ring-2 ring-white/50 group-hover:ring-white/80 transition-all duration-200">
                   {user.username.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex flex-col">
