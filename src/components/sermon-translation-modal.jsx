@@ -10,6 +10,7 @@ import {
   Link as LinkIcon,
   User,
   Loader2,
+  AlertCircle,
 } from "lucide-react";
 import authService from "../services/authService";
 
@@ -104,45 +105,56 @@ export function SermonTranslationModal({
 
         <form
           onSubmit={handleSubmit}
-          className="p-4 overflow-y-auto"
+          className="p-6 overflow-y-auto"
           style={{ maxHeight: "calc(100vh - 10rem)" }}
         >
-          {!sermonData ? (
-            <div className="text-center py-8 text-gray-600">
-              No sermon available for translation. Please ask the Pastor to
-              create or upload a sermon first.
+          {!sermonData || !sermonData.sermonLink ? (
+            <div className="text-center py-12">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-orange-100 mb-4">
+                <Book className="w-8 h-8 text-orange-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                No Sermon Available
+              </h3>
+              <p className="text-gray-600 max-w-md mx-auto">
+                A sermon document must be uploaded before translation can begin.
+                Please ask the Pastor to create or upload a sermon first.
+              </p>
             </div>
           ) : (
             <div className="space-y-6">
               {/* Original sermon section */}
-              <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <h3 className="font-medium text-gray-700 mb-2">
-                  Sermon for{" "}
-                  {new Date(sermonData.dateString).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}{" "}
-                  service
-                </h3>
+              <div className="p-5 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+                    <Book className="w-4 h-4 text-white" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900">
+                    Sermon for{" "}
+                    {new Date(sermonData.dateString).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}{" "}
+                    service
+                  </h3>
+                </div>
                 <div className="space-y-3">
                   {sermonData.sermonLink && (
                     <div>
-                      <Label className="text-sm text-gray-600">
-                        Sermon Document Link
+                      <Label className="text-sm text-gray-600 font-medium mb-2">
+                        Sermon Document
                       </Label>
-                      <div className="p-2 bg-white border border-gray-200 rounded-md text-gray-700 flex items-center gap-2">
+                      <a
+                        href={sermonData.sermonLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-1 p-3 bg-white border border-blue-300 rounded-lg text-blue-700 hover:bg-blue-50 hover:border-blue-400 transition-all duration-200 flex items-center gap-2 group shadow-sm"
+                      >
                         <LinkIcon className="w-4 h-4 text-blue-500" />
-                        <a
-                          href={sermonData.sermonLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
-                        >
-                          Open Google Doc
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      </div>
+                        <span className="font-medium">Open Google Doc</span>
+                        <ExternalLink className="w-4 h-4 ml-auto group-hover:translate-x-1 transition-transform" />
+                      </a>
                     </div>
                   )}
                 </div>
@@ -150,35 +162,39 @@ export function SermonTranslationModal({
 
               {/* Translation section */}
               <div className="space-y-4">
-                <h3 className="font-medium text-gray-700">Translation</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-gray-900">Translation Instructions</h3>
+                </div>
 
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-start">
-                    <div className="mr-3 mt-0.5">
-                      <ExternalLink className="w-5 h-5 text-blue-500" />
+                <div className="p-5 bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-xl">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-green-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <ExternalLink className="w-4 h-4 text-white" />
                     </div>
-                    <div>
-                      <h4 className="font-medium text-blue-800">
-                        Translation Instructions
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-green-900 mb-3">
+                        How to Translate
                       </h4>
-                      <ol className="mt-2 text-sm text-blue-700 list-decimal pl-5 space-y-1">
-                        <li>
-                          Click the original sermon Google Doc link above to
-                          open it
+                      <ol className="text-sm text-green-800 space-y-2">
+                        <li className="flex items-start gap-2">
+                          <span className="flex-shrink-0 w-5 h-5 rounded-full bg-green-600 text-white flex items-center justify-center text-xs font-semibold">1</span>
+                          <span>Click the sermon Google Doc link above to open it</span>
                         </li>
-                        <li>
-                          Translate the sermon directly in the same document
+                        <li className="flex items-start gap-2">
+                          <span className="flex-shrink-0 w-5 h-5 rounded-full bg-green-600 text-white flex items-center justify-center text-xs font-semibold">2</span>
+                          <span>Translate the sermon directly in the same document</span>
                         </li>
-                        <li>
-                          When you're done, check the confirmation box below
+                        <li className="flex items-start gap-2">
+                          <span className="flex-shrink-0 w-5 h-5 rounded-full bg-green-600 text-white flex items-center justify-center text-xs font-semibold">3</span>
+                          <span>When you're done, check the confirmation box below</span>
                         </li>
                       </ol>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-6">
-                  <div className="flex items-center">
+                <div className="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                  <div className="flex items-start gap-3">
                     <input
                       type="checkbox"
                       id="translationComplete"
@@ -192,42 +208,42 @@ export function SermonTranslationModal({
                             .classList.add("hidden");
                         }
                       }}
-                      className="h-5 w-5 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                      className="h-5 w-5 text-green-600 focus:ring-green-500 border-gray-300 rounded mt-0.5 cursor-pointer"
                     />
                     <label
                       htmlFor="translationComplete"
-                      className="ml-3 text-gray-700 font-medium"
+                      className="text-gray-900 font-medium cursor-pointer select-none"
                     >
-                      I confirm that I have completed the translation in the
-                      document
+                      I confirm that I have completed the translation in the document
                     </label>
                   </div>
 
                   {/* Error message - hidden by default */}
                   <div
                     id="translation-error"
-                    className="mt-2 text-red-600 text-sm hidden"
+                    className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm font-medium hidden flex items-center gap-2"
                   >
-                    Please confirm that you have completed the translation
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    <span>Please confirm that you have completed the translation</span>
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          <div className="flex justify-end gap-2 mt-6">
+          <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
             <Button
               type="button"
               onClick={onClose}
-              className="bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+              className="bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 px-4 py-2"
               disabled={isSubmitting}
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              className="bg-green-600 hover:bg-green-700 text-white"
-              disabled={!sermonData || !translationComplete || isSubmitting}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!sermonData || !sermonData.sermonLink || !translationComplete || isSubmitting}
             >
               {isSubmitting ? (
                 <>

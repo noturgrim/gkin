@@ -225,7 +225,7 @@ export const useWorkflowHandlers = () => {
         documentType: emailData.documentType,
         documentLink: documentLink,
         serviceDate: dateString,
-        recipientType: 'pastor',
+        recipientType: "pastor",
       });
 
       // Update the status if needed
@@ -283,7 +283,7 @@ export const useWorkflowHandlers = () => {
         documentType: emailData.documentType,
         documentLink: documentLink,
         serviceDate: dateString,
-        recipientType: 'music',
+        recipientType: "music",
       });
 
       // Update the status if needed
@@ -720,14 +720,17 @@ export const useWorkflowHandlers = () => {
     const sermonTitle =
       completedTasks?.sermonData?.sermonTitle || "Sermon Document";
 
-    // Create sermon data object with the link
-    const sermonData = {
-      sermonTitle: sermonTitle,
-      sermonLink: documentUrl,
-      dateString: dateString,
-    };
+    // Create sermon data object with the link (can be null if no sermon exists)
+    const sermonData = documentUrl
+      ? {
+          sermonTitle: sermonTitle,
+          sermonLink: documentUrl,
+          dateString: dateString,
+        }
+      : null;
 
     // Set the current sermon data and open the modal
+    // The modal will handle the empty state if sermonData is null
     setCurrentSermon(sermonData);
     setIsSermonTranslationModalOpen(true);
   };
