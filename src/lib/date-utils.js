@@ -140,8 +140,19 @@ export function formatDate(date) {
 
 // Get status color based on days remaining
 export function getStatusColor(daysRemaining) {
-  if (daysRemaining <= 3) return "bg-red-100 text-red-800 border-red-300";
-  if (daysRemaining <= 7)
+  // Today - green (it's happening now!)
+  if (daysRemaining === 0)
+    return "bg-green-100 text-green-800 border-green-300";
+  // Past dates - gray
+  if (daysRemaining < 0) return "bg-gray-100 text-gray-800 border-gray-300";
+  // Tomorrow - blue (coming up very soon)
+  if (daysRemaining === 1) return "bg-blue-100 text-blue-800 border-blue-300";
+  // 2-3 days - yellow (getting close)
+  if (daysRemaining <= 3)
     return "bg-yellow-100 text-yellow-800 border-yellow-300";
+  // 4-7 days - orange (approaching)
+  if (daysRemaining <= 7)
+    return "bg-orange-100 text-orange-800 border-orange-300";
+  // More than a week - green (plenty of time)
   return "bg-green-100 text-green-800 border-green-300";
 }
