@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
-import { FileText, Sparkles } from "lucide-react";
+import { Home, Sparkles } from "lucide-react";
 import { NotificationCenter, NotificationPanel } from "./notification-center";
 
 export function Header({
@@ -76,7 +76,7 @@ export function Header({
                   : "bg-gradient-to-br from-blue-500 to-indigo-600 shadow-md"
               } flex items-center justify-center`}
             >
-              <FileText
+              <Home
                 className={`w-4 h-4 ${
                   variant !== "default" ? "text-white" : "text-white"
                 }`}
@@ -228,7 +228,7 @@ export function Header({
                 : "bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg"
             } flex items-center justify-center relative group`}
           >
-            <FileText
+            <Home
               className={`w-6 h-6 ${
                 variant !== "default" ? "text-white" : "text-white"
               } transition-transform group-hover:scale-110 duration-200`}
