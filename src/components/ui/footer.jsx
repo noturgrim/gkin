@@ -1,13 +1,7 @@
 import React from "react";
-import { Link } from "react-router-dom";
 
 export function Footer({
   brandName = "GKIN RWDH Dienst Dashboard",
-  links = [
-    { name: "Help", href: "#" },
-    { name: "Privacy", href: "#" },
-    { name: "Terms", href: "#" },
-  ],
   copyrightOwner = "GKIN RWDH",
 }) {
   return (
@@ -35,18 +29,6 @@ export function Footer({
               <div className="font-medium text-sm text-gray-800">
                 {brandName}
               </div>
-            </div>
-
-            <div className="flex items-center gap-4">
-              {links.map((link, index) => (
-                <Link
-                  key={index}
-                  to={link.href}
-                  className="text-xs text-gray-600 hover:text-blue-600 transition-colors"
-                >
-                  {link.name}
-                </Link>
-              ))}
             </div>
 
             <div className="text-xs text-gray-500">
