@@ -12,6 +12,7 @@ const submitSermon = async (req, res) => {
     const { dateString, title, documentLink } = req.body;
 
     if (!dateString || !title || !documentLink) {
+      client.release();
       return res.status(400).json({
         message: "dateString, title, and documentLink are required",
       });

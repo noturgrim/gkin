@@ -105,17 +105,19 @@ const saveAssignments = async (req, res) => {
   const client = await db.getClient();
 
   try {
-    await client.query("BEGIN");
-
     const { dateString, assignments } = req.body;
 
     if (!dateString) {
+      client.release();
       return res.status(400).json({ message: "dateString is required" });
     }
 
     if (!assignments || !Array.isArray(assignments)) {
+      client.release();
       return res.status(400).json({ message: "Invalid assignments data" });
     }
+
+    await client.query("BEGIN");
 
     // Use UPSERT approach for the service assignment
     const serviceResult = await client.query(
@@ -197,6 +199,7 @@ const updateAssignment = async (req, res) => {
     const { assignments } = req.body;
 
     if (!dateString || !assignments) {
+      client.release();
       return res.status(400).json({ message: "Missing required fields" });
     }
 
@@ -281,6 +284,7 @@ const addRole = async (req, res) => {
     const { roleName } = req.body;
 
     if (!dateString || !roleName || !roleName.trim()) {
+      client.release();
       return res
         .status(400)
         .json({ message: "Date string and role name are required" });
@@ -346,6 +350,7 @@ const removeRole = async (req, res) => {
     const { dateString, roleName } = req.params;
 
     if (!dateString || !roleName) {
+      client.release();
       return res
         .status(400)
         .json({ message: "Date string and role name are required" });
@@ -400,6 +405,7 @@ const resetAssignments = async (req, res) => {
     const { dateString } = req.params;
 
     if (!dateString) {
+      client.release();
       return res.status(400).json({ message: "Date string is required" });
     }
 

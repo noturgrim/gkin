@@ -4,6 +4,9 @@ import { useWorkflow } from "../context/WorkflowContext";
 import { toast } from "react-hot-toast";
 import sermonService from "../../../services/sermonService";
 import musicLinksService from "../../../services/musicLinksService";
+import chatService from "../../../services/chatService";
+import emailService from "../../../services/emailService";
+import roleEmailsService from "../../../services/roleEmailsService";
 
 export const useWorkflowHandlers = () => {
   // Loading states
@@ -360,6 +363,42 @@ export const useWorkflowHandlers = () => {
       // Update the service status for this task if needed
       if (onStartAction) {
         onStartAction(`sermon-uploaded`);
+      }
+
+      // Send notifications to translation team
+      try {
+        // 1. Send in-app chat notification
+        const notificationMessage = `@translation I've uploaded the sermon for ${dateString}, you can now translate it.`;
+        await chatService.sendMessage(notificationMessage, [
+          {
+            type: "role",
+            value: "translation",
+          },
+        ]);
+
+        // 2. Send email notification
+        try {
+          const translationEmail = await roleEmailsService.getRoleEmail(
+            "translation"
+          );
+          if (translationEmail?.email) {
+            await emailService.sendEmail({
+              to: translationEmail.email,
+              subject: `Sermon Document Ready for Translation - ${dateString}`,
+              message: `A new sermon document has been uploaded for the service on ${dateString}.\n\nPlease visit the website to translate it: ${window.location.origin}\n\nDocument link: ${sermonData.sermonLink}`,
+              documentType: "sermon",
+              documentLink: sermonData.sermonLink,
+              serviceDate: dateString,
+              recipientType: "translation",
+            });
+          }
+        } catch (emailError) {
+          console.warn("Failed to send email notification:", emailError);
+          // Don't fail the whole operation if email fails
+        }
+      } catch (notificationError) {
+        console.error("Failed to send notifications:", notificationError);
+        // Don't fail the whole operation if notifications fail
       }
 
       // Close the upload modal - no alert needed
@@ -961,6 +1000,66 @@ export const useWorkflowHandlers = () => {
       // Update the service status if needed
       if (onStartAction) {
         onStartAction("qrcode-uploaded");
+      }
+
+      // Send notifications to beamer and liturgy teams
+      try {
+        // 1. Send in-app chat notification
+        const notificationMessage = `@beamer @liturgy I've uploaded the QR code for ${dateString}, you can now use it.`;
+        await chatService.sendMessage(notificationMessage, [
+          {
+            type: "role",
+            value: "beamer",
+          },
+          {
+            type: "role",
+            value: "liturgy",
+          },
+        ]);
+
+        // 2. Send email notifications to both roles
+        try {
+          const beamerEmail = await roleEmailsService.getRoleEmail("beamer");
+          const liturgyEmail = await roleEmailsService.getRoleEmail("liturgy");
+
+          const emailPromises = [];
+
+          if (beamerEmail?.email) {
+            emailPromises.push(
+              emailService.sendEmail({
+                to: beamerEmail.email,
+                subject: `QR Code Ready - ${dateString}`,
+                message: `The QR code has been uploaded for the service on ${dateString}.\n\nYou can access it here: ${qrCodeData.qrCodeLink}`,
+                documentType: "qrcode",
+                documentLink: qrCodeData.qrCodeLink,
+                serviceDate: dateString,
+                recipientType: "beamer",
+              })
+            );
+          }
+
+          if (liturgyEmail?.email) {
+            emailPromises.push(
+              emailService.sendEmail({
+                to: liturgyEmail.email,
+                subject: `QR Code Ready - ${dateString}`,
+                message: `The QR code has been uploaded for the service on ${dateString}.\n\nYou can access it here: ${qrCodeData.qrCodeLink}`,
+                documentType: "qrcode",
+                documentLink: qrCodeData.qrCodeLink,
+                serviceDate: dateString,
+                recipientType: "liturgy",
+              })
+            );
+          }
+
+          await Promise.all(emailPromises);
+        } catch (emailError) {
+          console.warn("Failed to send email notifications:", emailError);
+          // Don't fail the whole operation if email fails
+        }
+      } catch (notificationError) {
+        console.error("Failed to send notifications:", notificationError);
+        // Don't fail the whole operation if notifications fail
       }
 
       // Close the modal - no alert needed

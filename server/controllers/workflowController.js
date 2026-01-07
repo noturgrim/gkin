@@ -165,12 +165,14 @@ const updateTaskStatus = async (req, res) => {
     const { status, documentLink } = req.body;
 
     if (!dateString || !taskId) {
+      client.release();
       return res
         .status(400)
         .json({ message: "dateString and taskId are required" });
     }
 
     if (!status) {
+      client.release();
       return res.status(400).json({ message: "status is required" });
     }
 
@@ -323,6 +325,7 @@ const deleteWorkflowTask = async (req, res) => {
     const { dateString, taskId } = req.params;
 
     if (!dateString || !taskId) {
+      client.release();
       return res
         .status(400)
         .json({ message: "dateString and taskId are required" });

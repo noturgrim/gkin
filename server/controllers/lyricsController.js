@@ -111,7 +111,7 @@ const getLyricsByServiceDate = async (req, res) => {
       return res.json({
         dateString,
         lyrics: [],
-        message: "No service found for this date yet"
+        message: "No service found for this date yet",
       });
     }
 
@@ -170,6 +170,7 @@ const submitLyrics = async (req, res) => {
     const { dateString, songs } = req.body;
 
     if (!dateString || !songs || !Array.isArray(songs) || songs.length === 0) {
+      client.release();
       return res.status(400).json({
         message:
           "dateString and at least one song with title and lyrics are required",
@@ -269,6 +270,7 @@ const submitTranslation = async (req, res) => {
     const { translatedTitle, translatedLyrics } = req.body;
 
     if (!originalId || !translatedTitle || !translatedLyrics) {
+      client.release();
       return res.status(400).json({
         message:
           "originalId, translatedTitle, and translatedLyrics are required",
@@ -285,6 +287,7 @@ const submitTranslation = async (req, res) => {
 
     if (originalResult.rows.length === 0) {
       await client.query("ROLLBACK");
+      client.release();
       return res.status(404).json({ message: "Original lyrics not found" });
     }
 

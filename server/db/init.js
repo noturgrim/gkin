@@ -12,6 +12,8 @@ const {
 } = require("./migrate_assignable_people_roles");
 
 async function initializeDatabase() {
+  const client = await db.getClient();
+
   try {
     console.log("Initializing database...");
 
@@ -65,19 +67,42 @@ async function initializeDatabase() {
       "utf8"
     );
 
-    // Execute schema SQL
-    await db.query(schemaSQL);
-    await db.query(passcodesSchemaSQL);
-    await db.query(assignmentsSchemaSQL);
-    await db.query(workflowSchemaSQL);
-    await db.query(lyricsTranslationSchemaSQL);
-    await db.query(sermonTranslationsSchemaSQL);
-    await db.query(musicLinksSchemaSQL);
-    await db.query(activitySchemaSQL);
+    // Execute schema SQL with logging using the same client
+    console.log("Creating base schema...");
+    await client.query(schemaSQL);
+    console.log("✓ Base schema created");
+
+    console.log("Creating passcodes schema...");
+    await client.query(passcodesSchemaSQL);
+    console.log("✓ Passcodes schema created");
+
+    console.log("Creating assignments schema...");
+    await client.query(assignmentsSchemaSQL);
+    console.log("✓ Assignments schema created");
+
+    console.log("Creating workflow schema...");
+    await client.query(workflowSchemaSQL);
+    console.log("✓ Workflow schema created");
+
+    console.log("Creating lyrics translation schema...");
+    await client.query(lyricsTranslationSchemaSQL);
+    console.log("✓ Lyrics translation schema created");
+
+    console.log("Creating sermon translations schema...");
+    await client.query(sermonTranslationsSchemaSQL);
+    console.log("✓ Sermon translations schema created");
+
+    console.log("Creating music links schema...");
+    await client.query(musicLinksSchemaSQL);
+    console.log("✓ Music links schema created");
+
+    console.log("Creating activity schema...");
+    await client.query(activitySchemaSQL);
+    console.log("✓ Activity schema created");
 
     // Add email column to users table if it doesn't exist
     try {
-      await db.query(`
+      await client.query(`
         ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255);
       `);
       console.log("Email column added to users table (if not exists)");
@@ -93,7 +118,7 @@ async function initializeDatabase() {
 
     // Initialize email settings table
     try {
-      await db.query(emailSettingsSchemaSQL);
+      await client.query(emailSettingsSchemaSQL);
       console.log("Email settings table initialized successfully");
     } catch (error) {
       console.warn(
@@ -105,7 +130,7 @@ async function initializeDatabase() {
 
     // Initialize assignable people table
     try {
-      await db.query(assignablePeopleSchemaSQL);
+      await client.query(assignablePeopleSchemaSQL);
       console.log("Assignable people table initialized successfully");
     } catch (error) {
       console.warn(
@@ -126,7 +151,7 @@ async function initializeDatabase() {
 
     // Initialize role emails table
     try {
-      await db.query(roleEmailsSchemaSQL);
+      await client.query(roleEmailsSchemaSQL);
       console.log("Role emails table initialized successfully");
     } catch (error) {
       console.warn("Role emails table initialization warning:", error.message);
@@ -145,7 +170,7 @@ async function initializeDatabase() {
     console.log("Database schema created successfully");
 
     // Check if role_passcodes table is empty
-    const passcodesCount = await db.query(
+    const passcodesCount = await client.query(
       "SELECT COUNT(*) FROM role_passcodes"
     );
 
@@ -165,7 +190,7 @@ async function initializeDatabase() {
       };
 
       for (const [role, passcode] of Object.entries(defaultPasscodes)) {
-        await db.query(
+        await client.query(
           "INSERT INTO role_passcodes (role, passcode) VALUES ($1, $2)",
           [role, passcode]
         );
@@ -176,14 +201,14 @@ async function initializeDatabase() {
     }
 
     // Check if users table is empty
-    const userCount = await db.query("SELECT COUNT(*) FROM users");
+    const userCount = await client.query("SELECT COUNT(*) FROM users");
 
     // If no users exist, create default users for each role
     if (parseInt(userCount.rows[0].count) === 0) {
       console.log("Creating default users...");
 
       // Get roles from database
-      const roleResults = await db.query("SELECT role FROM role_passcodes");
+      const roleResults = await client.query("SELECT role FROM role_passcodes");
       const roles = [
         { id: "liturgy", name: "Liturgy Maker" },
         { id: "pastor", name: "Pastor" },
@@ -194,7 +219,7 @@ async function initializeDatabase() {
       ];
 
       for (const role of roles) {
-        await db.query(
+        await client.query(
           "INSERT INTO users (username, role, avatar_url) VALUES ($1, $2, $3)",
           [
             `Default ${role.name}`,
@@ -211,6 +236,8 @@ async function initializeDatabase() {
   } catch (error) {
     console.error("Error initializing database:", error);
     throw error;
+  } finally {
+    client.release();
   }
 }
 

@@ -127,10 +127,12 @@ const saveMusicLinks = async (req, res) => {
     const { musicLinks, title, notes } = req.body;
 
     if (!dateString) {
+      client.release();
       return res.status(400).json({ message: "dateString is required" });
     }
 
     if (!musicLinks || !Array.isArray(musicLinks) || musicLinks.length === 0) {
+      client.release();
       return res.status(400).json({ message: "musicLinks array is required" });
     }
 
@@ -253,6 +255,7 @@ const deleteMusicLinks = async (req, res) => {
     const { dateString } = req.params;
 
     if (!dateString) {
+      client.release();
       return res.status(400).json({ message: "dateString is required" });
     }
 
@@ -269,6 +272,7 @@ const deleteMusicLinks = async (req, res) => {
 
     if (taskResult.rows.length === 0) {
       await client.query("ROLLBACK");
+      client.release();
       return res.status(404).json({ message: "Music task not found" });
     }
 
