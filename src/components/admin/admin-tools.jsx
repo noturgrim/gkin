@@ -34,6 +34,7 @@ import adminService from "../../services/adminService";
 import emailSettingsService from "../../services/emailSettingsService";
 import { useNotifications } from "../../context/NotificationContext";
 import { PasscodeManager } from "./passcode-manager";
+import { RoleBasedPeopleManager } from "./role-based-people-manager";
 import { Link } from "react-router-dom";
 
 /**
@@ -47,7 +48,7 @@ export function AdminTools() {
   const [systemStatus, setSystemStatus] = useState(null);
   const [emailSettings, setEmailSettings] = useState([]);
   const [showPasswords, setShowPasswords] = useState({});
-  const [testEmail, setTestEmail] = useState('');
+  const [testEmail, setTestEmail] = useState("");
   const [error, setError] = useState(null);
   const { refreshMentions } = useNotifications();
 
@@ -91,14 +92,14 @@ export function AdminTools() {
       setLoading(true);
       setError(null);
 
-      const settingsToUpdate = emailSettings.map(setting => ({
+      const settingsToUpdate = emailSettings.map((setting) => ({
         setting_name: setting.setting_name,
         setting_value: setting.setting_value,
-        is_encrypted: setting.is_encrypted
+        is_encrypted: setting.is_encrypted,
       }));
 
       await emailSettingsService.updateEmailSettings(settingsToUpdate);
-      
+
       alert("Email settings updated successfully!");
       fetchEmailSettings(); // Refresh settings
     } catch (error) {
@@ -137,9 +138,9 @@ export function AdminTools() {
 
   // Toggle password visibility
   const togglePasswordVisibility = (settingName) => {
-    setShowPasswords(prev => ({
+    setShowPasswords((prev) => ({
       ...prev,
-      [settingName]: !prev[settingName]
+      [settingName]: !prev[settingName],
     }));
   };
 
@@ -161,8 +162,8 @@ export function AdminTools() {
       setError(error.message || "Failed to fetch system status");
       // Set default status to prevent UI errors
       setSystemStatus({
-        server: { status: 'unknown', uptime: 0 },
-        database: { status: 'unknown', connected: false }
+        server: { status: "unknown", uptime: 0 },
+        database: { status: "unknown", connected: false },
       });
     } finally {
       setLoading(false);
@@ -171,23 +172,29 @@ export function AdminTools() {
 
   // Tab options
   const tabs = [
-    { 
-      id: "messages", 
-      label: "Messages", 
+    {
+      id: "messages",
+      label: "Messages",
       icon: MessageSquare,
-      description: "Manage system messages and data"
+      description: "Manage system messages and data",
     },
-    { 
-      id: "passcodes", 
-      label: "Passcodes", 
+    {
+      id: "passcodes",
+      label: "Passcodes",
       icon: Key,
-      description: "Configure access codes"
+      description: "Configure access codes",
     },
-    { 
-      id: "settings", 
-      label: "Settings", 
+    {
+      id: "people",
+      label: "People",
+      icon: Users,
+      description: "Manage assignable people",
+    },
+    {
+      id: "settings",
+      label: "Settings",
       icon: Settings,
-      description: "System and email configuration"
+      description: "System and email configuration",
     },
   ];
 
@@ -259,9 +266,11 @@ export function AdminTools() {
           <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm font-medium">Total Messages</p>
+                <p className="text-gray-600 text-sm font-medium">
+                  Total Messages
+                </p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {stats ? stats.messageCount : '---'}
+                  {stats ? stats.messageCount : "---"}
                 </p>
               </div>
               <div className="bg-gray-100 p-3 rounded-lg">
@@ -269,13 +278,15 @@ export function AdminTools() {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm font-medium">Total Mentions</p>
+                <p className="text-gray-600 text-sm font-medium">
+                  Total Mentions
+                </p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {stats ? stats.mentionCount : '---'}
+                  {stats ? stats.mentionCount : "---"}
                 </p>
               </div>
               <div className="bg-gray-100 p-3 rounded-lg">
@@ -283,13 +294,15 @@ export function AdminTools() {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm font-medium">Active Users</p>
+                <p className="text-gray-600 text-sm font-medium">
+                  Active Users
+                </p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {stats && stats.topUsers ? stats.topUsers.length : '---'}
+                  {stats && stats.topUsers ? stats.topUsers.length : "---"}
                 </p>
               </div>
               <div className="bg-gray-100 p-3 rounded-lg">
@@ -297,14 +310,19 @@ export function AdminTools() {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm font-medium">System Status</p>
+                <p className="text-gray-600 text-sm font-medium">
+                  System Status
+                </p>
                 <p className="text-lg font-semibold text-gray-900">
-                  {systemStatus?.server?.status === 'online' ? 'Online' : 
-                   systemStatus?.server?.status ? 'Offline' : '---'}
+                  {systemStatus?.server?.status === "online"
+                    ? "Online"
+                    : systemStatus?.server?.status
+                    ? "Offline"
+                    : "---"}
                 </p>
               </div>
               <div className="bg-gray-100 p-3 rounded-lg">
@@ -327,16 +345,19 @@ export function AdminTools() {
               Manage and clear system message data with advanced controls
             </CardDescription>
           </CardHeader>
-          
+
           <CardContent className="p-6">
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
               <div className="flex items-start">
                 <AlertTriangle className="w-5 h-5 text-amber-600 mr-3 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="text-amber-800 font-medium mb-1">Data Deletion Warning</h4>
+                  <h4 className="text-amber-800 font-medium mb-1">
+                    Data Deletion Warning
+                  </h4>
                   <p className="text-sm text-amber-700">
-                    This action will permanently remove all messages, mentions, and related data from the system. 
-                    This operation cannot be reversed.
+                    This action will permanently remove all messages, mentions,
+                    and related data from the system. This operation cannot be
+                    reversed.
                   </p>
                 </div>
               </div>
@@ -358,7 +379,9 @@ export function AdminTools() {
                   disabled={loading}
                   className="border-gray-300 hover:border-gray-400 px-6 py-3"
                 >
-                  <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                  <RefreshCw
+                    className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
+                  />
                   Refresh Data
                 </Button>
               </div>
@@ -369,15 +392,20 @@ export function AdminTools() {
                     <AlertTriangle className="w-6 h-6 text-red-700" />
                   </div>
                   <div>
-                    <h4 className="text-red-900 font-bold text-lg mb-2">Final Confirmation Required</h4>
+                    <h4 className="text-red-900 font-bold text-lg mb-2">
+                      Final Confirmation Required
+                    </h4>
                     <p className="text-red-800 leading-relaxed">
-                      You are about to permanently delete <strong>all messages</strong>, <strong>all mentions</strong>, 
-                      and <strong>all related data</strong> from the system. This action is <strong>irreversible</strong> 
+                      You are about to permanently delete{" "}
+                      <strong>all messages</strong>,{" "}
+                      <strong>all mentions</strong>, and{" "}
+                      <strong>all related data</strong> from the system. This
+                      action is <strong>irreversible</strong>
                       and will affect all users.
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-red-200">
                   <Button
                     variant="destructive"
@@ -433,7 +461,7 @@ export function AdminTools() {
               Comprehensive insights into system message data and user activity
             </CardDescription>
           </CardHeader>
-          
+
           <CardContent className="p-6">
             <div className="flex flex-col sm:flex-row gap-4 mb-6">
               <Button
@@ -475,11 +503,15 @@ export function AdminTools() {
                       <div className="text-4xl font-bold text-gray-900 mb-2">
                         {stats.messageCount.toLocaleString()}
                       </div>
-                      <div className="text-gray-700 font-medium">Total Messages</div>
-                      <div className="text-sm text-gray-500 mt-1">System-wide count</div>
+                      <div className="text-gray-700 font-medium">
+                        Total Messages
+                      </div>
+                      <div className="text-sm text-gray-500 mt-1">
+                        System-wide count
+                      </div>
                     </div>
                   </div>
-                  
+
                   <div className="bg-white rounded-lg p-6 shadow-md border border-gray-200">
                     <div className="text-center">
                       <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -488,8 +520,12 @@ export function AdminTools() {
                       <div className="text-4xl font-bold text-gray-900 mb-2">
                         {stats.mentionCount.toLocaleString()}
                       </div>
-                      <div className="text-gray-700 font-medium">Total Mentions</div>
-                      <div className="text-sm text-gray-500 mt-1">User notifications</div>
+                      <div className="text-gray-700 font-medium">
+                        Total Mentions
+                      </div>
+                      <div className="text-sm text-gray-500 mt-1">
+                        User notifications
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -502,51 +538,60 @@ export function AdminTools() {
                         <TrendingUp className="w-5 h-5 mr-2 text-gray-600" />
                         Top Active Users
                       </h4>
-                      <p className="text-sm text-gray-600 mt-1">Users ranked by message count</p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Users ranked by message count
+                      </p>
                     </div>
-                    
+
                     <div className="p-6">
                       <div className="space-y-3">
                         {stats.topUsers.map((user, index) => {
-                          const maxCount = Math.max(...stats.topUsers.map((u) => u.message_count));
-                          const percentage = (user.message_count / maxCount) * 100;
+                          const maxCount = Math.max(
+                            ...stats.topUsers.map((u) => u.message_count)
+                          );
+                          const percentage =
+                            (user.message_count / maxCount) * 100;
                           const isTopUser = index < 3;
 
                           return (
                             <div
                               key={index}
                               className={`flex items-center p-4 rounded-lg border ${
-                                isTopUser 
-                                  ? 'bg-gray-50 border-gray-300' 
-                                  : 'bg-white border-gray-200'
+                                isTopUser
+                                  ? "bg-gray-50 border-gray-300"
+                                  : "bg-white border-gray-200"
                               }`}
                             >
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold mr-4 ${
-                                isTopUser 
-                                  ? 'bg-gray-700 text-white' 
-                                  : 'bg-gray-400 text-white'
-                              }`}>
+                              <div
+                                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold mr-4 ${
+                                  isTopUser
+                                    ? "bg-gray-700 text-white"
+                                    : "bg-gray-400 text-white"
+                                }`}
+                              >
                                 {index + 1}
                               </div>
-                              
+
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between mb-2">
                                   <span className="font-semibold text-gray-900 truncate">
                                     {user.username || "Unknown User"}
                                   </span>
-                                  <span className={`font-bold ${
-                                    isTopUser ? 'text-gray-900' : 'text-gray-700'
-                                  }`}>
+                                  <span
+                                    className={`font-bold ${
+                                      isTopUser
+                                        ? "text-gray-900"
+                                        : "text-gray-700"
+                                    }`}
+                                  >
                                     {user.message_count.toLocaleString()}
                                   </span>
                                 </div>
-                                
+
                                 <div className="w-full bg-gray-200 rounded-full h-2">
                                   <div
                                     className={`h-2 rounded-full transition-all duration-500 ${
-                                      isTopUser 
-                                        ? 'bg-gray-600' 
-                                        : 'bg-gray-400'
+                                      isTopUser ? "bg-gray-600" : "bg-gray-400"
                                     }`}
                                     style={{ width: `${percentage}%` }}
                                   ></div>
@@ -563,8 +608,13 @@ export function AdminTools() {
                     <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                       <Database className="w-8 h-8 text-gray-400" />
                     </div>
-                    <h4 className="text-lg font-medium text-gray-600 mb-2">No User Data Available</h4>
-                    <p className="text-gray-500">User activity statistics will appear here once data is available.</p>
+                    <h4 className="text-lg font-medium text-gray-600 mb-2">
+                      No User Data Available
+                    </h4>
+                    <p className="text-gray-500">
+                      User activity statistics will appear here once data is
+                      available.
+                    </p>
                   </div>
                 )}
               </div>
@@ -580,6 +630,11 @@ export function AdminTools() {
     return <PasscodeManager isEmbedded={true} />;
   };
 
+  // Render the People tab content
+  const renderPeopleTab = () => {
+    return <RoleBasedPeopleManager />;
+  };
+
   // Render the Settings tab content
   const renderSettingsTab = () => {
     // Helper function to format uptime
@@ -587,7 +642,7 @@ export function AdminTools() {
       const days = Math.floor(seconds / 86400);
       const hours = Math.floor((seconds % 86400) / 3600);
       const minutes = Math.floor((seconds % 3600) / 60);
-      
+
       if (days > 0) {
         return `${days}d ${hours}h ${minutes}m`;
       } else if (hours > 0) {
@@ -612,7 +667,7 @@ export function AdminTools() {
               Configure SMTP settings for system email notifications
             </CardDescription>
           </CardHeader>
-          
+
           <CardContent className="p-6">
             <div className="flex flex-col sm:flex-row gap-4 mb-6">
               <Button
@@ -646,25 +701,45 @@ export function AdminTools() {
               <div className="space-y-6">
                 {/* Email Settings Form */}
                 <div className="bg-gray-50 rounded-lg p-6">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4">SMTP Configuration</h4>
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">
+                    SMTP Configuration
+                  </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {emailSettings.map((setting, index) => (
                       <div key={setting.setting_name} className="space-y-2">
                         <label className="block text-sm font-medium text-gray-700 capitalize">
-                          {setting.setting_name.replace('smtp_', '').replace('_', ' ')}
+                          {setting.setting_name
+                            .replace("smtp_", "")
+                            .replace("_", " ")}
                         </label>
-                        {setting.setting_name.includes('password') ? (
+                        {setting.setting_name.includes("password") ? (
                           <div className="relative">
                             <input
-                              type={showPasswords[setting.setting_name] ? "text" : "password"}
-                              value={setting.setting_value === '••••••••' ? '' : setting.setting_value}
-                              onChange={(e) => handleEmailSettingChange(index, e.target.value)}
-                              placeholder={setting.setting_value === '••••••••' ? 'Enter new password' : ''}
+                              type={
+                                showPasswords[setting.setting_name]
+                                  ? "text"
+                                  : "password"
+                              }
+                              value={
+                                setting.setting_value === "••••••••"
+                                  ? ""
+                                  : setting.setting_value
+                              }
+                              onChange={(e) =>
+                                handleEmailSettingChange(index, e.target.value)
+                              }
+                              placeholder={
+                                setting.setting_value === "••••••••"
+                                  ? "Enter new password"
+                                  : ""
+                              }
                               className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             />
                             <button
                               type="button"
-                              onClick={() => togglePasswordVisibility(setting.setting_name)}
+                              onClick={() =>
+                                togglePasswordVisibility(setting.setting_name)
+                              }
                               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                             >
                               {showPasswords[setting.setting_name] ? (
@@ -674,10 +749,12 @@ export function AdminTools() {
                               )}
                             </button>
                           </div>
-                        ) : setting.setting_name === 'smtp_secure' ? (
+                        ) : setting.setting_name === "smtp_secure" ? (
                           <select
                             value={setting.setting_value}
-                            onChange={(e) => handleEmailSettingChange(index, e.target.value)}
+                            onChange={(e) =>
+                              handleEmailSettingChange(index, e.target.value)
+                            }
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           >
                             <option value="true">Yes (SSL/TLS)</option>
@@ -685,9 +762,15 @@ export function AdminTools() {
                           </select>
                         ) : (
                           <input
-                            type={setting.setting_name === 'smtp_port' ? "number" : "text"}
+                            type={
+                              setting.setting_name === "smtp_port"
+                                ? "number"
+                                : "text"
+                            }
                             value={setting.setting_value}
-                            onChange={(e) => handleEmailSettingChange(index, e.target.value)}
+                            onChange={(e) =>
+                              handleEmailSettingChange(index, e.target.value)
+                            }
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
                         )}
@@ -700,7 +783,9 @@ export function AdminTools() {
                 <div className="flex flex-col lg:flex-row gap-6">
                   {/* Save Settings */}
                   <div className="flex-1 bg-white border border-gray-200 rounded-lg p-4">
-                    <h5 className="font-semibold text-gray-900 mb-3">Save Configuration</h5>
+                    <h5 className="font-semibold text-gray-900 mb-3">
+                      Save Configuration
+                    </h5>
                     <Button
                       onClick={updateEmailSettings}
                       disabled={loading}
@@ -722,7 +807,9 @@ export function AdminTools() {
 
                   {/* Test Configuration */}
                   <div className="flex-1 bg-white border border-gray-200 rounded-lg p-4">
-                    <h5 className="font-semibold text-gray-900 mb-3">Test Configuration</h5>
+                    <h5 className="font-semibold text-gray-900 mb-3">
+                      Test Configuration
+                    </h5>
                     <div className="flex gap-2">
                       <input
                         type="email"
@@ -761,7 +848,7 @@ export function AdminTools() {
               Real-time system performance and administrative monitoring
             </CardDescription>
           </CardHeader>
-          
+
           <CardContent className="p-6">
             <div className="flex flex-col sm:flex-row gap-4 mb-6">
               <Button
@@ -793,30 +880,43 @@ export function AdminTools() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Server Status */}
-              <div className={`bg-white rounded-lg p-6 border text-center transition-all duration-200 ${
-                systemStatus?.server?.status === 'online' 
-                  ? 'border-green-200 shadow-green-100' 
-                  : 'border-red-200 shadow-red-100'
-              } shadow-lg`}>
-                <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
-                  systemStatus?.server?.status === 'online' 
-                    ? 'bg-green-100' 
-                    : 'bg-red-100'
-                }`}>
-                  <Activity className={`w-8 h-8 ${
-                    systemStatus?.server?.status === 'online' 
-                      ? 'text-green-600' 
-                      : 'text-red-600'
-                  }`} />
+              <div
+                className={`bg-white rounded-lg p-6 border text-center transition-all duration-200 ${
+                  systemStatus?.server?.status === "online"
+                    ? "border-green-200 shadow-green-100"
+                    : "border-red-200 shadow-red-100"
+                } shadow-lg`}
+              >
+                <div
+                  className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
+                    systemStatus?.server?.status === "online"
+                      ? "bg-green-100"
+                      : "bg-red-100"
+                  }`}
+                >
+                  <Activity
+                    className={`w-8 h-8 ${
+                      systemStatus?.server?.status === "online"
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }`}
+                  />
                 </div>
-                <h4 className="font-bold text-lg text-gray-800 mb-2">Server Status</h4>
-                <div className={`font-bold text-lg mb-2 ${
-                  systemStatus?.server?.status === 'online' 
-                    ? 'text-green-600' 
-                    : 'text-red-600'
-                }`}>
-                  {systemStatus?.server?.status === 'online' ? 'Online' : 
-                   systemStatus?.server?.status === 'offline' ? 'Offline' : 'Unknown'}
+                <h4 className="font-bold text-lg text-gray-800 mb-2">
+                  Server Status
+                </h4>
+                <div
+                  className={`font-bold text-lg mb-2 ${
+                    systemStatus?.server?.status === "online"
+                      ? "text-green-600"
+                      : "text-red-600"
+                  }`}
+                >
+                  {systemStatus?.server?.status === "online"
+                    ? "Online"
+                    : systemStatus?.server?.status === "offline"
+                    ? "Offline"
+                    : "Unknown"}
                 </div>
                 {systemStatus?.server?.uptime && (
                   <div className="text-sm text-gray-600">
@@ -824,32 +924,45 @@ export function AdminTools() {
                   </div>
                 )}
               </div>
-              
+
               {/* Database Status */}
-              <div className={`bg-white rounded-lg p-6 border text-center transition-all duration-200 ${
-                systemStatus?.database?.connected 
-                  ? 'border-blue-200 shadow-blue-100' 
-                  : 'border-red-200 shadow-red-100'
-              } shadow-lg`}>
-                <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
-                  systemStatus?.database?.connected 
-                    ? 'bg-blue-100' 
-                    : 'bg-red-100'
-                }`}>
-                  <Database className={`w-8 h-8 ${
-                    systemStatus?.database?.connected 
-                      ? 'text-blue-600' 
-                      : 'text-red-600'
-                  }`} />
+              <div
+                className={`bg-white rounded-lg p-6 border text-center transition-all duration-200 ${
+                  systemStatus?.database?.connected
+                    ? "border-blue-200 shadow-blue-100"
+                    : "border-red-200 shadow-red-100"
+                } shadow-lg`}
+              >
+                <div
+                  className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
+                    systemStatus?.database?.connected
+                      ? "bg-blue-100"
+                      : "bg-red-100"
+                  }`}
+                >
+                  <Database
+                    className={`w-8 h-8 ${
+                      systemStatus?.database?.connected
+                        ? "text-blue-600"
+                        : "text-red-600"
+                    }`}
+                  />
                 </div>
-                <h4 className="font-bold text-lg text-gray-800 mb-2">Database</h4>
-                <div className={`font-bold text-lg mb-2 ${
-                  systemStatus?.database?.connected 
-                    ? 'text-blue-600' 
-                    : 'text-red-600'
-                }`}>
-                  {systemStatus?.database?.connected ? 'Connected' : 
-                   systemStatus?.database?.status === 'disconnected' ? 'Disconnected' : 'Unknown'}
+                <h4 className="font-bold text-lg text-gray-800 mb-2">
+                  Database
+                </h4>
+                <div
+                  className={`font-bold text-lg mb-2 ${
+                    systemStatus?.database?.connected
+                      ? "text-blue-600"
+                      : "text-red-600"
+                  }`}
+                >
+                  {systemStatus?.database?.connected
+                    ? "Connected"
+                    : systemStatus?.database?.status === "disconnected"
+                    ? "Disconnected"
+                    : "Unknown"}
                 </div>
                 {systemStatus?.database?.error && (
                   <div className="text-xs text-red-500 mt-2 bg-red-50 p-2 rounded">
@@ -863,7 +976,8 @@ export function AdminTools() {
             {systemStatus?.server?.timestamp && (
               <div className="mt-6 pt-4 border-t border-gray-200 text-center">
                 <p className="text-sm text-gray-500">
-                  Last updated: {new Date(systemStatus.server.timestamp).toLocaleString()}
+                  Last updated:{" "}
+                  {new Date(systemStatus.server.timestamp).toLocaleString()}
                 </p>
               </div>
             )}
@@ -883,21 +997,32 @@ export function AdminTools() {
               System-wide settings and administrative controls
             </CardDescription>
           </CardHeader>
-          
+
           <CardContent className="p-6">
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
               <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Settings className="w-8 h-8 text-gray-600" />
               </div>
-              <h4 className="text-lg font-semibold text-gray-800 mb-2">Coming Soon</h4>
+              <h4 className="text-lg font-semibold text-gray-800 mb-2">
+                Coming Soon
+              </h4>
               <p className="text-gray-600 mb-4">
-                Advanced system settings and configuration options will be available in future updates.
+                Advanced system settings and configuration options will be
+                available in future updates.
               </p>
               <div className="flex flex-wrap justify-center gap-2 text-sm text-gray-600">
-                <span className="bg-gray-200 px-3 py-1 rounded-full">User Management</span>
-                <span className="bg-gray-200 px-3 py-1 rounded-full">Security Settings</span>
-                <span className="bg-gray-200 px-3 py-1 rounded-full">System Preferences</span>
-                <span className="bg-gray-200 px-3 py-1 rounded-full">API Configuration</span>
+                <span className="bg-gray-200 px-3 py-1 rounded-full">
+                  User Management
+                </span>
+                <span className="bg-gray-200 px-3 py-1 rounded-full">
+                  Security Settings
+                </span>
+                <span className="bg-gray-200 px-3 py-1 rounded-full">
+                  System Preferences
+                </span>
+                <span className="bg-gray-200 px-3 py-1 rounded-full">
+                  API Configuration
+                </span>
               </div>
             </div>
           </CardContent>
@@ -913,6 +1038,8 @@ export function AdminTools() {
         return renderMessagesTab();
       case "passcodes":
         return renderPasscodesTab();
+      case "people":
+        return renderPeopleTab();
       case "settings":
         return renderSettingsTab();
       default:
@@ -933,7 +1060,7 @@ export function AdminTools() {
               <ArrowLeft className="w-5 h-5 mr-2" />
               <span className="font-medium">Back to Dashboard</span>
             </Link>
-            
+
             <div className="flex items-center gap-3">
               <div className="bg-white rounded-lg px-4 py-2 border border-gray-200 shadow-sm">
                 <div className="flex items-center text-sm text-gray-600">
@@ -943,13 +1070,14 @@ export function AdminTools() {
               </div>
             </div>
           </div>
-          
+
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-gray-900 mb-3">
               Admin Control Center
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Comprehensive administrative tools for system management and monitoring
+              Comprehensive administrative tools for system management and
+              monitoring
             </p>
           </div>
         </div>
@@ -968,14 +1096,18 @@ export function AdminTools() {
                   }`}
                   onClick={() => setActiveTab(tab.id)}
                 >
-                  <tab.icon className={`w-5 h-5 ${
-                    activeTab === tab.id ? "text-white" : "text-gray-500"
-                  }`} />
+                  <tab.icon
+                    className={`w-5 h-5 ${
+                      activeTab === tab.id ? "text-white" : "text-gray-500"
+                    }`}
+                  />
                   <div className="text-left hidden sm:block">
                     <div className="font-semibold">{tab.label}</div>
-                    <div className={`text-xs ${
-                      activeTab === tab.id ? "text-gray-300" : "text-gray-500"
-                    }`}>
+                    <div
+                      className={`text-xs ${
+                        activeTab === tab.id ? "text-gray-300" : "text-gray-500"
+                      }`}
+                    >
                       {tab.description}
                     </div>
                   </div>
@@ -997,7 +1129,10 @@ export function AdminTools() {
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center text-sm text-gray-600">
                 <Settings className="w-4 h-4 mr-2 text-gray-400" />
-                <span>Administrative tools are restricted to authorized personnel only</span>
+                <span>
+                  Administrative tools are restricted to authorized personnel
+                  only
+                </span>
               </div>
               <Link
                 to="/dashboard"

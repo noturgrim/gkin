@@ -7,6 +7,9 @@ const {
   addServiceDateAndRecipientTypeToEmailHistory,
 } = require("./migrate_email_history_fields");
 const { optimizeChatQueries } = require("./optimize_chat");
+const {
+  migrateAssignablePeopleRoles,
+} = require("./migrate_assignable_people_roles");
 
 async function initializeDatabase() {
   try {
@@ -53,6 +56,10 @@ async function initializeDatabase() {
       path.join(__dirname, "email_settings_schema.sql"),
       "utf8"
     );
+    const assignablePeopleSchemaSQL = fs.readFileSync(
+      path.join(__dirname, "assignable_people_schema.sql"),
+      "utf8"
+    );
 
     // Execute schema SQL
     await db.query(schemaSQL);
@@ -89,6 +96,27 @@ async function initializeDatabase() {
         "Email settings table initialization warning:",
         error.message
       );
+      // Continue execution as this might be due to existing objects
+    }
+
+    // Initialize assignable people table
+    try {
+      await db.query(assignablePeopleSchemaSQL);
+      console.log("Assignable people table initialized successfully");
+    } catch (error) {
+      console.warn(
+        "Assignable people table initialization warning:",
+        error.message
+      );
+      // Continue execution as this might be due to existing objects
+    }
+
+    // Migrate assignable people to add roles column
+    try {
+      await migrateAssignablePeopleRoles();
+      console.log("Assignable people roles migration completed successfully");
+    } catch (error) {
+      console.warn("Assignable people roles migration warning:", error.message);
       // Continue execution as this might be due to existing objects
     }
 

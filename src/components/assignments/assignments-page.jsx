@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
+import { Select } from "../ui/select";
 import {
   Calendar,
   Save,
@@ -20,6 +21,7 @@ import { WeekSelector } from "../week-selector";
 import { useAssignments } from "./context/AssignmentsContext";
 import { getDefaultSelectedWeek } from "../../lib/date-utils";
 import { Badge } from "../ui/badge";
+import { getAssignablePeople } from "../../services/assignablePeopleService";
 
 export function AssignmentsPage() {
   const navigate = useNavigate();
@@ -28,6 +30,7 @@ export function AssignmentsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [assignablePeople, setAssignablePeople] = useState([]);
 
   const {
     assignments,
@@ -45,6 +48,20 @@ export function AssignmentsPage() {
     const savedUser = localStorage.getItem("currentUser");
     return savedUser ? JSON.parse(savedUser) : null;
   });
+
+  // Fetch assignable people on mount
+  useEffect(() => {
+    const fetchPeople = async () => {
+      try {
+        const people = await getAssignablePeople(true); // Only active people
+        setAssignablePeople(people || []); // Ensure it's always an array
+      } catch (error) {
+        console.error("Error fetching assignable people:", error);
+        setAssignablePeople([]); // Set empty array on error
+      }
+    };
+    fetchPeople();
+  }, []);
 
   // Get current service
   const currentService = getAssignmentsForDate(selectedWeek);
@@ -351,7 +368,7 @@ export function AssignmentsPage() {
                             <Trash2 className="h-5 w-5" />
                           </Button>
                         </div>
-                        <Input
+                        <Select
                           value={assignment.person}
                           onChange={(e) =>
                             updateAssignment(
@@ -361,8 +378,16 @@ export function AssignmentsPage() {
                             )
                           }
                           className="text-base h-12 border-2 border-gray-300 focus:border-blue-400"
-                          placeholder="Enter person name"
-                        />
+                        >
+                          <option value="">Not assigned</option>
+                          {assignablePeople && assignablePeople.length > 0
+                            ? assignablePeople.map((person) => (
+                                <option key={person.id} value={person.name}>
+                                  {person.name}
+                                </option>
+                              ))
+                            : null}
+                        </Select>
                       </div>
                     ))}
                   </div>
@@ -380,7 +405,7 @@ export function AssignmentsPage() {
                           </Label>
                         </div>
                         <div className="col-span-7">
-                          <Input
+                          <Select
                             value={assignment.person}
                             onChange={(e) =>
                               updateAssignment(
@@ -390,8 +415,16 @@ export function AssignmentsPage() {
                               )
                             }
                             className="text-base h-10 border-2 border-gray-300 focus:border-blue-400"
-                            placeholder="Enter person name"
-                          />
+                          >
+                            <option value="">Not assigned</option>
+                            {assignablePeople && assignablePeople.length > 0
+                              ? assignablePeople.map((person) => (
+                                  <option key={person.id} value={person.name}>
+                                    {person.name}
+                                  </option>
+                                ))
+                              : null}
+                          </Select>
                         </div>
                         <div className="col-span-1 flex items-center justify-center">
                           <Button

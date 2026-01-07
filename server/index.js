@@ -61,6 +61,7 @@ const activityRoutes = require("./routes/activity");
 const emailHistoryRoutes = require("./routes/emailHistory");
 const emailSettingsRoutes = require("./routes/emailSettings");
 const profileRoutes = require("./routes/profile");
+const assignablePeopleRoutes = require("./routes/assignablePeople");
 
 // Use routes
 app.use("/api/auth", authRoutes);
@@ -77,6 +78,7 @@ app.use("/api/sermon", sermonRoutes);
 app.use("/api/music-links", musicLinksRoutes);
 app.use("/api/activity", activityRoutes);
 app.use("/api/profile", profileRoutes);
+app.use("/api/assignable-people", assignablePeopleRoutes);
 
 // Default route
 app.get("/", (req, res) => {
