@@ -7,6 +7,8 @@ import musicLinksService from "../../../services/musicLinksService";
 import chatService from "../../../services/chatService";
 import emailService from "../../../services/emailService";
 import roleEmailsService from "../../../services/roleEmailsService";
+import { getAssignments } from "../../../services/assignmentsService";
+import { getAssignablePeople } from "../../../services/assignablePeopleService";
 
 export const useWorkflowHandlers = () => {
   // Loading states
@@ -169,6 +171,148 @@ export const useWorkflowHandlers = () => {
       // Update the service status for this task if needed
       if (onStartAction) {
         onStartAction(`${documentData.documentType}-completed`);
+      }
+
+      // Send notifications if this is the final document
+      if (documentData.documentType === "final") {
+        try {
+          // Get service assignments to find specific people
+          const allAssignments = await getAssignments();
+          const serviceAssignment = allAssignments.find(
+            (a) => a.dateString === dateString
+          );
+          const assignments = serviceAssignment?.assignments || [];
+
+          // Find specific assigned people
+          const muzikaleBegeleiding = assignments.find(
+            (a) => a.role === "Muzikale begeleiding"
+          )?.person;
+          const voorzangers = assignments.find(
+            (a) => a.role === "Voorzangers"
+          )?.person;
+          const ouderlingVanDienst = assignments.find(
+            (a) => a.role === "Ouderling van dienst"
+          )?.person;
+
+          // Build list of who was emailed
+          let emailedList = "Beamer team, Translation team";
+          if (muzikaleBegeleiding) {
+            emailedList += `, ${muzikaleBegeleiding} (Muzikale begeleiding)`;
+          }
+          if (voorzangers) {
+            emailedList += `, ${voorzangers} (Voorzangers)`;
+          }
+          if (ouderlingVanDienst) {
+            emailedList += `, ${ouderlingVanDienst} (Ouderling van dienst)`;
+          }
+
+          // 1. Send in-app chat notification
+          const notificationMessage = `@beamer @translation The final document for ${dateString} has been uploaded. Emailed: ${emailedList}`;
+          await chatService.sendMessage(notificationMessage, [
+            { type: "role", value: "beamer" },
+            { type: "role", value: "translation" },
+          ]);
+
+          // 2. Send emails to role emails and assigned people
+          try {
+            // Get role emails
+            const beamerEmail = await roleEmailsService.getRoleEmail("beamer");
+            const translationEmail = await roleEmailsService.getRoleEmail(
+              "translation"
+            );
+
+            console.log("Beamer email:", beamerEmail);
+            console.log("Translation email:", translationEmail);
+
+            // Get assignable people to find their email addresses
+            const allPeople = await getAssignablePeople(true);
+            console.log("All people:", allPeople);
+
+            const emailPromises = [];
+
+            if (beamerEmail?.email) {
+              console.log("Sending email to beamer:", beamerEmail.email);
+              emailPromises.push(
+                emailService.sendEmail({
+                  to: beamerEmail.email,
+                  subject: `Final Document Ready - ${dateString}`,
+                  message: `The final document has been uploaded for the service on ${dateString}.\n\nYou can access it here: ${documentLink}`,
+                  documentType: "final",
+                  documentLink: documentLink,
+                  serviceDate: dateString,
+                  recipientType: "beamer",
+                })
+              );
+            } else {
+              console.warn("Beamer email not configured");
+            }
+
+            if (translationEmail?.email) {
+              console.log(
+                "Sending email to translation:",
+                translationEmail.email
+              );
+              emailPromises.push(
+                emailService.sendEmail({
+                  to: translationEmail.email,
+                  subject: `Final Document Ready - ${dateString}`,
+                  message: `The final document has been uploaded for the service on ${dateString}.\n\nYou can access it here: ${documentLink}`,
+                  documentType: "final",
+                  documentLink: documentLink,
+                  serviceDate: dateString,
+                  recipientType: "translation",
+                })
+              );
+            } else {
+              console.warn("Translation email not configured");
+            }
+
+            // Send emails to assigned people
+            const assignedPeopleToEmail = [
+              { name: muzikaleBegeleiding, role: "Muzikale begeleiding" },
+              { name: voorzangers, role: "Voorzangers" },
+              { name: ouderlingVanDienst, role: "Ouderling van dienst" },
+            ].filter((p) => p.name); // Only include assigned people
+
+            for (const assignedPerson of assignedPeopleToEmail) {
+              const person = allPeople.find(
+                (p) => p.name === assignedPerson.name
+              );
+              if (person && person.email) {
+                console.log(
+                  `Sending email to ${assignedPerson.name} (${assignedPerson.role}):`,
+                  person.email
+                );
+                emailPromises.push(
+                  emailService.sendEmail({
+                    to: person.email,
+                    subject: `Final Document Ready - ${dateString}`,
+                    message: `Hello ${assignedPerson.name},\n\nThe final document has been uploaded for the service on ${dateString}.\n\nYou are assigned as: ${assignedPerson.role}`,
+                    documentType: "final",
+                    documentLink: documentLink,
+                    serviceDate: dateString,
+                    recipientType: assignedPerson.role,
+                  })
+                );
+              } else {
+                console.warn(
+                  `No email found for ${assignedPerson.name} (${assignedPerson.role})`
+                );
+              }
+            }
+
+            if (emailPromises.length > 0) {
+              await Promise.all(emailPromises);
+              console.log("All emails sent successfully");
+            } else {
+              console.warn("No emails to send - role emails not configured");
+            }
+          } catch (emailError) {
+            console.warn("Failed to send email notifications:", emailError);
+          }
+        } catch (notificationError) {
+          console.error("Failed to send notifications:", notificationError);
+        }
       }
 
       // Return success - no alert needed as the modal already shows loading state
