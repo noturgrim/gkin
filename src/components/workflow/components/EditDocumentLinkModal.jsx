@@ -42,10 +42,15 @@ export const EditDocumentLinkModal = ({
       setDocumentLink(initialLink || "");
       setFeedback({ type: null, message: "" });
       setShowDeleteConfirmation(false);
+      setIsSaving(false);
+      setIsDeleting(false);
     }
   }, [isOpen, initialLink]);
 
   const handleSave = async () => {
+    // Prevent double-clicks
+    if (isSaving || isDeleting) return;
+
     try {
       setIsSaving(true);
       setFeedback({ type: null, message: "" });
@@ -60,6 +65,7 @@ export const EditDocumentLinkModal = ({
 
       // Close the modal after a short delay
       setTimeout(() => {
+        setIsSaving(false);
         onClose();
       }, 1500);
     } catch (error) {
@@ -83,6 +89,9 @@ export const EditDocumentLinkModal = ({
   };
 
   const handleDelete = async () => {
+    // Prevent double-clicks
+    if (isDeleting || isSaving) return;
+
     try {
       setIsDeleting(true);
       setFeedback({ type: null, message: "" });
@@ -97,6 +106,8 @@ export const EditDocumentLinkModal = ({
 
       // Close the modal after a short delay
       setTimeout(() => {
+        setIsDeleting(false);
+        setShowDeleteConfirmation(false);
         onClose();
       }, 1500);
     } catch (error) {

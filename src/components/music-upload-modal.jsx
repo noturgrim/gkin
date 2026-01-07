@@ -118,6 +118,9 @@ export function MusicUploadModal({ isOpen, onClose, onSubmit, dateString }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Prevent double-clicks
+    if (isSubmitting) return;
+
     if (!validateForm()) {
       return;
     }

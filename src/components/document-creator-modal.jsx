@@ -59,6 +59,9 @@ export function DocumentCreatorModal({
 
   // Function to handle completion
   const handleComplete = async () => {
+    // Prevent double-clicks
+    if (isSubmitting) return;
+
     if (!driveLink.trim() || !isLinkValid) {
       alert("Please enter a valid Google Drive link");
       return;

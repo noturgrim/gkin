@@ -34,6 +34,9 @@ export function SermonUploadModal({ isOpen, onClose, onSubmit }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Prevent double-clicks
+    if (isSubmitting) return;
+
     // Form validation
     let errorMessage = "";
     if (!formValues.sermonLink.trim()) {
