@@ -494,6 +494,21 @@ export const AssignmentsProvider = ({ children }) => {
     }
   };
 
+  // Function to update entire assignments array for a date (local state only)
+  const updateAssignmentsForDate = (dateString, newAssignments) => {
+    setAssignments((prevAssignments) => {
+      return prevAssignments.map((service) => {
+        if (service.dateString === dateString) {
+          return {
+            ...service,
+            assignments: newAssignments,
+          };
+        }
+        return service;
+      });
+    });
+  };
+
   // Function to reset assignments to default roles
   const resetAssignments = async () => {
     try {
@@ -535,6 +550,7 @@ export const AssignmentsProvider = ({ children }) => {
     addRole,
     removeRole,
     getAssignmentsForDate,
+    updateAssignmentsForDate,
     addMoreFutureDates,
     saveAssignments,
     removeDate,

@@ -22,6 +22,8 @@ import { useAssignments } from "./context/AssignmentsContext";
 import { getDefaultSelectedWeek } from "../../lib/date-utils";
 import { Badge } from "../ui/badge";
 import { getAssignablePeople } from "../../services/assignablePeopleService";
+import { DraggableRoleManager } from "./DraggableRoleManager";
+import { DraggableRoleManagerMobile } from "./DraggableRoleManagerMobile";
 
 export function AssignmentsPage() {
   const navigate = useNavigate();
@@ -40,6 +42,7 @@ export function AssignmentsPage() {
     addRole,
     removeRole,
     getAssignmentsForDate,
+    updateAssignmentsForDate,
     saveAssignments,
     resetAssignments,
   } = useAssignments();
@@ -182,6 +185,37 @@ export function AssignmentsPage() {
         alert("Failed to remove role. Please try again.");
       }
     }
+  };
+
+  // Handle role reordering from drag and drop
+  const handleRoleReorder = (sourceIndex, destIndex) => {
+    if (!currentService || !currentService.assignments) return;
+
+    // Get unique roles in current order
+    const roles = [];
+    const roleMap = new Map();
+
+    currentService.assignments.forEach((assignment) => {
+      if (!roleMap.has(assignment.role)) {
+        roleMap.set(assignment.role, []);
+        roles.push(assignment.role);
+      }
+      roleMap.get(assignment.role).push(assignment);
+    });
+
+    // Reorder the roles array
+    const [movedRole] = roles.splice(sourceIndex, 1);
+    roles.splice(destIndex, 0, movedRole);
+
+    // Reconstruct assignments array with new role order
+    const reorderedAssignments = [];
+    roles.forEach((role) => {
+      const roleAssignments = roleMap.get(role);
+      reorderedAssignments.push(...roleAssignments);
+    });
+
+    // Update local state only - will save when user clicks "Save Changes"
+    updateAssignmentsForDate(selectedWeek, reorderedAssignments);
   };
 
   // Format date for display
@@ -384,154 +418,30 @@ export function AssignmentsPage() {
             <CardContent className="p-4 md:p-3">
               {currentService ? (
                 <>
-                  {/* Mobile Layout - Stacked */}
-                  <div className="space-y-4 lg:hidden">
-                    {Object.entries(groupedAssignments).map(
-                      ([roleName, people]) => (
-                        <div
-                          key={roleName}
-                          className="bg-gray-50 border border-gray-200 p-4"
-                        >
-                          <div className="flex items-center justify-between mb-3">
-                            <Label className="text-base font-semibold text-gray-800">
-                              {roleName}
-                            </Label>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleAddPersonToRole(roleName)}
-                              className="flex items-center gap-1"
-                            >
-                              <Plus className="h-4 w-4" />
-                              Add
-                            </Button>
-                          </div>
-                          <div className="space-y-2">
-                            {people.map((assignment) => {
-                              const availablePeople =
-                                getPeopleForRole(roleName);
-                              return (
-                                <div
-                                  key={assignment.originalIndex}
-                                  className="flex gap-2"
-                                >
-                                  <Select
-                                    value={assignment.person}
-                                    onChange={(e) =>
-                                      updateAssignment(
-                                        currentService.dateString,
-                                        assignment.originalIndex,
-                                        e.target.value
-                                      )
-                                    }
-                                    className="flex-1 text-sm h-10 border-2 border-gray-300 focus:border-blue-400"
-                                  >
-                                    <option value="">Not assigned</option>
-                                    {availablePeople.length > 0
-                                      ? availablePeople.map((person) => (
-                                          <option
-                                            key={person.id}
-                                            value={person.name}
-                                          >
-                                            {person.name} ({person.email})
-                                          </option>
-                                        ))
-                                      : null}
-                                  </Select>
-                                  <Button
-                                    variant="ghost"
-                                    onClick={() =>
-                                      handleRemoveRole(assignment.originalIndex)
-                                    }
-                                    className="h-10 w-10 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )
-                    )}
+                  {/* Mobile Layout - Draggable Stacked */}
+                  <div className="lg:hidden">
+                    <DraggableRoleManagerMobile
+                      groupedAssignments={groupedAssignments}
+                      onReorder={handleRoleReorder}
+                      updateAssignment={updateAssignment}
+                      handleRemoveRole={handleRemoveRole}
+                      handleAddPersonToRole={handleAddPersonToRole}
+                      getPeopleForRole={getPeopleForRole}
+                      currentService={currentService}
+                    />
                   </div>
 
-                  {/* Desktop Layout - Grid */}
-                  <div className="hidden lg:block space-y-4">
-                    {Object.entries(groupedAssignments).map(
-                      ([roleName, people]) => (
-                        <div
-                          key={roleName}
-                          className="border-b border-gray-200 pb-4 last:border-0"
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <Label className="text-base font-semibold text-gray-800">
-                              {roleName}
-                            </Label>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleAddPersonToRole(roleName)}
-                              className="flex items-center gap-1"
-                            >
-                              <Plus className="h-4 w-4" />
-                              Add Person
-                            </Button>
-                          </div>
-                          <div className="space-y-2">
-                            {people.map((assignment) => {
-                              const availablePeople =
-                                getPeopleForRole(roleName);
-                              return (
-                                <div
-                                  key={assignment.originalIndex}
-                                  className="grid grid-cols-12 gap-2"
-                                >
-                                  <div className="col-span-11">
-                                    <Select
-                                      value={assignment.person}
-                                      onChange={(e) =>
-                                        updateAssignment(
-                                          currentService.dateString,
-                                          assignment.originalIndex,
-                                          e.target.value
-                                        )
-                                      }
-                                      className="text-sm h-9 border-2 border-gray-300 focus:border-blue-400"
-                                    >
-                                      <option value="">Not assigned</option>
-                                      {availablePeople.length > 0
-                                        ? availablePeople.map((person) => (
-                                            <option
-                                              key={person.id}
-                                              value={person.name}
-                                            >
-                                              {person.name} ({person.email})
-                                            </option>
-                                          ))
-                                        : null}
-                                    </Select>
-                                  </div>
-                                  <div className="col-span-1 flex items-center justify-center">
-                                    <Button
-                                      variant="ghost"
-                                      onClick={() =>
-                                        handleRemoveRole(
-                                          assignment.originalIndex
-                                        )
-                                      }
-                                      className="h-9 w-9 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )
-                    )}
+                  {/* Desktop Layout - Draggable Grid */}
+                  <div className="hidden lg:block">
+                    <DraggableRoleManager
+                      groupedAssignments={groupedAssignments}
+                      onReorder={handleRoleReorder}
+                      updateAssignment={updateAssignment}
+                      handleRemoveRole={handleRemoveRole}
+                      handleAddPersonToRole={handleAddPersonToRole}
+                      getPeopleForRole={getPeopleForRole}
+                      currentService={currentService}
+                    />
                   </div>
 
                   {/* Add Role Form */}
