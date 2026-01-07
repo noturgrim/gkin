@@ -529,7 +529,7 @@ export const useWorkflowHandlers = () => {
             await emailService.sendEmail({
               to: translationEmail.email,
               subject: `Sermon Document Ready for Translation - ${dateString}`,
-              message: `A new sermon document has been uploaded for the service on ${dateString}.\n\nPlease visit the website to translate it: ${window.location.origin}\n\nDocument link: ${sermonData.sermonLink}`,
+              message: `A new sermon document has been uploaded for the service on ${dateString}.\n\nPlease visit the website to translate it: ${window.location.origin}`,
               documentType: "sermon",
               documentLink: sermonData.sermonLink,
               serviceDate: dateString,
@@ -994,6 +994,35 @@ export const useWorkflowHandlers = () => {
       // Update the service status if needed
       if (onStartAction) {
         onStartAction("sermon-translated");
+      }
+
+      // Send notification to beamer team
+      try {
+        // 1. Send in-app chat notification
+        const notificationMessage = `@beamer The sermon for ${dateString} has been translated and is ready.`;
+        await chatService.sendMessage(notificationMessage, [
+          { type: "role", value: "beamer" },
+        ]);
+
+        // 2. Send email notification to beamer
+        try {
+          const beamerEmail = await roleEmailsService.getRoleEmail("beamer");
+          if (beamerEmail?.email) {
+            await emailService.sendEmail({
+              to: beamerEmail.email,
+              subject: `Sermon Translation Complete - ${dateString}`,
+              message: `The sermon has been translated for the service on ${dateString}.`,
+              documentType: "sermon",
+              documentLink: documentLink,
+              serviceDate: dateString,
+              recipientType: "beamer",
+            });
+          }
+        } catch (emailError) {
+          console.warn("Failed to send email notification:", emailError);
+        }
+      } catch (notificationError) {
+        console.error("Failed to send notifications:", notificationError);
       }
 
       // Show a success message using toast instead of alert
