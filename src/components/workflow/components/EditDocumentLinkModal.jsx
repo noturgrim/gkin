@@ -128,16 +128,28 @@ export const EditDocumentLinkModal = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      onClick={(e) => {
+        // Close modal when clicking backdrop
+        if (e.target === e.currentTarget && !isSaving && !isDeleting) {
+          onClose();
+        }
+      }}
+    >
+      <div
+        className="bg-white rounded-lg p-6 w-full max-w-md"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold capitalize">
             Edit {documentType} Document Link
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
+            className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full p-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
             disabled={isSaving || isDeleting}
+            type="button"
           >
             <X size={20} />
           </button>
@@ -211,7 +223,7 @@ export const EditDocumentLinkModal = ({
                     variant="outline"
                     onClick={cancelDelete}
                     size="sm"
-                    className="border-red-300 text-red-700 hover:bg-red-50"
+                    className="border-red-300 text-red-700 hover:bg-red-50 hover:border-red-400 transition-all"
                     disabled={isDeleting}
                   >
                     Cancel
@@ -222,7 +234,7 @@ export const EditDocumentLinkModal = ({
                     onClick={handleDelete}
                     size="sm"
                     disabled={isDeleting}
-                    className="flex items-center"
+                    className="flex items-center hover:bg-red-700 transition-all"
                   >
                     {isDeleting ? (
                       <>
@@ -244,7 +256,7 @@ export const EditDocumentLinkModal = ({
             type="button"
             variant="destructive"
             onClick={showDeleteConfirmationUI}
-            className="flex items-center"
+            className="flex items-center hover:bg-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={
               !initialLink ||
               isDeleting ||
@@ -263,13 +275,14 @@ export const EditDocumentLinkModal = ({
               variant="outline"
               onClick={onClose}
               disabled={isSaving || isDeleting || feedback.type === "success"}
+              className="hover:bg-gray-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </Button>
             <Button
               type="button"
               onClick={handleSave}
-              className="flex items-center min-w-[90px] justify-center"
+              className="flex items-center min-w-[90px] justify-center hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={
                 !documentLink.trim() ||
                 isSaving ||
