@@ -54,7 +54,7 @@ export const RoleBasedPeopleManager = () => {
     try {
       setLoading(true);
       const data = await getAssignablePeople(false);
-      console.log("Fetched people:", data);
+      //   console.log("Fetched people:", data);
       setPeople(data || []);
       setError(null);
     } catch (err) {

@@ -111,6 +111,41 @@ export function AssignmentsPage() {
     }
   };
 
+  // Add another person to the same role
+  const handleAddPersonToRole = (roleName) => {
+    if (currentService) {
+      addRole(selectedWeek, roleName);
+    }
+  };
+
+  // Group assignments by role
+  const groupAssignmentsByRole = () => {
+    if (!currentService || !currentService.assignments) return {};
+
+    const grouped = {};
+    currentService.assignments.forEach((assignment, index) => {
+      if (!grouped[assignment.role]) {
+        grouped[assignment.role] = [];
+      }
+      grouped[assignment.role].push({ ...assignment, originalIndex: index });
+    });
+    return grouped;
+  };
+
+  // Get people available for a specific role
+  const getPeopleForRole = (roleName) => {
+    if (!assignablePeople || assignablePeople.length === 0) return [];
+
+    return assignablePeople.filter(
+      (person) =>
+        person.roles &&
+        Array.isArray(person.roles) &&
+        person.roles.includes(roleName)
+    );
+  };
+
+  const groupedAssignments = groupAssignmentsByRole();
+
   // Remove role with confirmation
   const handleRemoveRole = async (roleIndex) => {
     if (
@@ -351,92 +386,152 @@ export function AssignmentsPage() {
                 <>
                   {/* Mobile Layout - Stacked */}
                   <div className="space-y-4 lg:hidden">
-                    {currentService.assignments.map((assignment, index) => (
-                      <div
-                        key={index}
-                        className="bg-gray-50 border border-gray-200 p-4"
-                      >
-                        <div className="flex items-center justify-between mb-3">
-                          <Label className="text-base font-semibold text-gray-800">
-                            {assignment.role}
-                          </Label>
-                          <Button
-                            variant="ghost"
-                            onClick={() => handleRemoveRole(index)}
-                            className="h-12 w-12 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                          >
-                            <Trash2 className="h-5 w-5" />
-                          </Button>
-                        </div>
-                        <Select
-                          value={assignment.person}
-                          onChange={(e) =>
-                            updateAssignment(
-                              currentService.dateString,
-                              index,
-                              e.target.value
-                            )
-                          }
-                          className="text-base h-12 border-2 border-gray-300 focus:border-blue-400"
+                    {Object.entries(groupedAssignments).map(
+                      ([roleName, people]) => (
+                        <div
+                          key={roleName}
+                          className="bg-gray-50 border border-gray-200 p-4"
                         >
-                          <option value="">Not assigned</option>
-                          {assignablePeople && assignablePeople.length > 0
-                            ? assignablePeople.map((person) => (
-                                <option key={person.id} value={person.name}>
-                                  {person.name}
-                                </option>
-                              ))
-                            : null}
-                        </Select>
-                      </div>
-                    ))}
+                          <div className="flex items-center justify-between mb-3">
+                            <Label className="text-base font-semibold text-gray-800">
+                              {roleName}
+                            </Label>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleAddPersonToRole(roleName)}
+                              className="flex items-center gap-1"
+                            >
+                              <Plus className="h-4 w-4" />
+                              Add
+                            </Button>
+                          </div>
+                          <div className="space-y-2">
+                            {people.map((assignment) => {
+                              const availablePeople =
+                                getPeopleForRole(roleName);
+                              return (
+                                <div
+                                  key={assignment.originalIndex}
+                                  className="flex gap-2"
+                                >
+                                  <Select
+                                    value={assignment.person}
+                                    onChange={(e) =>
+                                      updateAssignment(
+                                        currentService.dateString,
+                                        assignment.originalIndex,
+                                        e.target.value
+                                      )
+                                    }
+                                    className="flex-1 text-sm h-10 border-2 border-gray-300 focus:border-blue-400"
+                                  >
+                                    <option value="">Not assigned</option>
+                                    {availablePeople.length > 0
+                                      ? availablePeople.map((person) => (
+                                          <option
+                                            key={person.id}
+                                            value={person.name}
+                                          >
+                                            {person.name} ({person.email})
+                                          </option>
+                                        ))
+                                      : null}
+                                  </Select>
+                                  <Button
+                                    variant="ghost"
+                                    onClick={() =>
+                                      handleRemoveRole(assignment.originalIndex)
+                                    }
+                                    className="h-10 w-10 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )
+                    )}
                   </div>
 
                   {/* Desktop Layout - Grid */}
-                  <div className="hidden lg:block space-y-2">
-                    {currentService.assignments.map((assignment, index) => (
-                      <div
-                        key={index}
-                        className="grid grid-cols-12 gap-2 border-b border-gray-100 py-3 last:border-0"
-                      >
-                        <div className="col-span-4 flex items-center">
-                          <Label className="text-base font-medium text-gray-700">
-                            {assignment.role}
-                          </Label>
+                  <div className="hidden lg:block space-y-4">
+                    {Object.entries(groupedAssignments).map(
+                      ([roleName, people]) => (
+                        <div
+                          key={roleName}
+                          className="border-b border-gray-200 pb-4 last:border-0"
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <Label className="text-base font-semibold text-gray-800">
+                              {roleName}
+                            </Label>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleAddPersonToRole(roleName)}
+                              className="flex items-center gap-1"
+                            >
+                              <Plus className="h-4 w-4" />
+                              Add Person
+                            </Button>
+                          </div>
+                          <div className="space-y-2">
+                            {people.map((assignment) => {
+                              const availablePeople =
+                                getPeopleForRole(roleName);
+                              return (
+                                <div
+                                  key={assignment.originalIndex}
+                                  className="grid grid-cols-12 gap-2"
+                                >
+                                  <div className="col-span-11">
+                                    <Select
+                                      value={assignment.person}
+                                      onChange={(e) =>
+                                        updateAssignment(
+                                          currentService.dateString,
+                                          assignment.originalIndex,
+                                          e.target.value
+                                        )
+                                      }
+                                      className="text-sm h-9 border-2 border-gray-300 focus:border-blue-400"
+                                    >
+                                      <option value="">Not assigned</option>
+                                      {availablePeople.length > 0
+                                        ? availablePeople.map((person) => (
+                                            <option
+                                              key={person.id}
+                                              value={person.name}
+                                            >
+                                              {person.name} ({person.email})
+                                            </option>
+                                          ))
+                                        : null}
+                                    </Select>
+                                  </div>
+                                  <div className="col-span-1 flex items-center justify-center">
+                                    <Button
+                                      variant="ghost"
+                                      onClick={() =>
+                                        handleRemoveRole(
+                                          assignment.originalIndex
+                                        )
+                                      }
+                                      className="h-9 w-9 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
-                        <div className="col-span-7">
-                          <Select
-                            value={assignment.person}
-                            onChange={(e) =>
-                              updateAssignment(
-                                currentService.dateString,
-                                index,
-                                e.target.value
-                              )
-                            }
-                            className="text-base h-10 border-2 border-gray-300 focus:border-blue-400"
-                          >
-                            <option value="">Not assigned</option>
-                            {assignablePeople && assignablePeople.length > 0
-                              ? assignablePeople.map((person) => (
-                                  <option key={person.id} value={person.name}>
-                                    {person.name}
-                                  </option>
-                                ))
-                              : null}
-                          </Select>
-                        </div>
-                        <div className="col-span-1 flex items-center justify-center">
-                          <Button
-                            variant="ghost"
-                            onClick={() => handleRemoveRole(index)}
-                            className="h-10 w-10 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                          >
-                            <Trash2 className="h-5 w-5" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
+                      )
+                    )}
                   </div>
 
                   {/* Add Role Form */}
@@ -484,27 +579,31 @@ export function AssignmentsPage() {
             </CardHeader>
             <CardContent className="p-3">
               {currentService ? (
-                <div className="space-y-2">
-                  {currentService.assignments.map((assignment, index) => (
-                    <div
-                      key={index}
-                      className="grid grid-cols-12 gap-1 border-b border-gray-100 pb-2 last:border-0 last:pb-0"
-                    >
-                      <div className="col-span-5 text-gray-800 font-medium text-right pr-1 text-sm">
-                        {assignment.role}
+                <div className="space-y-3">
+                  {Object.entries(groupedAssignments).map(
+                    ([roleName, people]) => (
+                      <div
+                        key={roleName}
+                        className="border-b border-gray-100 pb-2 last:border-0 last:pb-0"
+                      >
+                        <div className="text-gray-800 font-semibold text-sm mb-1">
+                          {roleName}
+                        </div>
+                        <div className="pl-3 space-y-1">
+                          {people.map((assignment, idx) => (
+                            <div key={idx} className="text-gray-900 text-sm">
+                              •{" "}
+                              {assignment.person || (
+                                <span className="text-gray-400 italic">
+                                  Not assigned
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                      <div className="col-span-1 text-gray-400 text-center text-sm">
-                        :
-                      </div>
-                      <div className="col-span-6 text-gray-900 text-sm">
-                        {assignment.person || (
-                          <span className="text-gray-400 italic">
-                            Not assigned
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  )}
                 </div>
               ) : (
                 <div className="text-center py-4 text-gray-500">

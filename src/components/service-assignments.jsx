@@ -8,9 +8,11 @@ import { useAssignments } from "./assignments/context/AssignmentsContext";
 
 export function ServiceAssignments({ selectedDate }) {
   const { getAssignmentsForDate, assignments, loading } = useAssignments();
-  
+
   // Get current service for the selected date - this will create a default service if none exists
-  const currentService = selectedDate ? getAssignmentsForDate(selectedDate) : null;
+  const currentService = selectedDate
+    ? getAssignmentsForDate(selectedDate)
+    : null;
 
   // Show loading only when actually loading from backend
   if (loading) {
@@ -23,9 +25,7 @@ export function ServiceAssignments({ selectedDate }) {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-3 flex items-center justify-center">
-          <div className="text-sm text-gray-500">
-            Loading assignments...
-          </div>
+          <div className="text-sm text-gray-500">Loading assignments...</div>
         </CardContent>
       </Card>
     );
@@ -59,6 +59,20 @@ export function ServiceAssignments({ selectedDate }) {
   const formattedDateString = currentService.title;
   const statusColor = getStatusColor(currentService.daysRemaining);
 
+  // Group assignments by role
+  const groupedAssignments = currentService.assignments.reduce(
+    (acc, assignment) => {
+      if (!acc[assignment.role]) {
+        acc[assignment.role] = [];
+      }
+      if (assignment.person) {
+        acc[assignment.role].push(assignment.person);
+      }
+      return acc;
+    },
+    {}
+  );
+
   return (
     <Card className="border border-gray-200 shadow-sm">
       <CardHeader className="bg-gray-50 border-b border-gray-200 p-3">
@@ -84,7 +98,12 @@ export function ServiceAssignments({ selectedDate }) {
                 : `${currentService.daysRemaining} days`}
             </Badge>
             <Link to="/assignments">
-              <Button size="sm" variant="ghost" className="h-7 w-7 p-0 ml-1" title="Edit Assignments">
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 w-7 p-0 ml-1"
+                title="Edit Assignments"
+              >
                 <Edit className="h-3.5 w-3.5" />
               </Button>
             </Link>
@@ -95,27 +114,35 @@ export function ServiceAssignments({ selectedDate }) {
       <CardContent className="p-3">
         {/* Assignments table - more compact layout */}
         <div className="space-y-2">
-          {currentService.assignments.map((assignment, index) => (
+          {Object.entries(groupedAssignments).map(([role, people], index) => (
             <div
               key={index}
               className="grid grid-cols-12 gap-1 border-b border-gray-100 pb-2 last:border-0 last:pb-0"
             >
               <div className="col-span-4 text-gray-800 font-medium text-right pr-1 text-sm">
-                {assignment.role}
+                {role}
               </div>
               <div className="col-span-1 text-gray-400 text-center text-sm">
                 :
               </div>
               <div className="col-span-7 text-gray-900 text-sm">
-                {assignment.person || <span className="text-gray-400 italic">Not assigned</span>}
+                {people.length > 0 ? (
+                  people.join(", ")
+                ) : (
+                  <span className="text-gray-400 italic">Not assigned</span>
+                )}
               </div>
             </div>
           ))}
         </div>
-        
+
         <div className="mt-4 pt-3 border-t border-gray-100 flex justify-end">
           <Link to="/assignments">
-            <Button variant="outline" size="sm" className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-1"
+            >
               <Plus className="h-3.5 w-3.5" />
               Manage All Assignments
             </Button>
