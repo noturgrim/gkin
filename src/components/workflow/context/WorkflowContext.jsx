@@ -90,26 +90,22 @@ export const WorkflowProvider = ({
       const statusResults = {};
 
       try {
-        // Check for each document type and recipient type combination
-        for (const documentType of EMAIL_DOCUMENT_TYPES) {
-          statusResults[documentType] = {};
+        // Fire all 6 requests in parallel (3 doc types × 2 recipients)
+        const requests = EMAIL_DOCUMENT_TYPES.flatMap((documentType) => [
+          emailHistoryService
+            .getEmailSendStatus(documentType, dateString, "pastor")
+            .then((res) => ({ documentType, recipient: "pastor", data: res.data })),
+          emailHistoryService
+            .getEmailSendStatus(documentType, dateString, "music")
+            .then((res) => ({ documentType, recipient: "music", data: res.data })),
+        ]);
 
-          // Check pastor emails
-          const pastorStatus = await emailHistoryService.getEmailSendStatus(
-            documentType,
-            dateString,
-            "pastor"
-          );
-          statusResults[documentType].pastor = pastorStatus.data;
+        const results = await Promise.all(requests);
 
-          // Check music emails
-          const musicStatus = await emailHistoryService.getEmailSendStatus(
-            documentType,
-            dateString,
-            "music"
-          );
-          statusResults[documentType].music = musicStatus.data;
-        }
+        results.forEach(({ documentType, recipient, data }) => {
+          if (!statusResults[documentType]) statusResults[documentType] = {};
+          statusResults[documentType][recipient] = data;
+        });
 
         setEmailSendStatus(statusResults);
       } catch (error) {

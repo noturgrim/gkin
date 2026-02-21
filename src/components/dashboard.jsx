@@ -33,7 +33,6 @@ import { WelcomeBanner } from "./welcome-banner";
 import { Footer } from "./ui/footer";
 import { Header } from "./header";
 import {
-  generateServiceData,
   getDefaultSelectedWeek,
   getUpcomingSundays,
 } from "../lib/date-utils";
@@ -51,7 +50,7 @@ function Dashboard() {
   });
   const [selectedWeek, setSelectedWeek] = useState(getDefaultSelectedWeek());
   const [welcomeBannerDismissed, setWelcomeBannerDismissed] = useState(false);
-  const [mockServices, setMockServices] = useState(generateServiceData());
+  const [mockServices, setMockServices] = useState([]);
   const { assignments } = useAssignments();
 
   // Initialize services using the shared date utility
@@ -116,9 +115,6 @@ function Dashboard() {
   useEffect(() => {
     if (!user) {
       navigate("/login");
-    } else {
-      // Debug user object structure
-      console.log("Hey There", user.role);
     }
   }, [user, navigate]);
 
@@ -159,7 +155,7 @@ function Dashboard() {
 
         {/* Welcome Banner - for first-time users */}
         {!welcomeBannerDismissed &&
-          user.role.id === "liturgy" &&
+          user.role === "liturgy" &&
           currentService?.currentStep === 1 && (
             <WelcomeBanner
               userName={user.username}

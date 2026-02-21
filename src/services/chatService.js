@@ -13,6 +13,7 @@ class ChatService {
     this.messageListeners = [];
     this.mentionListeners = [];
     this.connectionListeners = [];
+    this.activityListeners = [];
   }
 
   /**
@@ -108,6 +109,11 @@ class ChatService {
         this.socket.on('mention', (data) => {
           this.mentionListeners.forEach(listener => listener(data));
         });
+
+        // Listen for activity updates (workflow changes, etc.)
+        this.socket.on('activity_update', (activity) => {
+          this.activityListeners.forEach(listener => listener(activity));
+        });
       }
     });
   }
@@ -169,6 +175,22 @@ class ChatService {
    */
   offConnectionChange(listener) {
     this.connectionListeners = this.connectionListeners.filter(l => l !== listener);
+  }
+
+  /**
+   * Add a listener for activity_update events (workflow changes, etc.)
+   * @param {Function} listener - Function to call when an activity update is received
+   */
+  onActivityUpdate(listener) {
+    this.activityListeners.push(listener);
+  }
+
+  /**
+   * Remove an activity update listener
+   * @param {Function} listener - The listener to remove
+   */
+  offActivityUpdate(listener) {
+    this.activityListeners = this.activityListeners.filter(l => l !== listener);
   }
 
   /**
