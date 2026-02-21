@@ -1,4 +1,0 @@
----
-alwaysApply: true
----
-When suggesting a code edit, just give the edited part dont give the full file code to save time
