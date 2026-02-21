@@ -15,9 +15,9 @@ import {
   CheckCircle,
   RefreshCw,
 } from "lucide-react";
-import { Header } from "../header";
+import { Header } from "../layout/header";
 import { Footer } from "../ui/footer";
-import { WeekSelector } from "../week-selector";
+import { WeekSelector } from "../layout/week-selector";
 import { useAssignments } from "./context/AssignmentsContext";
 import { getDefaultSelectedWeek } from "../../lib/date-utils";
 import { Badge } from "../ui/badge";

@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Button } from "./ui/button";
+import { Button } from "../ui/button";
 import { Home, Sparkles } from "lucide-react";
-import { NotificationCenter, NotificationPanel } from "./notification-center";
+import { NotificationCenter, NotificationPanel } from "../notifications/notification-center";
 
 export function Header({
   title = "Liturgy Workflow",

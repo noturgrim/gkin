@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { Button } from "./ui/button";
-import { Card, CardContent } from "./ui/card";
+import { Button } from "../ui/button";
+import { Card, CardContent } from "../ui/card";
 import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
-import { getUpcomingSundays } from "../lib/date-utils";
+import { getUpcomingSundays } from "../../lib/date-utils";
 
 export function WeekSelector({ selectedWeek, onWeekChange, customWeeks }) {
   const [allSundays, setAllSundays] = useState([]);

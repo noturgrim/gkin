@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { Button } from "./ui/button";
-import { Label } from "./ui/label";
-import { Textarea } from "./ui/textarea";
+import { Button } from "../ui/button";
+import { Label } from "../ui/label";
+import { Textarea } from "../ui/textarea";
 import { Globe, X, Save } from "lucide-react";
 
 export function TranslationModal({ isOpen, onClose, onSubmit, lyricsData }) {

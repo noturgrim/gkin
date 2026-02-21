@@ -1,15 +1,15 @@
 // src/components/workflow/components/ModalManager.jsx
-import { DocumentCreatorModal } from "../../document-creator-modal";
-import { SendToPastorModal } from "../../send-to-pastor-modal";
-import { SendToMusicModal } from "../../send-to-music-modal";
-import { SermonUploadModal } from "../../sermon-upload-modal";
-import { PastorNotifyModal } from "../../pastor-notify-modal";
-import { TranslationModal } from "../../translation-modal";
-import { ViewTranslatedLyricsModal } from "../../view-translated-lyrics-modal";
-import { SermonTranslationModal } from "../../sermon-translation-modal";
-import { SlidesUploadModal } from "../../slides-upload-modal";
-import { QrCodeUploadModal } from "../../qr-code-upload-modal";
-import { MusicUploadModal } from "../../music-upload-modal";
+import { DocumentCreatorModal } from "../../modals/document-creator-modal";
+import { SendToPastorModal } from "../../modals/send-to-pastor-modal";
+import { SendToMusicModal } from "../../modals/send-to-music-modal";
+import { SermonUploadModal } from "../../modals/sermon-upload-modal";
+import { PastorNotifyModal } from "../../modals/pastor-notify-modal";
+import { TranslationModal } from "../../modals/translation-modal";
+import { ViewTranslatedLyricsModal } from "../../modals/view-translated-lyrics-modal";
+import { SermonTranslationModal } from "../../modals/sermon-translation-modal";
+import { SlidesUploadModal } from "../../modals/slides-upload-modal";
+import { QrCodeUploadModal } from "../../modals/qr-code-upload-modal";
+import { MusicUploadModal } from "../../modals/music-upload-modal";
 import { EditDocumentLinkModal } from "./EditDocumentLinkModal";
 import { EditMusicLinksModal } from "./EditMusicLinksModal";
 import { ViewMusicLinksModal } from "./ViewMusicLinksModal";

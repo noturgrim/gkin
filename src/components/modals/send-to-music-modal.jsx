@@ -1,15 +1,16 @@
 import { useState, useEffect } from "react";
-import { Button } from "./ui/button";
-import { Label } from "./ui/label";
-import { Input } from "./ui/input";
-import { Mail, Loader2, CheckCircle, AlertCircle } from "lucide-react";
-import { Textarea } from "./ui/textarea";
-import { useWorkflow } from "./workflow/context/WorkflowContext";
-import { EmailHistory } from "./EmailHistory";
+import { Button } from "../ui/button";
+import { Label } from "../ui/label";
+import { Input } from "../ui/input";
+import { Music, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { Textarea } from "../ui/textarea";
+import { useWorkflow } from "../workflow/context/WorkflowContext";
+import { EmailHistory } from "../notifications/EmailHistory";
 
-export function SendToPastorModal({ isOpen, onClose, onSubmit, documentType }) {
+export function SendToMusicModal({ isOpen, onClose, onSubmit, documentType }) {
   // Import the WorkflowContext to get the actual document link
   const { completedTasks, dateString, triggerEmailStatusRefresh } = useWorkflow();
+
   // Default values
   const documentTypes = {
     concept: "Concept Document",
@@ -21,10 +22,10 @@ export function SendToPastorModal({ isOpen, onClose, onSubmit, documentType }) {
 
   // State for form values
   const [formValues, setFormValues] = useState({
-    email: "user2003@andrewscreem.com", // Default pastor email (using your personal email)
+    email: "user2003@andrewscreem.com", // Default music team email (using test email for now)
     cc: "", // CC field
-    subject: `[GKIN] ${documentTitle} for Review`,
-    message: `Dear Pastor,\n\nPlease find attached the ${documentTitle} for the upcoming service.\n\nKind regards,\nLiturgy Team`,
+    subject: `[GKIN] ${documentTitle} for Music Team`,
+    message: `Dear Music Team,\n\nPlease find attached the ${documentTitle} for the upcoming service.\n\nKind regards,\nLiturgy Team`,
   });
 
   // Loading and feedback states
@@ -36,10 +37,10 @@ export function SendToPastorModal({ isOpen, onClose, onSubmit, documentType }) {
   useEffect(() => {
     if (isOpen) {
       setFormValues({
-        email: "user2003@andrewscreem.com",
+        email: "user2003@andrewscreem.com", // Using test email for now
         cc: "",
-        subject: `[GKIN] ${documentTitle} for Review`,
-        message: `Dear Pastor,\n\nPlease find attached the ${documentTitle} for the upcoming service.\n\nKind regards,\nLiturgy Team`,
+        subject: `[GKIN] ${documentTitle} for Music Team`,
+        message: `Dear Music Team,\n\nPlease find attached the ${documentTitle} for the upcoming service.\n\nKind regards,\nLiturgy Team`,
       });
       // Reset feedback states
       setIsSubmitting(false);
@@ -155,14 +156,14 @@ export function SendToPastorModal({ isOpen, onClose, onSubmit, documentType }) {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header - Fixed */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-blue-50 rounded-t-xl flex-shrink-0">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-indigo-50 rounded-t-xl flex-shrink-0">
           <h2 className="text-xl font-semibold flex items-center gap-3 text-gray-800">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Mail className="w-5 h-5 text-blue-600" />
+            <div className="p-2 bg-indigo-100 rounded-lg">
+              <Music className="w-5 h-5 text-indigo-600" />
             </div>
             <div>
-              <div className="text-lg">Send {documentTitle} to Pastor</div>
-              <div className="text-sm text-gray-500 font-normal">Share document for review</div>
+              <div className="text-lg">Send {documentTitle} to Music Team</div>
+              <div className="text-sm text-gray-500 font-normal">Share document with music team</div>
             </div>
           </h2>
           <button
@@ -195,8 +196,8 @@ export function SendToPastorModal({ isOpen, onClose, onSubmit, documentType }) {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                    <Mail className="w-4 h-4" />
-                    Pastor's Email
+                    <Music className="w-4 h-4" />
+                    Music Team Email
                   </Label>
                   <Input
                     id="email"
@@ -204,7 +205,7 @@ export function SendToPastorModal({ isOpen, onClose, onSubmit, documentType }) {
                     type="email"
                     value={formValues.email}
                     onChange={handleChange}
-                    className="h-11 border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-200"
+                    className="h-11 border-gray-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
                     required
                   />
                 </div>
@@ -223,7 +224,7 @@ export function SendToPastorModal({ isOpen, onClose, onSubmit, documentType }) {
                     value={formValues.cc}
                     onChange={handleChange}
                     placeholder="Additional recipients (comma-separated)"
-                    className="h-11 border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-200"
+                    className="h-11 border-gray-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
                   />
                 </div>
               </div>
@@ -241,7 +242,7 @@ export function SendToPastorModal({ isOpen, onClose, onSubmit, documentType }) {
                   name="subject"
                   value={formValues.subject}
                   onChange={handleChange}
-                  className="h-11 border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-200"
+                  className="h-11 border-gray-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
                   required
                 />
               </div>
@@ -260,20 +261,20 @@ export function SendToPastorModal({ isOpen, onClose, onSubmit, documentType }) {
                   rows={6}
                   value={formValues.message}
                   onChange={handleChange}
-                  className="border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 resize-none"
+                  className="border-gray-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 resize-none"
                   required
                 />
               </div>
 
               {/* Document Link Preview */}
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <h3 className="text-sm font-medium text-blue-800 mb-2 flex items-center gap-2">
+              <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
+                <h3 className="text-sm font-medium text-indigo-800 mb-2 flex items-center gap-2">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                   </svg>
                   Document Link (will be included in the email)
                 </h3>
-                <div className="text-sm text-blue-700 break-all bg-white p-3 rounded border border-blue-200">
+                <div className="text-sm text-indigo-700 break-all bg-white p-3 rounded border border-indigo-200">
                   {completedTasks[documentType]?.documentLink ||
                     completedTasks?.documentLinks?.[documentType] ||
                     (documentType === "concept"
@@ -288,7 +289,7 @@ export function SendToPastorModal({ isOpen, onClose, onSubmit, documentType }) {
               <EmailHistory 
                 documentType={documentType} 
                 serviceDate={dateString} 
-                recipientType="pastor"
+                recipientType="music"
                 isOpen={isOpen} 
               />
             </div>
@@ -338,7 +339,7 @@ export function SendToPastorModal({ isOpen, onClose, onSubmit, documentType }) {
           <Button
             type="submit"
             onClick={handleSubmit}
-            className="order-1 sm:order-2 bg-blue-600 hover:bg-blue-700 text-white min-w-[120px] h-11 px-6"
+            className="order-1 sm:order-2 bg-indigo-600 hover:bg-indigo-700 text-white min-w-[120px] h-11 px-6"
             disabled={isSubmitting}
           >
             {isSubmitting ? (
@@ -348,7 +349,7 @@ export function SendToPastorModal({ isOpen, onClose, onSubmit, documentType }) {
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4" />
+                <Music className="h-4 w-4" />
                 <span>Send Email</span>
               </div>
             )}

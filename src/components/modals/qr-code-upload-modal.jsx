@@ -1,23 +1,24 @@
 import { useState, useEffect } from "react";
-import { Button } from "./ui/button";
-import { Label } from "./ui/label";
-import { Input } from "./ui/input";
-import { Book, Link as LinkIcon, Loader2 } from "lucide-react";
+import { Button } from "../ui/button";
+import { Label } from "../ui/label";
+import { Input } from "../ui/input";
+import { Link, QrCode, X, Loader2, Calendar } from "lucide-react";
 
-export function SermonUploadModal({ isOpen, onClose, onSubmit }) {
+export function QrCodeUploadModal({ isOpen, onClose, onSubmit, dateString }) {
   // State for loading
   const [isSubmitting, setIsSubmitting] = useState(false);
   // State for form values
   const [formValues, setFormValues] = useState({
-    sermonLink: "",
+    qrCodeLink: "",
   });
 
   // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
       setFormValues({
-        sermonLink: "",
+        qrCodeLink: "",
       });
+      setIsSubmitting(false);
     }
   }, [isOpen]);
 
@@ -30,6 +31,16 @@ export function SermonUploadModal({ isOpen, onClose, onSubmit }) {
     }));
   };
 
+  // Validate if the string is a valid URL
+  const isValidUrl = (url) => {
+    try {
+      new URL(url);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  };
+
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -39,16 +50,15 @@ export function SermonUploadModal({ isOpen, onClose, onSubmit }) {
 
     // Form validation
     let errorMessage = "";
-    if (!formValues.sermonLink.trim()) {
-      errorMessage = "Please enter a Google Drive/Doc link";
-    } else if (!formValues.sermonLink.startsWith("http")) {
-      errorMessage =
-        "Please enter a valid URL (starting with http:// or https://)";
+    if (!formValues.qrCodeLink.trim()) {
+      errorMessage = "Please provide a link to the QR code";
+    } else if (!isValidUrl(formValues.qrCodeLink)) {
+      errorMessage = "Please provide a valid URL for the QR code";
     }
 
     if (errorMessage) {
       // Display error without using alert
-      const errorElement = document.getElementById("sermon-form-error");
+      const errorElement = document.getElementById("qrcode-form-error");
       if (errorElement) {
         errorElement.textContent = errorMessage;
         errorElement.style.display = "block";
@@ -57,7 +67,7 @@ export function SermonUploadModal({ isOpen, onClose, onSubmit }) {
     }
 
     // Clear any previous errors
-    const errorElement = document.getElementById("sermon-form-error");
+    const errorElement = document.getElementById("qrcode-form-error");
     if (errorElement) {
       errorElement.style.display = "none";
     }
@@ -66,21 +76,27 @@ export function SermonUploadModal({ isOpen, onClose, onSubmit }) {
     setIsSubmitting(true);
 
     try {
+      // Generate a title based on the date
+      const formattedDate = dateString
+        ? new Date(dateString).toLocaleDateString()
+        : new Date().toLocaleDateString();
+      const title = `QR Code for ${formattedDate} Service`;
+
       // Submit the data
       await onSubmit({
-        ...formValues,
+        qrCodeLink: formValues.qrCodeLink,
+        title,
         uploadedAt: new Date().toISOString(),
       });
 
       // Note: The modal will be closed by the parent component after successful submission
     } catch (error) {
-      console.error("Error submitting sermon:", error);
+      console.error("Error submitting QR code:", error);
       if (errorElement) {
         errorElement.textContent =
-          "An error occurred while saving the sermon. Please try again.";
+          "An error occurred while saving the QR code. Please try again.";
         errorElement.style.display = "block";
       }
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -118,65 +134,61 @@ export function SermonUploadModal({ isOpen, onClose, onSubmit }) {
       >
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-800">
-            <Book className="w-5 h-5 text-purple-600" />
-            Upload Sermon
+            <QrCode className="w-5 h-5 text-emerald-600" />
+            Add QR Code Link
           </h2>
           <button
             onClick={onClose}
             className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
             aria-label="Close"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="p-4 overflow-y-auto"
-          style={{ maxHeight: "calc(100vh - 8rem)" }}
-        >
+        <form onSubmit={handleSubmit} className="p-4">
           {/* Error message display */}
           <div
-            id="sermon-form-error"
+            id="qrcode-form-error"
             className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm hidden"
           ></div>
 
+          {/* Service date display */}
+          <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-md">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-emerald-600" />
+              <span className="font-medium text-emerald-800">
+                QR Code for{" "}
+                {dateString
+                  ? new Date(dateString).toLocaleDateString()
+                  : "Current"}{" "}
+                Service
+              </span>
+            </div>
+          </div>
+
           <div className="space-y-4">
-            <div className="grid gap-2">
-              <Label htmlFor="sermonLink" className="text-gray-700">
-                Google Drive/Doc Link *
+            <div>
+              <Label htmlFor="qrCodeLink" className="text-gray-700 mb-2 block">
+                QR Code Link
               </Label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                  <LinkIcon className="w-4 h-4 text-gray-500" />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Link className="h-4 w-4 text-gray-400" />
                 </div>
                 <Input
-                  id="sermonLink"
-                  name="sermonLink"
-                  type="url"
-                  value={formValues.sermonLink}
+                  id="qrCodeLink"
+                  name="qrCodeLink"
+                  value={formValues.qrCodeLink}
                   onChange={handleChange}
-                  className="pl-10 border-gray-300 focus:border-purple-500 focus:ring focus:ring-purple-200 focus:ring-opacity-50"
-                  placeholder="https://docs.google.com/document/d/..."
+                  className="pl-10 border-gray-300 focus:border-emerald-500 focus:ring focus:ring-emerald-200 focus:ring-opacity-50"
+                  placeholder="Paste link to your QR code image (Google Drive, Dropbox, etc.)"
                   required
                 />
               </div>
-              <p className="text-xs text-gray-500">
-                Please enter a Google Drive or Google Docs link to your sermon
-                document
+              <p className="text-xs text-gray-500 mt-2">
+                Please provide a direct link to the QR code image with public
+                access enabled
               </p>
             </div>
           </div>
@@ -186,13 +198,14 @@ export function SermonUploadModal({ isOpen, onClose, onSubmit }) {
               type="button"
               onClick={onClose}
               className="bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              className="bg-purple-600 hover:bg-purple-700 text-white"
-              disabled={isSubmitting || !formValues.sermonLink.trim()}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              disabled={isSubmitting || !formValues.qrCodeLink.trim()}
             >
               {isSubmitting ? (
                 <>
@@ -200,7 +213,7 @@ export function SermonUploadModal({ isOpen, onClose, onSubmit }) {
                   Saving...
                 </>
               ) : (
-                "Save Sermon"
+                "Save QR Code Link"
               )}
             </Button>
           </div>

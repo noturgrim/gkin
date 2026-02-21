@@ -6,11 +6,11 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "./ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { Badge } from "./ui/badge";
-import { Button } from "./ui/button";
-import { Progress } from "./ui/progress";
+} from "../ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
+import { Progress } from "../ui/progress";
 import {
   Calendar,
   FileText,
@@ -25,21 +25,21 @@ import {
   Plus,
   Lock,
 } from "lucide-react";
-import { WorkflowBoard } from "./workflow";
-import { WeekSelector } from "./week-selector";
+import { WorkflowBoard } from "../workflow";
+import { WeekSelector } from "../layout/week-selector";
 // Removed import for old InlineChatComponent
-import { ServiceAssignments } from "./service-assignments";
-import { WelcomeBanner } from "./welcome-banner";
-import { Footer } from "./ui/footer";
-import { Header } from "./header";
+import { ServiceAssignments } from "../layout/service-assignments";
+import { WelcomeBanner } from "../layout/welcome-banner";
+import { Footer } from "../ui/footer";
+import { Header } from "../layout/header";
 import {
   getDefaultSelectedWeek,
   getUpcomingSundays,
-} from "../lib/date-utils";
-import { RecentUpdates } from "./recent-updates";
-import { useAssignments } from "./assignments/context/AssignmentsContext";
-import authService from "../services/authService";
-import { GlobalChat } from "./global-chat-updated";
+} from "../../lib/date-utils";
+import { RecentUpdates } from "../layout/recent-updates";
+import { useAssignments } from "../assignments/context/AssignmentsContext";
+import authService from "../../services/authService";
+import { GlobalChat } from "../notifications/global-chat-updated";
 
 function Dashboard() {
   const navigate = useNavigate();

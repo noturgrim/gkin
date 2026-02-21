@@ -17,7 +17,7 @@ import {
 import { toast } from "react-hot-toast";
 import { useWorkflow } from "../context/WorkflowContext";
 import { useWorkflowHandlers } from "../hooks/useWorkflowHandlers";
-import { MusicUploadModal } from "../../music-upload-modal";
+import { MusicUploadModal } from "../../modals/music-upload-modal";
 
 // Task type specific styling
 const taskTypeStyles = {
@@ -125,7 +125,7 @@ export const TaskCard = ({ task, categoryId }) => {
         text: recipientType === "pastor" ? "Send to Pastor" : "Send to Music",
         isSent: true,
         subtitle: `Last sent by ${sendStatus.lastSentBy}`,
-        className: "", // Remove the disabling class
+        className: "",
       };
     }
 
@@ -136,6 +136,7 @@ export const TaskCard = ({ task, categoryId }) => {
       className: "",
     };
   };
+
   const {
     handleActionStart,
     handleViewDocument,
@@ -301,7 +302,7 @@ export const TaskCard = ({ task, categoryId }) => {
           </div>
         )}
 
-      {/* Status badge - moved to top for better visibility */}
+      {/* Status badge */}
       {!isActive && !isCompleted && (
         <Badge className={`mb-3 px-3 py-1 text-xs ${taskStyle.badge}`}>
           Pending
@@ -715,7 +716,6 @@ export const TaskCard = ({ task, categoryId }) => {
                   size="sm"
                   className={viewButtonClass}
                   onClick={() => {
-                    // Open the sermon document again if needed
                     let documentUrl;
 
                     if (
@@ -809,7 +809,6 @@ export const TaskCard = ({ task, categoryId }) => {
 
             {isCompleted && (
               <div className="space-y-2">
-                {/* Show View Music button that opens modal */}
                 <div className="space-y-2">
                   <Button
                     size="sm"

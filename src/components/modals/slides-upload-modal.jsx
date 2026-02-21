@@ -1,8 +1,8 @@
 // src/components/slides-upload-modal.jsx
 import { useState, useEffect } from "react";
-import { Button } from "./ui/button";
-import { Label } from "./ui/label";
-import { Input } from "./ui/input";
+import { Button } from "../ui/button";
+import { Label } from "../ui/label";
+import { Input } from "../ui/input";
 import { Link, Presentation, X, Loader2 } from "lucide-react";
 
 export function SlidesUploadModal({ isOpen, onClose, onSubmit, dateString }) {

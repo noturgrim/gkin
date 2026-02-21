@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { MessageCircle } from "lucide-react";
-import chatService from "../services/chatService";
-import { useNotifications } from "../context/NotificationContext";
-import { ChatContainer } from "./chat/ChatContainer";
+import chatService from "../../services/chatService";
+import { useNotifications } from "../../context/NotificationContext";
+import { ChatContainer } from "../chat/ChatContainer";
 
 // Preload chat service connection
 let chatServicePreloaded = false;

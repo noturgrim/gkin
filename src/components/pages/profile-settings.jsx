@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { Button } from "./ui/button";
+import { Button } from "../ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "./ui/card";
+} from "../ui/card";
 import {
   User,
   Mail,
@@ -20,9 +20,9 @@ import {
   Lock,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import authService from "../services/authService";
-import api from "../services/api";
-import { getMyRoleEmail } from "../services/roleEmailsService";
+import authService from "../../services/authService";
+import api from "../../services/api";
+import { getMyRoleEmail } from "../../services/roleEmailsService";
 
 export function ProfileSettings() {
   const navigate = useNavigate();

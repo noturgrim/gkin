@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Filter, ChevronLeft, ChevronRight } from "lucide-react";
-import recentUpdatesService from "../services/recentUpdatesService";
+import recentUpdatesService from "../../services/recentUpdatesService";
 import {
   SingleUpdate,
   LoadingState,
   ErrorState,
   EmptyState,
-} from "./updates/update-components";
+} from "../updates/update-components";
 
 /**
  * AllUpdatesPage component for displaying all recent updates

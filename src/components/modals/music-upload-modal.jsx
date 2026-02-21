@@ -1,8 +1,8 @@
 // src/components/music-upload-modal.jsx
 import { useState, useEffect } from "react";
-import { Button } from "./ui/button";
-import { Label } from "./ui/label";
-import { Input } from "./ui/input";
+import { Button } from "../ui/button";
+import { Label } from "../ui/label";
+import { Input } from "../ui/input";
 import { Link, Music, X, Plus, Trash2, Loader2 } from "lucide-react";
 import { toast } from "react-hot-toast";
 

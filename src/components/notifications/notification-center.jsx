@@ -1,15 +1,15 @@
-import { Button } from "./ui/button";
-import { Badge } from "./ui/badge";
+import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "./ui/card";
+} from "../ui/card";
 import { Bell, AtSign, MessageCircle } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { useNotifications } from "../context/NotificationContext";
+import { useNotifications } from "../../context/NotificationContext";
 
 // Role colors mapping - same as in ChatInput.jsx for consistency
 const roleColors = {

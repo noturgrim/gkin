@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { Button } from "./ui/button";
-import { Label } from "./ui/label";
-import { Input } from "./ui/input";
+import { Button } from "../ui/button";
+import { Label } from "../ui/label";
+import { Input } from "../ui/input";
 import {
   Book,
   X,
@@ -12,7 +12,7 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react";
-import authService from "../services/authService";
+import authService from "../../services/authService";
 
 export function SermonTranslationModal({
   isOpen,

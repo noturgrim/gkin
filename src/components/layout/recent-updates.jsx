@@ -1,13 +1,13 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
-import recentUpdatesService from "../services/recentUpdatesService";
-import chatService from "../services/chatService";
+import recentUpdatesService from "../../services/recentUpdatesService";
+import chatService from "../../services/chatService";
 import {
   SingleUpdate,
   LoadingState,
   ErrorState,
   EmptyState,
-} from "./updates/update-components";
+} from "../updates/update-components";
 
 /**
  * RecentUpdates component

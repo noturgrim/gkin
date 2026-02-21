@@ -4,7 +4,7 @@ import authService from "../../services/authService";
 import { toast } from "react-hot-toast";
 import { TranslationForm } from "./translation-form";
 import { LyricsCard } from "./lyrics-card";
-import { LyricsInputModal } from "../lyrics-input-modal";
+import { LyricsInputModal } from "../modals/lyrics-input-modal";
 import { Button } from "../ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Badge } from "../ui/badge";
@@ -32,7 +32,6 @@ export function LyricsTranslationPage() {
     submitLyrics,
   } = useTranslation();
 
-  // Get query parameters from URL
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const tabParam = queryParams.get("tab");
@@ -46,14 +45,6 @@ export function LyricsTranslationPage() {
   const [isSubmittingLyrics, setIsSubmittingLyrics] = useState(false);
   const [successBanner, setSuccessBanner] = useState(null);
 
-  // Add console log to debug lyrics data
-  console.log("Current lyrics data:", {
-    lyrics,
-    currentServiceDate,
-    selectedWeek,
-  });
-
-  // Calculate counts for each tab
   const pendingLyrics = (lyrics || []).filter(
     (lyric) => !lyric.translation || lyric.translation.status === "pending"
   );
@@ -65,12 +56,9 @@ export function LyricsTranslationPage() {
         lyric.translation.status === "approved")
   );
 
-  // Filter lyrics based on active tab
   const filteredLyrics =
     activeTab === "pending" ? pendingLyrics : translatedLyrics;
 
-  // This function is kept for compatibility but no longer exposed in the UI
-  // since we're now focusing on a specific date that comes from the URL or workflow
   const handleDateChange = (dateString) => {
     setSelectedWeek(dateString);
     if (dateString) {
@@ -80,74 +68,58 @@ export function LyricsTranslationPage() {
     }
   };
 
-  // Handle lyric selection
   const handleSelectLyric = (lyric) => {
     setSelectedLyric(lyric);
   };
 
-  // Handle translation form close
   const handleCloseForm = () => {
     setSelectedLyric(null);
   };
 
-  // Handle successful translation with banner feedback
   const handleTranslationSuccess = (lyricTitle) => {
     setSuccessBanner({
       message: `Translation for "${lyricTitle}" saved successfully!`,
       timestamp: Date.now(),
     });
 
-    // Auto-hide banner after 5 seconds
     setTimeout(() => {
       setSuccessBanner(null);
     }, 5000);
 
-    // If user was on pending tab, auto-switch to translated tab after showing banner
-    // Keep the selected lyric so user can see their completed translation
     if (activeTab === "pending") {
       setTimeout(() => {
         setActiveTab("translated");
-        // The selectedLyric should remain the same, but we need to update it with the latest data
-        // This will happen automatically through the context state update
       }, 2000);
     }
   };
 
-  // Handle banner dismissal
   const handleDismissBanner = () => {
     setSuccessBanner(null);
   };
 
-  // Handle opening lyrics modal
   const handleOpenLyricsModal = () => {
     setIsLyricsModalOpen(true);
   };
 
-  // Handle lyrics modal close
   const handleCloseLyricsModal = () => {
     setIsLyricsModalOpen(false);
   };
 
-  // Handle lyrics submission
   const handleLyricsSubmit = (lyricsData) => {
     if (!selectedWeek) {
       toast.error("Please select a date first");
       return;
     }
 
-    console.log("Submitting lyrics for date:", selectedWeek, lyricsData.songs);
     setIsSubmittingLyrics(true);
     submitLyrics(selectedWeek, lyricsData.songs)
-      .then((response) => {
-        console.log("Lyrics submission response:", response);
+      .then(() => {
         setIsLyricsModalOpen(false);
         toast.success("Lyrics added successfully!");
-
-        // Force refresh lyrics for the selected date
         fetchLyricsByDate(selectedWeek);
       })
-      .catch((error) => {
-        console.error("Error submitting lyrics:", error);
+      .catch((err) => {
+        console.error("Error submitting lyrics:", err);
         toast.error("Failed to add lyrics. Please try again.");
       })
       .finally(() => {
@@ -155,17 +127,13 @@ export function LyricsTranslationPage() {
       });
   };
 
-  // All authenticated users can translate
-  const canTranslate = !!user; // Just check if user is logged in
+  const canTranslate = !!user;
 
-  // Create a ref to track initial fetch
   const initialFetchDone = useRef(false);
 
-  // Fetch lyrics on component mount - only once
   useEffect(() => {
     if (!initialFetchDone.current) {
       if (dateParam) {
-        // If date is provided in URL, set it as selected week and fetch lyrics for that date
         setSelectedWeek(dateParam);
         fetchLyricsByDate(dateParam);
       } else {
@@ -175,18 +143,15 @@ export function LyricsTranslationPage() {
     }
   }, [fetchAllLyrics, fetchLyricsByDate, dateParam]);
 
-  // Add an effect to monitor selectedWeek changes
   useEffect(() => {
     if (selectedWeek) {
-      console.log("Selected week changed, fetching lyrics for:", selectedWeek);
       fetchLyricsByDate(selectedWeek);
     }
   }, [selectedWeek, fetchLyricsByDate]);
 
-  // Keep selected lyric updated when lyrics data changes (after translation submission)
   useEffect(() => {
     if (selectedLyric && lyrics && lyrics.length > 0) {
-      const updatedLyric = lyrics.find(lyric => lyric.id === selectedLyric.id);
+      const updatedLyric = lyrics.find((lyric) => lyric.id === selectedLyric.id);
       if (updatedLyric && JSON.stringify(updatedLyric) !== JSON.stringify(selectedLyric)) {
         setSelectedLyric(updatedLyric);
       }
@@ -195,7 +160,6 @@ export function LyricsTranslationPage() {
 
   return (
     <div className="container mx-auto px-4 py-6">
-      {/* Back to Dashboard Button */}
       <div className="mb-4">
         <Link to="/dashboard">
           <Button
@@ -235,7 +199,6 @@ export function LyricsTranslationPage() {
         </div>
       </div>
 
-      {/* Success Banner */}
       {successBanner && (
         <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-md mb-6 flex items-center justify-between">
           <div className="flex items-center">
@@ -247,7 +210,7 @@ export function LyricsTranslationPage() {
             className="text-green-600 hover:text-green-800 font-bold text-lg leading-none"
             aria-label="Dismiss banner"
           >
-            ×
+            x
           </button>
         </div>
       )}
@@ -260,14 +223,9 @@ export function LyricsTranslationPage() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left column - Lyrics list */}
         <div className="lg:col-span-1">
           <div className="bg-white rounded-lg shadow-md p-4">
-            <Tabs
-              defaultValue="pending"
-              value={activeTab}
-              onValueChange={setActiveTab}
-            >
+            <Tabs defaultValue="pending" value={activeTab} onValueChange={setActiveTab}>
               <div className="flex flex-col space-y-3 mb-4">
                 <div className="flex justify-between items-center">
                   <h2 className="text-lg font-semibold">Song Lyrics</h2>
@@ -309,13 +267,9 @@ export function LyricsTranslationPage() {
                     <Music className="h-12 w-12 mx-auto text-gray-300 mb-2" />
                     <p>No pending lyrics found</p>
                     {!currentServiceDate ? (
-                      <p className="text-sm mt-2">
-                        Select a specific date to see service lyrics
-                      </p>
+                      <p className="text-sm mt-2">Select a specific date to see service lyrics</p>
                     ) : (
-                      <p className="text-sm mt-2">
-                        No lyrics have been added for this date yet
-                      </p>
+                      <p className="text-sm mt-2">No lyrics have been added for this date yet</p>
                     )}
                   </div>
                 ) : (
@@ -355,13 +309,10 @@ export function LyricsTranslationPage() {
                   </div>
                 )}
               </TabsContent>
-
-              {/* Approved tab removed as per user request */}
             </Tabs>
           </div>
         </div>
 
-        {/* Right column - Translation form or details */}
         <div className="lg:col-span-2">
           {selectedLyric ? (
             <TranslationForm
@@ -398,13 +349,11 @@ export function LyricsTranslationPage() {
                     Add Song Lyrics
                   </Button>
                 )}
-                <Button
-                  onClick={() => (window.location.href = "/dashboard")}
-                  variant="outline"
-                  className="border-gray-300"
-                >
-                  Go to Dashboard
-                </Button>
+                <Link to="/dashboard">
+                  <Button variant="outline" className="border-gray-300">
+                    Go to Dashboard
+                  </Button>
+                </Link>
               </div>
             </div>
           ) : (
@@ -414,15 +363,13 @@ export function LyricsTranslationPage() {
                 Select a song to translate
               </h3>
               <p className="text-gray-500 max-w-md">
-                Click on a song from the list to view details and add or edit
-                translations
+                Click on a song from the list to view details and add or edit translations
               </p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Lyrics Input Modal */}
       <LyricsInputModal
         isOpen={isLyricsModalOpen}
         onClose={handleCloseLyricsModal}

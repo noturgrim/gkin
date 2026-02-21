@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Clock, User, Mail, Eye, EyeOff, ChevronLeft, ChevronRight } from "lucide-react";
-import emailHistoryService from "../services/emailHistoryService";
+import emailHistoryService from "../../services/emailHistoryService";
 
 export function EmailHistory({ documentType, serviceDate, recipientType, isOpen }) {
   const [emails, setEmails] = useState([]);

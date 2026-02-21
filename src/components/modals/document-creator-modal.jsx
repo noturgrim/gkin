@@ -6,8 +6,8 @@ import {
   CardTitle,
   CardDescription,
   CardFooter,
-} from "./ui/card";
-import { Button } from "./ui/button";
+} from "../ui/card";
+import { Button } from "../ui/button";
 import {
   FileText,
   Link as LinkIcon,
@@ -19,7 +19,7 @@ import {
   Loader2,
   Calendar,
 } from "lucide-react";
-import { getUpcomingSundays } from "../lib/date-utils";
+import { getUpcomingSundays } from "../../lib/date-utils";
 
 export function DocumentCreatorModal({
   isOpen,

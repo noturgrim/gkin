@@ -1,11 +1,11 @@
 import { useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Badge } from "./ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Badge } from "../ui/badge";
 import { Calendar, Edit, Plus } from "lucide-react";
-import { Button } from "./ui/button";
+import { Button } from "../ui/button";
 import { Link } from "react-router-dom";
-import { getStatusColor } from "../lib/date-utils";
-import { useAssignments } from "./assignments/context/AssignmentsContext";
+import { getStatusColor } from "../../lib/date-utils";
+import { useAssignments } from "../assignments/context/AssignmentsContext";
 
 function formatDaysRemaining(days) {
   if (days === 0) return "Today";
