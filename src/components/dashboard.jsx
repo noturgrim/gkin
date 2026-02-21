@@ -222,12 +222,11 @@ function Dashboard() {
        
 
        
-        {/* Footer component */}
-        <Footer />
       </div>
       
       {/* Global Chat Component */}
       <GlobalChat defaultExpanded={false} />
+      <Footer />
     </div>
   );
 }
