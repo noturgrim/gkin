@@ -1,12 +1,38 @@
-# React + Vite
+# GKIN RWDH Dienst Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A church service coordination platform for managing roles, assignments, and communication across weekly services.
 
-Currently, two official plugins are available:
+## Overview
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+The dashboard provides a centralized workspace for six service roles — liturgy, pastor, translation, beamer, music, and treasurer — along with an admin role for oversight. Each user authenticates using a role-specific passcode rather than a personal account.
 
-## Expanding the ESLint configuration
+## Features
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- **Role-based access** — Separate passcode authentication per role; admin role has full system access
+- **Service assignments** — Assign people to specific roles for upcoming Sunday services
+- **Workflow tasks** — Track per-service tasks with statuses: pending, in-progress, completed, or skipped
+- **Real-time updates** — Live notifications via Socket.IO when assignments or tasks change
+- **Team chat** — In-app messaging between roles
+- **Email coordination** — Send and track role-specific emails with full history
+- **Sermon & lyrics management** — Store sermon translations and song lyrics for the translation team
+- **Music links** — Centralized repository of music references for the music team
+- **Activity log** — Audit trail of actions taken across the platform
+- **Admin panel** — Manage passcodes, assignable people, role emails, and email settings
+
+## Tech Stack
+
+- **Frontend** — React 19, Vite, Tailwind CSS 4
+- **Backend** — Express 5, Socket.IO, PostgreSQL
+- **Deployment** — Frontend on Render, backend and database on Railway
+
+## Development
+
+```bash
+# Start frontend (port 5173)
+npm run dev
+
+# Start backend (port 5000)
+cd server && npm run dev
+```
+
+Both processes must run simultaneously during development.
