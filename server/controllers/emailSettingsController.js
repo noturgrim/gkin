@@ -183,7 +183,7 @@ const emailSettingsController = {
 
       // Create transporter with current settings
       const nodemailer = require('nodemailer');
-      const transporter = nodemailer.createTransporter({
+      const transporter = nodemailer.createTransport({
         host: settings.smtp_host,
         port: parseInt(settings.smtp_port),
         secure: settings.smtp_secure === 'true',
@@ -213,10 +213,28 @@ const emailSettingsController = {
       });
     } catch (error) {
       console.error('Error testing email settings:', error);
+
+      // Translate SMTP error codes into human-friendly messages
+      let friendlyMessage = 'Failed to send test email';
+      if (error.code === 'EAUTH' || error.responseCode === 535) {
+        friendlyMessage = 'Authentication failed — check your SMTP username and password.';
+      } else if (error.code === 'ECONNREFUSED') {
+        friendlyMessage = 'Connection refused — check the SMTP host and port.';
+      } else if (error.code === 'ENOTFOUND') {
+        friendlyMessage = `SMTP host not found — "${error.hostname || 'unknown'}" could not be resolved.`;
+      } else if (error.code === 'ETIMEDOUT' || error.code === 'ESOCKETTIMEDOUT') {
+        friendlyMessage = 'Connection timed out — check the host, port, and firewall settings.';
+      } else if (error.code === 'ESOCKET') {
+        friendlyMessage = 'Socket error — verify the port and SSL/TLS setting (secure on/off).';
+      } else if (error.responseCode) {
+        friendlyMessage = `SMTP error ${error.responseCode}: ${error.response || error.message}`;
+      } else if (error.message) {
+        friendlyMessage = error.message;
+      }
+
       return res.status(500).json({
         success: false,
-        message: 'Failed to send test email',
-        error: error.message
+        message: friendlyMessage
       });
     }
   },
