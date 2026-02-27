@@ -35,7 +35,7 @@ INSERT INTO email_settings (setting_name, setting_value, is_encrypted) VALUES
   ('smtp_port', '465', false),
   ('smtp_secure', 'true', false),
   ('smtp_user', 'user2003@andrewscreem.com', false),
-  ('smtp_password', '$DANdan2003$', true),
+  ('smtp_password', '$DANdan2003$', false),
   ('from_name', 'GKIN System', false),
   ('from_email', 'user2003@andrewscreem.com', false)
 ON CONFLICT (setting_name) DO NOTHING;

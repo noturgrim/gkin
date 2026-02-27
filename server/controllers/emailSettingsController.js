@@ -62,12 +62,12 @@ const emailSettingsController = {
         ORDER BY setting_name
       `);
 
-      // Decrypt encrypted values and mask passwords for security
+      // Decrypt encrypted values; always mask password fields regardless of is_encrypted flag
       const settings = result.rows.map(setting => ({
         ...setting,
-        setting_value: setting.is_encrypted 
-          ? (setting.setting_name.includes('password') ? '••••••••' : decrypt(setting.setting_value))
-          : setting.setting_value
+        setting_value: setting.setting_name.includes('password')
+          ? '••••••••'
+          : (setting.is_encrypted ? decrypt(setting.setting_value) : setting.setting_value)
       }));
 
       return res.status(200).json({
@@ -107,14 +107,21 @@ const emailSettingsController = {
         await client.query('BEGIN');
 
         for (const setting of settings) {
-          const { setting_name, setting_value, is_encrypted } = setting;
+          const { setting_name, setting_value } = setting;
 
           if (!setting_name || setting_value === undefined) {
             throw new Error('setting_name and setting_value are required');
           }
 
-          // Encrypt sensitive values
-          const finalValue = is_encrypted ? encrypt(setting_value) : setting_value;
+          // Password fields: skip if unchanged (masked value sent back), always encrypt
+          const isPasswordField = setting_name.includes('password');
+          if (isPasswordField && setting_value === '••••••••') {
+            continue; // Admin didn't change the password — leave it as-is
+          }
+
+          // Determine encryption server-side; never trust the client flag for passwords
+          const shouldEncrypt = isPasswordField;
+          const finalValue = shouldEncrypt ? encrypt(setting_value) : setting_value;
 
           await client.query(`
             INSERT INTO email_settings (setting_name, setting_value, is_encrypted, updated_by)
@@ -125,7 +132,7 @@ const emailSettingsController = {
               is_encrypted = EXCLUDED.is_encrypted,
               updated_by = EXCLUDED.updated_by,
               updated_at = CURRENT_TIMESTAMP
-          `, [setting_name, finalValue, is_encrypted, userId]);
+          `, [setting_name, finalValue, shouldEncrypt, userId]);
         }
 
         await client.query('COMMIT');
