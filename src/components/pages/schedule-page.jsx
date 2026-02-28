@@ -6,6 +6,8 @@ import {
   CalendarDays,
   Table2,
   RotateCcw,
+  Share2,
+  Check,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Header } from "../layout/header";
@@ -131,7 +133,16 @@ export function SchedulePage() {
 
   const [mode, setMode] = useState("monthly");
   const [cursor, setCursor] = useState(() => todayUTC());
-  const [emailMap, setEmailMap] = useState({}); // name (lowercase) → email
+  const [emailMap, setEmailMap] = useState({});
+  const [copied, setCopied] = useState(false);
+
+  const handleShareLink = () => {
+    const url = `${window.location.origin}/public/schedule`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }; // name (lowercase) → email
 
   useEffect(() => {
     getAssignablePeople(false)
@@ -260,6 +271,21 @@ export function SchedulePage() {
             >
               <RotateCcw className="w-3.5 h-3.5" />
               Today
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className={`flex items-center gap-1.5 h-8 ${
+                copied ? "text-green-600 border-green-400" : "text-gray-600"
+              }`}
+              onClick={handleShareLink}
+              title="Copy public schedule link"
+            >
+              {copied ? (
+                <><Check className="w-3.5 h-3.5" /> Copied!</>
+              ) : (
+                <><Share2 className="w-3.5 h-3.5" /> Share</>  
+              )}
             </Button>
           </div>
         </div>

@@ -63,6 +63,7 @@ const emailSettingsRoutes = require("./routes/emailSettings");
 const profileRoutes = require("./routes/profile");
 const assignablePeopleRoutes = require("./routes/assignablePeople");
 const roleEmailsRoutes = require("./routes/roleEmails");
+const publicScheduleRoutes = require("./routes/publicSchedule");
 
 // Use routes
 app.use("/api/auth", authRoutes);
@@ -81,6 +82,7 @@ app.use("/api/activity", activityRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/assignable-people", assignablePeopleRoutes);
 app.use("/api/role-emails", roleEmailsRoutes);
+app.use("/api/public/schedule", publicScheduleRoutes);
 
 // Default route
 app.get("/", (req, res) => {
