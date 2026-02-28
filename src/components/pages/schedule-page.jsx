@@ -427,10 +427,7 @@ export function SchedulePage() {
                 const isToday = dateStr === today;
                 const isNearest = !isToday && dateStr === nearest;
                 const dayData = assignmentMap[dateStr];
-                const rolesToShow = allRoles.filter((role) => {
-                  const personStr = dayData?.[role];
-                  return personStr && personStr.trim().length > 0;
-                });
+                const rolesToShow = allRoles;
                 return (
                   <div
                     key={dateStr}
@@ -500,7 +497,7 @@ export function SchedulePage() {
                                 {role}
                               </span>
                               <div className="flex flex-col gap-0 min-w-0">
-                                {people.map((name, i) => (
+                                {people.length > 0 ? people.map((name, i) => (
                                   <div key={i} className="flex items-baseline gap-1.5 flex-wrap">
                                     <span className="text-[13px] font-semibold text-gray-800 leading-snug">{name}</span>
                                     {emailMap[name.toLowerCase()] && (
@@ -513,7 +510,9 @@ export function SchedulePage() {
                                       </a>
                                     )}
                                   </div>
-                                ))}
+                                )) : (
+                                  <span className="text-[12px] text-gray-300 italic leading-snug">Not assigned</span>
+                                )}
                               </div>
                             </div>
                           );

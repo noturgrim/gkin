@@ -251,10 +251,7 @@ export function PublicSchedulePage() {
               const isToday = dateStr === today;
               const isNearest = !isToday && dateStr === nearest;
               const dayData = assignmentMap[dateStr];
-              const rolesToShow = allRoles.filter((role) => {
-                const v = dayData?.[role];
-                return v && v.trim().length > 0;
-              });
+              const rolesToShow = allRoles;
               return (
                 <div
                   key={dateStr}
@@ -306,9 +303,11 @@ export function PublicSchedulePage() {
                               {role}
                             </span>
                             <div className="flex flex-col gap-0 min-w-0">
-                              {people.map((name, i) => (
+                              {people.length > 0 ? people.map((name, i) => (
                                 <span key={i} className="text-[13px] font-semibold text-gray-800 leading-snug">{name}</span>
-                              ))}
+                              )) : (
+                                <span className="text-[12px] text-gray-300 italic leading-snug">Not assigned</span>
+                              )}
                             </div>
                           </div>
                         );
