@@ -85,7 +85,7 @@ export function ServiceAssignments({ selectedDate }) {
             <Badge className={`${statusColor} px-1.5 py-0.5 text-xs ml-1`}>
               {formatDaysRemaining(currentService.daysRemaining)}
             </Badge>
-            <Link to="/assignments">
+            <Link to={`/assignments${selectedDate ? `?date=${selectedDate}` : ''}`}>
               <Button size="sm" variant="ghost" className="h-7 w-7 p-0 ml-1" title="Edit Assignments">
                 <Edit className="h-3.5 w-3.5" />
               </Button>
@@ -117,7 +117,7 @@ export function ServiceAssignments({ selectedDate }) {
         </div>
 
         <div className="mt-4 pt-3 border-t border-gray-100 flex justify-end">
-          <Link to="/assignments">
+          <Link to={`/assignments${selectedDate ? `?date=${selectedDate}` : ''}`}>
             <Button variant="outline" size="sm" className="flex items-center gap-1">
               <Plus className="h-3.5 w-3.5" />
               Manage All Assignments

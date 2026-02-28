@@ -159,7 +159,7 @@ function Dashboard() {
           currentService?.currentStep === 1 && (
             <WelcomeBanner
               userName={user.username}
-              roleName={user.role.name}
+              roleName={user.role}
               onStartAction={handleStartAction}
               onDismiss={() => setWelcomeBannerDismissed(true)}
             />

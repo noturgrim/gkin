@@ -12,6 +12,7 @@ import { LyricsTranslationPage } from "./components/translation/lyrics-translati
 import { TranslationProvider } from "./context/TranslationContext";
 import { AllUpdatesPage } from "./components/pages/all-updates-page";
 import { ProfileSettings } from "./components/pages/profile-settings";
+import { SchedulePage } from "./components/pages/schedule-page";
 
 // Routes configuration
 export const router = createBrowserRouter([
@@ -91,6 +92,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <ProfileSettings />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "schedule",
+        element: (
+          <ProtectedRoute>
+            <SchedulePage />
           </ProtectedRoute>
         ),
       },

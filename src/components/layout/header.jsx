@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "../ui/button";
-import { Home, Sparkles } from "lucide-react";
+import { Home, Sparkles, CalendarDays } from "lucide-react";
 import { NotificationCenter, NotificationPanel } from "../notifications/notification-center";
 
 export function Header({
@@ -151,6 +151,19 @@ export function Header({
                 </div>
               </div>
             </div>
+
+            {/* Schedule option for mobile view */}
+            <Button
+              variant="outline"
+              className="w-full text-xs text-gray-700 font-medium border-gray-200 hover:bg-gray-50 hover:border-gray-300 flex items-center justify-center gap-2 transition-all duration-200"
+              onClick={() => {
+                setShowMobileMenu(false);
+                window.location.href = "/schedule";
+              }}
+            >
+              <CalendarDays width={14} height={14} />
+              Schedule
+            </Button>
 
             {/* Profile Settings option for mobile view */}
             <Button
@@ -333,9 +346,21 @@ export function Header({
                         : user.role?.name || "Role"}
                     </div>
                   </div>
-                  {/* Profile Settings */}
+                  {/* Schedule */}
                   <div
                     className="px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer flex items-center gap-3 transition-colors duration-150 mx-2 rounded-lg mt-1"
+                    onClick={() => {
+                      setShowUserDropdown(false);
+                      window.location.href = "/schedule";
+                    }}
+                  >
+                    <CalendarDays width={16} height={16} className="text-gray-500" />
+                    Schedule
+                  </div>
+
+                  {/* Profile Settings */}
+                  <div
+                    className="px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer flex items-center gap-3 transition-colors duration-150 mx-2 rounded-lg"
                     onClick={() => {
                       setShowUserDropdown(false);
                       window.location.href = "/profile";

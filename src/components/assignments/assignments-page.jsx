@@ -1,6 +1,6 @@
 // src/components/assignments/assignments-page.jsx
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -27,7 +27,10 @@ import { DraggableRoleManagerMobile } from "./DraggableRoleManagerMobile";
 
 export function AssignmentsPage() {
   const navigate = useNavigate();
-  const [selectedWeek, setSelectedWeek] = useState(getDefaultSelectedWeek());
+  const [searchParams] = useSearchParams();
+  const [selectedWeek, setSelectedWeek] = useState(
+    () => searchParams.get("date") || getDefaultSelectedWeek()
+  );
   const [newRoleName, setNewRoleName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
