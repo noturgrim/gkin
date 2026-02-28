@@ -13,6 +13,7 @@ export const DraggableRoleManagerMobile = ({
   handleAddPersonToRole,
   getPeopleForRole,
   currentService,
+  defaultRoleNames = new Set(),
 }) => {
   const handleDragEnd = (result) => {
     if (!result.destination) return;
@@ -106,15 +107,17 @@ export const DraggableRoleManagerMobile = ({
                                   ))
                                 : null}
                             </Select>
-                            <Button
-                              variant="ghost"
-                              onClick={() =>
-                                handleRemoveRole(assignment.originalIndex)
-                              }
-                              className="h-10 w-10 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            {(!defaultRoleNames.has(roleName) || people.length > 1) && (
+                              <Button
+                                variant="ghost"
+                                onClick={() =>
+                                  handleRemoveRole(assignment.originalIndex)
+                                }
+                                className="h-10 w-10 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
                           </div>
                         );
                       })}

@@ -13,6 +13,7 @@ export const DraggableRoleManager = ({
   handleAddPersonToRole,
   getPeopleForRole,
   currentService,
+  defaultRoleNames = new Set(),
 }) => {
   const handleDragEnd = (result) => {
     if (!result.destination) return;
@@ -112,15 +113,17 @@ export const DraggableRoleManager = ({
                               </Select>
                             </div>
                             <div className="col-span-1 flex items-center justify-center">
-                              <Button
-                                variant="ghost"
-                                onClick={() =>
-                                  handleRemoveRole(assignment.originalIndex)
-                                }
-                                className="h-9 w-9 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                              {(!defaultRoleNames.has(roleName) || people.length > 1) && (
+                                <Button
+                                  variant="ghost"
+                                  onClick={() =>
+                                    handleRemoveRole(assignment.originalIndex)
+                                  }
+                                  className="h-9 w-9 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
                             </div>
                           </div>
                         );

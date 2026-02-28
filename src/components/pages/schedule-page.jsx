@@ -137,16 +137,20 @@ export function SchedulePage() {
 
   const sundaysInWindow = useMemo(() => getSundaysInRange(start, end), [start, end]);
 
-  // Build a lookup: dateString → Map<role, person>
+  // Build a lookup: dateString → Map<role, string (comma-joined people)>
   const assignmentMap = useMemo(() => {
     const map = {};
     if (!assignments) return map;
     for (const service of assignments) {
       const roleMap = {};
       for (const { role, person } of service.assignments ?? []) {
-        roleMap[role] = person;
+        if (!roleMap[role]) roleMap[role] = [];
+        if (person) roleMap[role].push(person);
       }
-      map[service.dateString] = roleMap;
+      // Convert arrays to comma-joined strings (empty string if none assigned)
+      map[service.dateString] = Object.fromEntries(
+        Object.entries(roleMap).map(([role, people]) => [role, people.join(", ")])
+      );
     }
     return map;
   }, [assignments]);

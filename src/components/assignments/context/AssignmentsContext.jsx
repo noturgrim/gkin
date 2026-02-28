@@ -13,6 +13,12 @@ const DEFAULT_ROLES = [
   { role: "Ouderling van dienst", person: "" },
   { role: "Muzikale begeleiding", person: "" },
   { role: "Voorzangers", person: "" },
+  { role: "Lector", person: "" },
+  { role: "Beamer", person: "" },
+  { role: "Sound", person: "" },
+  { role: "Guest Reception Team", person: "" },
+  { role: "Coffee Service", person: "" },
+  { role: "Sunday School Teacher", person: "" },
 ];
 
 // --- Pure module-level helpers (no state dependencies) ---
