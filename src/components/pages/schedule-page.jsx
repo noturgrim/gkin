@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ChevronLeft,
@@ -12,6 +12,7 @@ import { Header } from "../layout/header";
 import { Footer } from "../ui/footer";
 import { useAssignments } from "../assignments/context/AssignmentsContext";
 import authService from "../../services/authService";
+import { getAssignablePeople } from "../../services/assignablePeopleService";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -130,6 +131,19 @@ export function SchedulePage() {
 
   const [mode, setMode] = useState("monthly");
   const [cursor, setCursor] = useState(() => todayUTC());
+  const [emailMap, setEmailMap] = useState({}); // name (lowercase) → email
+
+  useEffect(() => {
+    getAssignablePeople(false)
+      .then((people) => {
+        const map = {};
+        for (const p of people ?? []) {
+          if (p.name && p.email) map[p.name.toLowerCase()] = p.email;
+        }
+        setEmailMap(map);
+      })
+      .catch(() => {});
+  }, []);
 
   // ── Derived data ────────────────────────────────────────────────────────
 
@@ -343,14 +357,32 @@ export function SchedulePage() {
 
                       {/* Role cells */}
                       {allRoles.map((role) => {
-                        const person = assignmentMap[dateStr]?.[role];
+                        const personStr = assignmentMap[dateStr]?.[role];
+                        const people = personStr
+                          ? personStr.split(",").map((p) => p.trim()).filter(Boolean)
+                          : [];
                         return (
                           <td
                             key={role}
                             className="border-r border-b border-gray-100 px-4 py-2.5 text-center"
                           >
-                            {person ? (
-                              <span className="text-gray-800 font-medium">{person}</span>
+                            {people.length > 0 ? (
+                              <div className="flex flex-col items-center gap-1.5">
+                                {people.map((name, i) => (
+                                  <div key={i} className="flex flex-col items-center gap-0.5">
+                                    <span className="text-gray-800 font-medium">{name}</span>
+                                    {emailMap[name.toLowerCase()] && (
+                                      <a
+                                        href={`mailto:${emailMap[name.toLowerCase()]}`}
+                                        className="text-[11px] text-blue-500 hover:underline"
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
+                                        {emailMap[name.toLowerCase()]}
+                                      </a>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
                             ) : (
                               <span className="text-gray-300 select-none">—</span>
                             )}
@@ -378,10 +410,6 @@ export function SchedulePage() {
           <div className="flex items-center gap-1.5">
             <span className="text-gray-300 font-semibold text-base leading-none">—</span>
             <span>Not yet assigned</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-gray-200 font-semibold text-base leading-none">·</span>
-            <span>No service data</span>
           </div>
         </div>
       </main>

@@ -82,6 +82,12 @@ export const DraggableRoleManager = ({
                     <div className="space-y-2 ml-7">
                       {people.map((assignment) => {
                         const availablePeople = getPeopleForRole(roleName);
+                        // Build the set of names already used elsewhere in this service
+                        const assignedElsewhere = new Set(
+                          (currentService?.assignments ?? [])
+                            .map((a) => a.person)
+                            .filter((p) => p && p !== assignment.person)
+                        );
                         return (
                           <div
                             key={assignment.originalIndex}
@@ -101,14 +107,18 @@ export const DraggableRoleManager = ({
                               >
                                 <option value="">Not assigned</option>
                                 {availablePeople.length > 0
-                                  ? availablePeople.map((person) => (
-                                      <option
-                                        key={person.id}
-                                        value={person.name}
-                                      >
-                                        {person.name} ({person.email})
-                                      </option>
-                                    ))
+                                  ? availablePeople.map((person) => {
+                                      const isDisabled = assignedElsewhere.has(person.name);
+                                      return (
+                                        <option
+                                          key={person.id}
+                                          value={person.name}
+                                          disabled={isDisabled}
+                                        >
+                                          {person.name} ({person.email}){isDisabled ? " — already assigned" : ""}
+                                        </option>
+                                      );
+                                    })
                                   : null}
                               </Select>
                             </div>
