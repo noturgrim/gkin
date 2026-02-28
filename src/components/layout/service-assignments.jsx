@@ -82,9 +82,9 @@ export function ServiceAssignments({ selectedDate }) {
         <CardContent className="p-3 flex items-center justify-center">
           <div className="text-sm text-gray-500 text-center">
             <div>Select a date to view service assignments</div>
-            <Link to="/assignments" className="mt-2 inline-block">
+            <Link to="/schedule" className="mt-2 inline-block">
               <Button size="sm" variant="outline">
-                Manage Assignments
+                View Schedule
               </Button>
             </Link>
           </div>
@@ -111,7 +111,7 @@ export function ServiceAssignments({ selectedDate }) {
             <Badge className={`${statusColor} px-1.5 py-0.5 text-xs ml-1`}>
               {formatDaysRemaining(currentService.daysRemaining)}
             </Badge>
-            <Link to={`/assignments${selectedDate ? `?date=${selectedDate}` : ''}`}>
+            <Link to={`/schedule${selectedDate ? `?edit=${selectedDate}` : ''}`}>
               <Button size="sm" variant="ghost" className="h-7 w-7 p-0 ml-1" title="Edit Assignments">
                 <Edit className="h-3.5 w-3.5" />
               </Button>
@@ -143,7 +143,7 @@ export function ServiceAssignments({ selectedDate }) {
         </div>
 
         <div className="mt-4 pt-3 border-t border-gray-100 flex justify-end">
-          <Link to={`/assignments${selectedDate ? `?date=${selectedDate}` : ''}`}>
+          <Link to={`/schedule${selectedDate ? `?edit=${selectedDate}` : ''}`}>
             <Button variant="outline" size="sm" className="flex items-center gap-1">
               <Plus className="h-3.5 w-3.5" />
               Manage All Assignments

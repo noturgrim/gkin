@@ -4,7 +4,6 @@ import Dashboard from "./components/pages/dashboard";
 import { LoginPage } from "./components/pages/login-page";
 import { EmailComposerPage } from "./components/pages/email-composer-page";
 import { ProtectedRoute } from "./components/layout/protected-route";
-import { AssignmentsPage } from "./components/assignments/assignments-page";
 import { AssignmentsProvider } from "./components/assignments/context/AssignmentsContext";
 import { AdminTools } from "./components/admin/admin-tools";
 import { LyricsTranslationPage } from "./components/translation/lyrics-translation-page";
@@ -70,7 +69,7 @@ export const router = createBrowserRouter([
         path: "assignments",
         element: (
           <ProtectedRoute>
-            <AssignmentsPage />
+            <Navigate to="/schedule" replace />
           </ProtectedRoute>
         ),
       },

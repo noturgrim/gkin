@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   ChevronLeft,
   ChevronRight,
@@ -9,11 +9,20 @@ import {
   Share2,
   Check,
   LayoutGrid,
+  Pencil,
+  X,
+  Save,
+  Plus,
+  RefreshCw,
+  CheckCircle,
 } from "lucide-react";
 import { Button } from "../ui/button";
+import { Input } from "../ui/input";
 import { Header } from "../layout/header";
 import { Footer } from "../ui/footer";
 import { useAssignments } from "../assignments/context/AssignmentsContext";
+import { DraggableRoleManager } from "../assignments/DraggableRoleManager";
+import { DraggableRoleManagerMobile } from "../assignments/DraggableRoleManagerMobile";
 import authService from "../../services/authService";
 import { getAssignablePeople } from "../../services/assignablePeopleService";
 
@@ -24,7 +33,6 @@ function getSundaysInRange(start, end) {
   const sundays = [];
   const cursor = new Date(start);
   cursor.setUTCHours(0, 0, 0, 0);
-  // move to first Sunday
   while (cursor.getUTCDay() !== 0) cursor.setUTCDate(cursor.getUTCDate() + 1);
   while (cursor <= end) {
     sundays.push(cursor.toISOString().slice(0, 10));
@@ -62,81 +70,47 @@ function todayString() {
   return todayUTC().toISOString().slice(0, 10);
 }
 
-/** Return a {start, end, label} window for the given mode & cursor date */
-function getWindow(mode, cursor) {
-  const y = cursor.getUTCFullYear();
-  const m = cursor.getUTCMonth(); // 0-based
+// ─── Constants ───────────────────────────────────────────────────────────────
 
-  if (mode === "weekly") {
-    // find Sunday of the week containing cursor
-    const day = cursor.getUTCDay();
-    const sunday = new Date(cursor);
-    sunday.setUTCDate(cursor.getUTCDate() - day);
-    const end = new Date(sunday);
-    end.setUTCDate(sunday.getUTCDate() + 6);
-    return {
-      start: sunday,
-      end,
-      label: `Week of ${sunday.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" })}`,
-    };
-  }
-
-  if (mode === "monthly") {
-    const start = new Date(Date.UTC(y, m, 1));
-    const end = new Date(Date.UTC(y, m + 1, 0));
-    return {
-      start,
-      end,
-      label: cursor.toLocaleDateString("en-GB", { month: "long", year: "numeric", timeZone: "UTC" }),
-    };
-  }
-
-  if (mode === "quarterly") {
-    const q = Math.floor(m / 3);
-    const start = new Date(Date.UTC(y, q * 3, 1));
-    const end = new Date(Date.UTC(y, q * 3 + 3, 0));
-    return {
-      start,
-      end,
-      label: `Q${q + 1} ${y}`,
-    };
-  }
-
-  // annual
-  const start = new Date(Date.UTC(y, 0, 1));
-  const end = new Date(Date.UTC(y, 11, 31));
-  return { start, end, label: String(y) };
-}
-
-/** Advance cursor by one period in the given mode */
-function advanceCursor(cursor, mode, direction) {
-  const d = new Date(cursor);
-  if (mode === "weekly") d.setUTCDate(d.getUTCDate() + direction * 7);
-  else if (mode === "monthly") d.setUTCMonth(d.getUTCMonth() + direction);
-  else if (mode === "quarterly") d.setUTCMonth(d.getUTCMonth() + direction * 3);
-  else d.setUTCFullYear(d.getUTCFullYear() + direction);
-  return d;
-}
+const DEFAULT_ROLE_NAMES = new Set([
+  "Voorganger", "Ouderling van dienst", "Collecte", "Preekvertaling",
+  "Muzikale begeleiding", "Muzikale bijdrage", "Voorzangers", "Lector",
+  "Beamer", "Streaming", "Geluid", "Kindernevendienst", "Ontvangstteam", "Koffiedienst",
+]);
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-const VIEW_MODES = [
-  { key: "weekly", label: "Weekly" },
-  { key: "monthly", label: "Monthly" },
-  { key: "quarterly", label: "Quarterly" },
-  { key: "annual", label: "Annual" },
-];
-
 export function SchedulePage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const user = authService.getCurrentUser();
-  const { assignments, loading } = useAssignments();
+  const {
+    assignments, loading,
+    updateAssignment, updateAssignmentsForDate, saveAssignments, resetAssignments,
+    addRole, removeRole, getAssignmentsForDate,
+  } = useAssignments();
 
-  const [mode, setMode] = useState("monthly");
-  const [cursor, setCursor] = useState(() => todayUTC());
   const [emailMap, setEmailMap] = useState({});
   const [copied, setCopied] = useState(false);
   const [layoutView, setLayoutView] = useState("table"); // "table" | "cards"
+  const [year, setYear] = useState(() => todayUTC().getUTCFullYear());
+
+  // ── Edit panel state ────────────────────────────────────────────────────
+  const [editingDate, setEditingDate] = useState(() => searchParams.get("edit") || null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [newRoleName, setNewRoleName] = useState("");
+  const [assignablePeople, setAssignablePeople] = useState([]);
+
+  // If a date was passed via ?edit=, switch to that year automatically
+  useEffect(() => {
+    const editDate = searchParams.get("edit");
+    if (editDate) {
+      const y = parseInt(editDate.slice(0, 4), 10);
+      if (!isNaN(y)) setYear(y);
+      setEditingDate(editDate);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleShareLink = () => {
     const url = `${window.location.origin}/public/schedule`;
@@ -158,11 +132,18 @@ export function SchedulePage() {
       .catch(() => {});
   }, []);
 
+  // Fetch active people for the editor
+  useEffect(() => {
+    getAssignablePeople(true).then((p) => setAssignablePeople(p ?? [])).catch(() => {});
+  }, []);
+
   // ── Derived data ────────────────────────────────────────────────────────
 
-  const { start, end, label } = useMemo(() => getWindow(mode, cursor), [mode, cursor]);
-
-  const sundaysInWindow = useMemo(() => getSundaysInRange(start, end), [start, end]);
+  const sundaysInWindow = useMemo(() => {
+    const start = new Date(Date.UTC(year, 0, 1));
+    const end = new Date(Date.UTC(year, 11, 31));
+    return getSundaysInRange(start, end);
+  }, [year]);
 
   // Build a lookup: dateString → Map<role, string (comma-joined people)>
   const assignmentMap = useMemo(() => {
@@ -212,14 +193,100 @@ export function SchedulePage() {
       el.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "start" });
     }, 120);
     return () => clearTimeout(id);
-  }, [loading, layoutView, mode]);
+  }, [loading, layoutView, year]);
 
   // ── Handlers ────────────────────────────────────────────────────────────
 
-  const handlePrev = () => setCursor((c) => advanceCursor(c, mode, -1));
-  const handleNext = () => setCursor((c) => advanceCursor(c, mode, +1));
-  const handleToday = () => setCursor(todayUTC());
   const handleLogout = () => authService.logout();
+  const handlePrevYear = () => setYear((y) => y - 1);
+  const handleNextYear = () => setYear((y) => y + 1);
+  const handleThisYear = () => setYear(todayUTC().getUTCFullYear());
+
+  // ── Edit panel helpers ───────────────────────────────────────────────────
+
+  const editingService = editingDate ? getAssignmentsForDate(editingDate) : null;
+
+  const groupedEditAssignments = useMemo(() => {
+    if (!editingService?.assignments) return {};
+    const grouped = {};
+    editingService.assignments.forEach((a, i) => {
+      if (!grouped[a.role]) grouped[a.role] = [];
+      grouped[a.role].push({ ...a, originalIndex: i });
+    });
+    return grouped;
+  }, [editingService]);
+
+  const getPeopleForRole = (roleName) => {
+    if (!assignablePeople?.length) return [];
+    return assignablePeople.filter(
+      (p) => p.roles && Array.isArray(p.roles) && p.roles.includes(roleName)
+    );
+  };
+
+  const handleOpenEdit = (dateStr) => {
+    setEditingDate(dateStr);
+    setSaveSuccess(false);
+    setNewRoleName("");
+  };
+
+  const handleCloseEdit = () => {
+    setEditingDate(null);
+    setSaveSuccess(false);
+    setNewRoleName("");
+  };
+
+  const handleSaveForDate = async () => {
+    if (!editingDate || !editingService) return;
+    setIsSaving(true);
+    try {
+      await saveAssignments(editingDate, editingService.assignments);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2500);
+    } catch (err) {
+      console.error("Error saving:", err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleAddRole = (e) => {
+    e.preventDefault();
+    if (newRoleName.trim() && editingDate) {
+      addRole(editingDate, newRoleName.trim());
+      setNewRoleName("");
+    }
+  };
+
+  const handleRemoveSlot = async (slotIndex) => {
+    if (!editingService?.assignments || !editingDate) return;
+    const updated = editingService.assignments.filter((_, i) => i !== slotIndex);
+    updateAssignmentsForDate(editingDate, updated);
+    try {
+      await saveAssignments(editingDate, updated);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2000);
+    } catch (err) {
+      console.error("Error removing slot:", err);
+    }
+  };
+
+  const handleAddPersonToRole = (roleName) => {
+    if (editingDate) addRole(editingDate, roleName);
+  };
+
+  const handleRoleReorder = (sourceIndex, destIndex) => {
+    if (!editingService?.assignments || !editingDate) return;
+    const roles = [];
+    const roleMap = new Map();
+    editingService.assignments.forEach((a) => {
+      if (!roleMap.has(a.role)) { roleMap.set(a.role, []); roles.push(a.role); }
+      roleMap.get(a.role).push(a);
+    });
+    const [moved] = roles.splice(sourceIndex, 1);
+    roles.splice(destIndex, 0, moved);
+    const reordered = roles.flatMap((r) => roleMap.get(r));
+    updateAssignmentsForDate(editingDate, reordered);
+  };
 
   // ── Render ───────────────────────────────────────────────────────────────
 
@@ -237,9 +304,8 @@ export function SchedulePage() {
 
       <main className="flex-1 max-w-full px-3 sm:px-4 py-4 sm:py-6 mx-auto w-full">
         {/* ── Controls bar ── */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 mb-4 sm:mb-5">
-          {/* Row 1 on mobile: back + share */}
-          <div className="flex items-center justify-between sm:justify-start gap-2">
+        <div className="flex items-center justify-between gap-2 mb-4 sm:mb-5">
+          <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="sm"
@@ -249,74 +315,37 @@ export function SchedulePage() {
               <ChevronLeft className="w-4 h-4" />
               <span className="hidden xs:inline">Dashboard</span>
             </Button>
-
-            {/* Share — visible on mobile in this row */}
-            <Button
-              variant="outline"
-              size="sm"
-              className={`flex items-center gap-1.5 h-8 sm:hidden ${
-                copied ? "text-green-600 border-green-400" : "text-gray-600"
-              }`}
-              onClick={handleShareLink}
-              title="Copy public schedule link"
-            >
-              {copied ? <Check className="w-3.5 h-3.5" /> : <Share2 className="w-3.5 h-3.5" />}
-              {copied ? "Copied!" : "Share"}
-            </Button>
           </div>
 
-          {/* View mode toggle */}
-          <div className="flex rounded-lg border border-gray-200 bg-white overflow-hidden shadow-sm self-stretch sm:self-auto">
-            {VIEW_MODES.map(({ key, label: modeLabel }) => (
-              <button
-                key={key}
-                onClick={() => setMode(key)}
-                className={`flex-1 sm:flex-none px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors duration-150 ${
-                  mode === key
-                    ? "bg-blue-600 text-white"
-                    : "text-gray-600 hover:bg-gray-50"
-                }`}
-              >
-                {modeLabel}
-              </button>
-            ))}
-          </div>
-
-          {/* Period navigator + Today + Share (desktop) */}
-          <div className="flex items-center gap-1.5 sm:gap-2 self-stretch sm:self-auto">
-            <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={handlePrev}>
+          {/* Year navigator */}
+          <div className="flex items-center gap-1.5">
+            <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={handlePrevYear}>
               <ChevronLeft className="w-4 h-4" />
             </Button>
-            <span className="flex-1 text-center text-sm font-semibold text-gray-800 sm:min-w-[140px] sm:flex-none">
-              {label}
-            </span>
-            <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={handleNext}>
+            <span className="text-sm font-bold text-gray-800 min-w-[48px] text-center">{year}</span>
+            <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={handleNextYear}>
               <ChevronRight className="w-4 h-4" />
             </Button>
+            {year !== todayUTC().getUTCFullYear() && (
+              <Button variant="outline" size="sm" className="flex items-center gap-1.5 text-gray-600 h-8" onClick={handleThisYear}>
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">This year</span>
+              </Button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* Share */}
             <Button
               variant="outline"
               size="sm"
-              className="flex items-center gap-1.5 text-gray-600 h-8 shrink-0"
-              onClick={handleToday}
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Today</span>
-            </Button>
-            {/* Share — desktop only */}
-            <Button
-              variant="outline"
-              size="sm"
-              className={`hidden sm:flex items-center gap-1.5 h-8 ${
+              className={`flex items-center gap-1.5 h-8 ${
                 copied ? "text-green-600 border-green-400" : "text-gray-600"
               }`}
               onClick={handleShareLink}
               title="Copy public schedule link"
             >
-              {copied ? (
-                <><Check className="w-3.5 h-3.5" /> Copied!</>
-              ) : (
-                <><Share2 className="w-3.5 h-3.5" /> Share</>
-              )}
+              {copied ? <><Check className="w-3.5 h-3.5" /> Copied!</> : <><Share2 className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Share</span></>}
             </Button>
             {/* Layout toggle */}
             <div className="flex rounded-lg border border-gray-200 bg-white overflow-hidden shadow-sm">
@@ -393,16 +422,25 @@ export function SchedulePage() {
                       <span className={`font-bold text-sm ${isToday ? "text-blue-800" : isNearest ? "text-indigo-700" : "text-gray-800"}`}>
                         {formatSundayRow(dateStr)}
                       </span>
-                      {isToday && (
-                        <span className="ml-auto text-[10px] font-semibold text-blue-600 bg-blue-100 border border-blue-300 rounded-full px-2 py-0.5">
-                          Today
-                        </span>
-                      )}
-                      {isNearest && (
-                        <span className="ml-auto text-[10px] font-semibold text-indigo-600 bg-indigo-100 border border-indigo-300 rounded-full px-2 py-0.5">
-                          Next
-                        </span>
-                      )}
+                      <div className="ml-auto flex items-center gap-1.5">
+                        {isToday && (
+                          <span className="text-[10px] font-semibold text-blue-600 bg-blue-100 border border-blue-300 rounded-full px-2 py-0.5">
+                            Today
+                          </span>
+                        )}
+                        {isNearest && (
+                          <span className="text-[10px] font-semibold text-indigo-600 bg-indigo-100 border border-indigo-300 rounded-full px-2 py-0.5">
+                            Next
+                          </span>
+                        )}
+                        <button
+                          onClick={() => handleOpenEdit(dateStr)}
+                          className="p-1 rounded hover:bg-black/10 text-gray-500 hover:text-gray-800 transition-colors"
+                          title="Edit assignments"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                     {rolesToShow.length === 0 ? (
                       <p className="px-4 py-3 text-xs text-gray-400 italic">No assignments yet</p>
@@ -468,6 +506,13 @@ export function SchedulePage() {
                           <div>{formatSundayRow(dateStr)}</div>
                           {isToday && <div className="text-[10px] font-medium text-blue-500 mt-0.5">Today</div>}
                           {isNearest && <div className="text-[10px] font-medium text-indigo-400 mt-0.5">Next</div>}
+                          <button
+                            onClick={() => handleOpenEdit(dateStr)}
+                            className="mt-1 p-0.5 rounded hover:bg-black/10 text-inherit opacity-60 hover:opacity-100 transition-opacity"
+                            title="Edit assignments"
+                          >
+                            <Pencil className="w-3 h-3" />
+                          </button>
                         </th>
                       );
                     })}
@@ -543,6 +588,116 @@ export function SchedulePage() {
           </div>
         </div>
       </main>
+
+      {/* ── Edit slide-over panel ── */}
+      {editingDate && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          {/* Backdrop */}
+          <div className="fixed inset-0 bg-black/40" onClick={handleCloseEdit} />
+
+          {/* Panel */}
+          <div className="relative z-10 w-full sm:w-[500px] bg-white shadow-2xl flex flex-col h-full">
+            {/* Header */}
+            <div className={`flex items-center justify-between px-4 py-3 border-b shrink-0 ${
+              editingDate === today ? "bg-blue-50 border-blue-200" : "bg-gray-50 border-gray-200"
+            }`}>
+              <div className="flex items-center gap-2">
+                <CalendarDays className="w-4 h-4 text-blue-600" />
+                <h2 className="font-bold text-gray-800 text-sm">
+                  Edit — {formatSundayRow(editingDate)}
+                </h2>
+              </div>
+              <button
+                onClick={handleCloseEdit}
+                className="p-1 rounded hover:bg-gray-200 text-gray-500 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Save success banner */}
+            {saveSuccess && (
+              <div className="flex items-center gap-2 px-4 py-2 bg-green-50 border-b border-green-200 text-green-700 text-sm shrink-0">
+                <CheckCircle className="w-4 h-4" />
+                <span className="font-medium">Saved successfully!</span>
+              </div>
+            )}
+
+            {/* Scrollable content */}
+            <div className="flex-1 overflow-y-auto p-4">
+              {editingService ? (
+                <>
+                  {/* Mobile layout */}
+                  <div className="lg:hidden">
+                    <DraggableRoleManagerMobile
+                      groupedAssignments={groupedEditAssignments}
+                      onReorder={handleRoleReorder}
+                      updateAssignment={updateAssignment}
+                      handleRemoveRole={handleRemoveSlot}
+                      handleAddPersonToRole={handleAddPersonToRole}
+                      getPeopleForRole={getPeopleForRole}
+                      currentService={editingService}
+                      defaultRoleNames={DEFAULT_ROLE_NAMES}
+                    />
+                  </div>
+                  {/* Desktop layout */}
+                  <div className="hidden lg:block">
+                    <DraggableRoleManager
+                      groupedAssignments={groupedEditAssignments}
+                      onReorder={handleRoleReorder}
+                      updateAssignment={updateAssignment}
+                      handleRemoveRole={handleRemoveSlot}
+                      handleAddPersonToRole={handleAddPersonToRole}
+                      getPeopleForRole={getPeopleForRole}
+                      currentService={editingService}
+                      defaultRoleNames={DEFAULT_ROLE_NAMES}
+                    />
+                  </div>
+
+                  {/* Add role */}
+                  <form onSubmit={handleAddRole} className="mt-5 pt-4 border-t border-gray-200">
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="New role name…"
+                        value={newRoleName}
+                        onChange={(e) => setNewRoleName(e.target.value)}
+                        className="h-9 text-sm"
+                      />
+                      <Button type="submit" size="sm" className="bg-blue-600 hover:bg-blue-700 text-white h-9 px-3 shrink-0">
+                        <Plus className="w-4 h-4 mr-1" /> Add Role
+                      </Button>
+                    </div>
+                  </form>
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-48 text-gray-400 gap-3">
+                  <CalendarDays className="w-10 h-10" />
+                  <span className="text-sm">No service found for this date.</span>
+                </div>
+              )}
+            </div>
+
+            {/* Footer actions */}
+            <div className="border-t border-gray-200 px-4 py-3 flex items-center justify-between shrink-0 bg-gray-50">
+              <Button variant="ghost" size="sm" className="text-gray-600" onClick={handleCloseEdit}>
+                Close
+              </Button>
+              <Button
+                size="sm"
+                className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white h-9 px-4"
+                onClick={handleSaveForDate}
+                disabled={isSaving || !editingService}
+              >
+                {isSaving ? (
+                  <><RefreshCw className="w-4 h-4 animate-spin" /> Saving…</>
+                ) : (
+                  <><Save className="w-4 h-4" /> Save Changes</>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

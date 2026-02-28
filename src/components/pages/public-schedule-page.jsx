@@ -64,52 +64,13 @@ function formatSundayRow(dateStr) {
   return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", timeZone: "UTC" });
 }
 
-function getWindow(mode, cursor) {
-  const y = cursor.getUTCFullYear();
-  const m = cursor.getUTCMonth();
 
-  if (mode === "monthly") {
-    const start = new Date(Date.UTC(y, m, 1));
-    const end = new Date(Date.UTC(y, m + 1, 0));
-    return {
-      start, end,
-      label: cursor.toLocaleDateString("en-GB", { month: "long", year: "numeric", timeZone: "UTC" }),
-    };
-  }
-  if (mode === "quarterly") {
-    const q = Math.floor(m / 3);
-    const start = new Date(Date.UTC(y, q * 3, 1));
-    const end = new Date(Date.UTC(y, q * 3 + 3, 0));
-    return { start, end, label: `Q${q + 1} ${y}` };
-  }
-  // annual
-  return {
-    start: new Date(Date.UTC(y, 0, 1)),
-    end: new Date(Date.UTC(y, 11, 31)),
-    label: String(y),
-  };
-}
-
-function advanceCursor(cursor, mode, direction) {
-  const d = new Date(cursor);
-  if (mode === "monthly") d.setUTCMonth(d.getUTCMonth() + direction);
-  else if (mode === "quarterly") d.setUTCMonth(d.getUTCMonth() + direction * 3);
-  else d.setUTCFullYear(d.getUTCFullYear() + direction);
-  return d;
-}
-
-const VIEW_MODES = [
-  { key: "monthly", label: "Monthly" },
-  { key: "quarterly", label: "Quarterly" },
-  { key: "annual", label: "Annual" },
-];
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function PublicSchedulePage() {
-  const [mode, setMode] = useState("monthly");
-  const [cursor, setCursor] = useState(() => todayUTC());
   const [layoutView, setLayoutView] = useState("cards"); // "table" | "cards"
+  const [year, setYear] = useState(() => todayUTC().getUTCFullYear());
   const [rawData, setRawData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -133,8 +94,11 @@ export function PublicSchedulePage() {
       });
   }, []);
 
-  const { start, end, label } = useMemo(() => getWindow(mode, cursor), [mode, cursor]);
-  const sundaysInWindow = useMemo(() => getSundaysInRange(start, end), [start, end]);
+  const sundaysInWindow = useMemo(() => {
+    const start = new Date(Date.UTC(year, 0, 1));
+    const end = new Date(Date.UTC(year, 11, 31));
+    return getSundaysInRange(start, end);
+  }, [year]);
 
   // Build lookup: dateString → { role → person }
   const assignmentMap = useMemo(() => {
@@ -177,11 +141,7 @@ export function PublicSchedulePage() {
       el.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "start" });
     }, 120);
     return () => clearTimeout(id);
-  }, [loading, layoutView, mode]);
-
-  const handlePrev = () => setCursor((c) => advanceCursor(c, mode, -1));
-  const handleNext = () => setCursor((c) => advanceCursor(c, mode, +1));
-  const handleToday = () => setCursor(todayUTC());
+  }, [loading, layoutView, year]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -198,69 +158,46 @@ export function PublicSchedulePage() {
 
       <main className="flex-1 max-w-screen-xl mx-auto w-full px-3 sm:px-4 py-4 sm:py-6">
         {/* ── Controls ── */}
-        <div className="flex flex-col gap-2 mb-4 sm:mb-5">
-          {/* Row 1: period mode + layout toggle */}
-          <div className="flex items-center justify-between gap-2">
-            {/* Period mode pills */}
-            <div className="flex rounded-lg border border-gray-200 bg-white overflow-hidden shadow-sm">
-              {VIEW_MODES.map(({ key, label: modeLabel }) => (
-                <button
-                  key={key}
-                  onClick={() => setMode(key)}
-                  className={`px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors duration-150 ${
-                    mode === key ? "bg-blue-600 text-white" : "text-gray-600 hover:bg-gray-50"
-                  }`}
-                >
-                  {modeLabel}
-                </button>
-              ))}
-            </div>
-
-            {/* Layout toggle */}
-            <div className="flex rounded-lg border border-gray-200 bg-white overflow-hidden shadow-sm">
-              <button
-                onClick={() => setLayoutView("cards")}
-                className={`px-2.5 py-1.5 flex items-center gap-1.5 text-xs font-medium transition-colors ${
-                  layoutView === "cards" ? "bg-blue-600 text-white" : "text-gray-600 hover:bg-gray-50"
-                }`}
-                title="Cards"
-              >
-                <LayoutGrid className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Cards</span>
-              </button>
-              <button
-                onClick={() => setLayoutView("table")}
-                className={`px-2.5 py-1.5 flex items-center gap-1.5 text-xs font-medium transition-colors ${
-                  layoutView === "table" ? "bg-blue-600 text-white" : "text-gray-600 hover:bg-gray-50"
-                }`}
-                title="Table"
-              >
-                <Table2 className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Table</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Row 2: period navigator */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={handlePrev}>
+        <div className="flex items-center justify-between gap-2 mb-4 sm:mb-5">
+          {/* Year navigator */}
+          <div className="flex items-center gap-1.5">
+            <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={() => setYear((y) => y - 1)}>
               <ChevronLeft className="w-4 h-4" />
             </Button>
-            <span className="flex-1 text-center text-sm font-semibold text-gray-800 sm:min-w-[140px] sm:flex-none">
-              {label}
-            </span>
-            <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={handleNext}>
+            <span className="text-sm font-bold text-gray-800 min-w-[48px] text-center">{year}</span>
+            <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={() => setYear((y) => y + 1)}>
               <ChevronRight className="w-4 h-4" />
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-1.5 text-gray-600 h-8 shrink-0"
-              onClick={handleToday}
+            {year !== todayUTC().getUTCFullYear() && (
+              <Button variant="outline" size="sm" className="flex items-center gap-1.5 text-gray-600 h-8" onClick={() => setYear(todayUTC().getUTCFullYear())}>
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">This year</span>
+              </Button>
+            )}
+          </div>
+
+          {/* Layout toggle */}
+          <div className="flex rounded-lg border border-gray-200 bg-white overflow-hidden shadow-sm">
+            <button
+              onClick={() => setLayoutView("cards")}
+              className={`px-2.5 py-1.5 flex items-center gap-1.5 text-xs font-medium transition-colors ${
+                layoutView === "cards" ? "bg-blue-600 text-white" : "text-gray-600 hover:bg-gray-50"
+              }`}
+              title="Cards"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Today</span>
-            </Button>
+              <LayoutGrid className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Cards</span>
+            </button>
+            <button
+              onClick={() => setLayoutView("table")}
+              className={`px-2.5 py-1.5 flex items-center gap-1.5 text-xs font-medium transition-colors ${
+                layoutView === "table" ? "bg-blue-600 text-white" : "text-gray-600 hover:bg-gray-50"
+              }`}
+              title="Table"
+            >
+              <Table2 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Table</span>
+            </button>
           </div>
         </div>
 
