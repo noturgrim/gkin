@@ -1,6 +1,6 @@
 // src/components/pages/public-schedule-page.jsx
 // Publicly accessible — no login required
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -166,6 +166,19 @@ export function PublicSchedulePage() {
   const today = todayString();
   const nearest = nearestSundayString();
 
+  // Ref attached to the nearest/today Sunday element; scrolled into view after load
+  const nearestRef = useRef(null);
+  useEffect(() => {
+    if (loading) return;
+    const el = nearestRef.current;
+    if (!el) return;
+    // Small delay so the DOM has painted
+    const id = setTimeout(() => {
+      el.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "start" });
+    }, 120);
+    return () => clearTimeout(id);
+  }, [loading, layoutView, mode]);
+
   const handlePrev = () => setCursor((c) => advanceCursor(c, mode, -1));
   const handleNext = () => setCursor((c) => advanceCursor(c, mode, +1));
   const handleToday = () => setCursor(todayUTC());
@@ -284,6 +297,7 @@ export function PublicSchedulePage() {
               return (
                 <div
                   key={dateStr}
+                  ref={isToday || isNearest ? nearestRef : null}
                   className={`rounded-xl border shadow-sm [overflow:clip] ${
                     isToday
                       ? "border-blue-300 bg-blue-50"
@@ -357,6 +371,7 @@ export function PublicSchedulePage() {
                     return (
                       <th
                         key={dateStr}
+                        ref={isToday || isNearest ? nearestRef : null}
                         className={`border-b border-r border-gray-200 px-4 py-3 text-center text-xs font-semibold min-w-[130px] whitespace-nowrap ${
                           isToday
                             ? "bg-blue-100 text-blue-700"

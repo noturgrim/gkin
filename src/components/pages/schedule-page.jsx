@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ChevronLeft,
@@ -202,6 +202,18 @@ export function SchedulePage() {
   const today = todayString();
   const nearest = nearestSundayString();
 
+  // Ref attached to the nearest/today Sunday element; scrolled into view after load
+  const nearestRef = useRef(null);
+  useEffect(() => {
+    if (loading) return;
+    const el = nearestRef.current;
+    if (!el) return;
+    const id = setTimeout(() => {
+      el.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "start" });
+    }, 120);
+    return () => clearTimeout(id);
+  }, [loading, layoutView, mode]);
+
   // ── Handlers ────────────────────────────────────────────────────────────
 
   const handlePrev = () => setCursor((c) => advanceCursor(c, mode, -1));
@@ -359,6 +371,7 @@ export function SchedulePage() {
                 return (
                   <div
                     key={dateStr}
+                    ref={isToday || isNearest ? nearestRef : null}
                     className={`rounded-xl border shadow-sm [overflow:clip] ${
                       isToday
                         ? "border-blue-300 bg-blue-50"
@@ -443,6 +456,7 @@ export function SchedulePage() {
                       return (
                         <th
                           key={dateStr}
+                          ref={isToday || isNearest ? nearestRef : null}
                           className={`border-b border-r border-gray-200 px-4 py-3 text-center text-xs font-semibold min-w-[130px] whitespace-nowrap ${
                             isToday
                               ? "bg-blue-100 text-blue-700"
