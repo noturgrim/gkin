@@ -7,6 +7,19 @@ import { Link } from "react-router-dom";
 import { getStatusColor } from "../../lib/date-utils";
 import { useAssignments } from "../assignments/context/AssignmentsContext";
 
+const DEFAULT_ROLE_ORDER = [
+  "Voorganger",
+  "Ouderling van dienst",
+  "Muzikale begeleiding",
+  "Voorzangers",
+  "Lector",
+  "Beamer",
+  "Sound",
+  "Guest Reception Team",
+  "Coffee Service",
+  "Sunday School Teacher",
+];
+
 function formatDaysRemaining(days) {
   if (days === 0) return "Today";
   if (days === 1) return "Tomorrow";
@@ -31,11 +44,20 @@ export function ServiceAssignments({ selectedDate }) {
   // Group assignments by role — memoized to avoid recomputing on unrelated renders
   const groupedAssignments = useMemo(() => {
     if (!currentService) return {};
-    return currentService.assignments.reduce((acc, { role, person }) => {
+
+    // Start with all default roles so they always appear
+    const acc = Object.fromEntries(DEFAULT_ROLE_ORDER.map((r) => [r, []]));
+
+    // Merge in any roles from the stored record (including custom ones)
+    for (const { role, person } of currentService.assignments) {
       if (!acc[role]) acc[role] = [];
       if (person) acc[role].push(person);
-      return acc;
-    }, {});
+    }
+
+    // Return in default order first, then any custom roles appended
+    const customRoles = Object.keys(acc).filter((r) => !DEFAULT_ROLE_ORDER.includes(r));
+    const orderedKeys = [...DEFAULT_ROLE_ORDER, ...customRoles];
+    return Object.fromEntries(orderedKeys.map((r) => [r, acc[r]]));
   }, [currentService]);
 
   if (loading) {

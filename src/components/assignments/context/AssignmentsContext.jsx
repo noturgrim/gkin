@@ -52,6 +52,32 @@ const createServiceObject = (dateString, assignments = [...DEFAULT_ROLES]) => {
   };
 };
 
+const mergeWithDefaultRoles = (savedAssignments) => {
+  // Build a map of role -> saved entries for quick lookup
+  const savedByRole = new Map();
+  for (const entry of savedAssignments) {
+    if (!savedByRole.has(entry.role)) savedByRole.set(entry.role, []);
+    savedByRole.get(entry.role).push(entry);
+  }
+
+  // Always start with all default roles in order
+  const merged = DEFAULT_ROLES.map(({ role }) => {
+    const saved = savedByRole.get(role);
+    if (saved && saved.length > 0) {
+      savedByRole.delete(role); // consumed
+      return saved; // may be multiple entries per role
+    }
+    return [{ role, person: "" }];
+  }).flat();
+
+  // Append any custom (non-default) roles that were saved
+  for (const entries of savedByRole.values()) {
+    merged.push(...entries);
+  }
+
+  return merged;
+};
+
 const transformBackendData = (backendData) => {
   const groupedByDate = backendData.reduce((acc, item) => {
     if (!acc[item.dateString]) {
@@ -65,10 +91,7 @@ const transformBackendData = (backendData) => {
 
   return Object.values(groupedByDate)
     .map(({ dateString, assignments }) =>
-      createServiceObject(
-        dateString,
-        assignments.length > 0 ? assignments : [...DEFAULT_ROLES]
-      )
+      createServiceObject(dateString, mergeWithDefaultRoles(assignments))
     )
     .sort((a, b) => new Date(a.dateString) - new Date(b.dateString));
 };

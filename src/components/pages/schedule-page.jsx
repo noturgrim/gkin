@@ -338,9 +338,7 @@ export function SchedulePage() {
                         {isNearest && (
                           <div className="text-[10px] text-indigo-400 font-medium mt-0.5">Next</div>
                         )}
-                        {!hasData && (
-                          <div className="text-[10px] text-gray-400 mt-0.5">No data</div>
-                        )}
+
                       </td>
 
                       {/* Role cells */}
@@ -351,14 +349,10 @@ export function SchedulePage() {
                             key={role}
                             className="border-r border-b border-gray-100 px-4 py-2.5 text-center"
                           >
-                            {hasData ? (
-                              person ? (
-                                <span className="text-gray-800 font-medium">{person}</span>
-                              ) : (
-                                <span className="text-gray-300 select-none">—</span>
-                              )
+                            {person ? (
+                              <span className="text-gray-800 font-medium">{person}</span>
                             ) : (
-                              <span className="text-gray-200 select-none text-xs">·</span>
+                              <span className="text-gray-300 select-none">—</span>
                             )}
                           </td>
                         );

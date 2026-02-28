@@ -27,6 +27,12 @@ const DEFAULT_ROLES = [
   "Ouderling van dienst",
   "Muzikale begeleiding",
   "Voorzangers",
+  "Lector",
+  "Beamer",
+  "Sound",
+  "Guest Reception Team",
+  "Coffee Service",
+  "Sunday School Teacher",
 ];
 
 export const RoleBasedPeopleManager = () => {
