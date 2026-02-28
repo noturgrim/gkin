@@ -320,7 +320,7 @@ export function SchedulePage() {
               onClick={() => navigate("/dashboard")}
             >
               <ChevronLeft className="w-4 h-4" />
-              <span className="hidden xs:inline">Dashboard</span>
+              <span>Home</span>
             </Button>
           </div>
 
