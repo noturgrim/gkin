@@ -1,19 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
-} from "../ui/card";
 import { Button } from "../ui/button";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
 import {
   AlertCircle,
-  Check,
   Lock,
   Shield,
   Search,
@@ -27,7 +16,6 @@ import {
   RefreshCw,
   Key,
   ArrowLeft,
-  Home,
 } from "lucide-react";
 import passcodeService from "../../services/passcodeService";
 import authService from "../../services/authService";
@@ -240,15 +228,9 @@ export function PasscodeManager({ isEmbedded = false }) {
   // If user doesn't have permission
   if (!currentUser || currentUser.role !== "admin") {
     return (
-      <div className="max-w-md mx-auto px-4 mt-8">
-        <Card className="border border-red-200 bg-red-50 shadow-md">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-red-700">
-              <Shield className="h-5 w-5" />
-              <p>You don't have permission to access this page.</p>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+        <Shield className="h-4 w-4 flex-shrink-0" />
+        You don't have permission to access this page.
       </div>
     );
   }
@@ -256,15 +238,9 @@ export function PasscodeManager({ isEmbedded = false }) {
   // Show loading state
   if (loading) {
     return (
-      <div className="max-w-md mx-auto px-4 mt-8 flex justify-center">
-        <Card className="w-full shadow-md">
-          <CardContent className="py-12">
-            <div className="flex flex-col items-center justify-center gap-3">
-              <div className="animate-spin h-10 w-10 border-4 border-indigo-500 border-t-transparent rounded-full"></div>
-              <p className="text-gray-500 text-sm">Loading passcodes...</p>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="flex flex-col items-center justify-center py-16 gap-3">
+        <div className="animate-spin h-8 w-8 border-2 border-indigo-600 border-t-transparent rounded-full" />
+        <p className="text-sm font-medium text-slate-500">Loading passcodes…</p>
       </div>
     );
   }
@@ -272,15 +248,9 @@ export function PasscodeManager({ isEmbedded = false }) {
   // Show error state
   if (error) {
     return (
-      <div className="max-w-md mx-auto px-4 mt-8">
-        <Card className="border border-red-200 bg-red-50 shadow-md">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-red-700">
-              <AlertCircle className="h-5 w-5" />
-              <p>{error}</p>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+        <AlertCircle className="h-4 w-4 flex-shrink-0" />
+        {error}
       </div>
     );
   }
@@ -288,7 +258,6 @@ export function PasscodeManager({ isEmbedded = false }) {
   // Function to handle input focus to prevent unwanted interactions
   const handleInputFocus = (e) => {
     e.stopPropagation();
-    // Prevent the input from being affected by other events
     e.target.focus();
   };
 
@@ -313,384 +282,319 @@ export function PasscodeManager({ isEmbedded = false }) {
     navigate("/dashboard");
   };
 
+  // Role display config
+  const getRoleConfig = (role) => {
+    const configs = {
+      liturgy:   { color: "bg-blue-500",    badge: "bg-blue-50 text-blue-700 border-blue-200" },
+      pastor:    { color: "bg-purple-500",   badge: "bg-purple-50 text-purple-700 border-purple-200" },
+      translation:{ color: "bg-green-500",  badge: "bg-green-50 text-green-700 border-green-200" },
+      beamer:    { color: "bg-orange-500",   badge: "bg-orange-50 text-orange-700 border-orange-200" },
+      music:     { color: "bg-pink-500",     badge: "bg-pink-50 text-pink-700 border-pink-200" },
+      treasurer: { color: "bg-emerald-500",  badge: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+      admin:     { color: "bg-indigo-600",   badge: "bg-indigo-50 text-indigo-700 border-indigo-200" },
+    };
+    return configs[role] || { color: "bg-slate-400", badge: "bg-slate-50 text-slate-700 border-slate-200" };
+  };
+
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: animationStyles }} />
-      <div className={isEmbedded ? "" : "max-w-4xl mx-auto px-4 py-6"}>
-        {!isEmbedded && (
-          <div className="mb-4">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleGoBack}
-              className="flex items-center gap-2 hover:bg-indigo-50"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span>Back to Dashboard</span>
-            </Button>
-          </div>
-        )}
-        <Card className={`shadow-lg border-gray-200 overflow-hidden ${!isEmbedded ? "animate-fade-in" : ""}`}>
-          <CardHeader className="bg-gradient-to-r from-indigo-50 to-blue-50 border-b border-gray-200">
-            <div className="flex justify-between items-center">
+
+      {!isEmbedded && (
+        <div className="max-w-3xl mx-auto px-4 py-6">
+          <button
+            onClick={() => navigate("/dashboard")}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors mb-6"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Dashboard
+          </button>
+        </div>
+      )}
+
+      <div className={isEmbedded ? "" : "max-w-3xl mx-auto px-4"}>
+        {/* Panel */}
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+
+          {/* Panel header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                <Lock className="w-4 h-4 text-indigo-600" />
+              </div>
               <div>
-                <CardTitle className="text-xl flex items-center gap-2">
-                  <Lock className="h-5 w-5 text-indigo-600" />
-                  Role Passcode Management
-                </CardTitle>
-                <CardDescription className="text-gray-600">
-                  Update passcodes for different roles in the system
-                </CardDescription>
+                <h3 className="text-sm font-semibold text-slate-900">Role Passcode Management</h3>
+                <p className="text-xs text-slate-500">Update access codes for each role</p>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="flex items-center gap-1.5"
-                onClick={refreshPasscodes}
-              >
-                <RefreshCw className="h-4 w-4" />
-                Refresh
-              </Button>
             </div>
+            <button
+              onClick={refreshPasscodes}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors"
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+              Refresh
+            </button>
+          </div>
 
-            {/* Search and sort controls */}
-            <div className="mt-4 flex flex-col sm:flex-row gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search roles..."
-                  className="pl-8"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onClick={(e) => e.stopPropagation()}
-                  onFocus={handleInputFocus}
-                  onMouseDown={(e) => e.stopPropagation()}
-                  autoComplete="off"
-                />
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-1.5"
-                onClick={() =>
-                  setSortOrder(sortOrder === "asc" ? "desc" : "asc")
-                }
-              >
-                {sortOrder === "asc" ? (
-                  <>
-                    <SortAsc className="h-4 w-4" />
-                    <span>A-Z</span>
-                  </>
-                ) : (
-                  <>
-                    <SortDesc className="h-4 w-4" />
-                    <span>Z-A</span>
-                  </>
-                )}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-1.5"
-                onClick={() => setShowPasswords(!showPasswords)}
-              >
-                {showPasswords ? (
-                  <>
-                    <EyeOff className="h-4 w-4" />
-                    <span>Hide</span>
-                  </>
-                ) : (
-                  <>
-                    <Eye className="h-4 w-4" />
-                    <span>Show</span>
-                  </>
-                )}
-              </Button>
+          {/* Search / sort / visibility toolbar */}
+          <div className="px-6 py-3 border-b border-slate-100 flex flex-col sm:flex-row gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search roles…"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                onFocus={handleInputFocus}
+                onMouseDown={(e) => e.stopPropagation()}
+                autoComplete="off"
+                className="w-full pl-8 pr-3 py-2 text-sm border border-slate-200 rounded-xl bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+              />
             </div>
+            <button
+              onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition"
+            >
+              {sortOrder === "asc" ? <SortAsc className="h-3.5 w-3.5" /> : <SortDesc className="h-3.5 w-3.5" />}
+              {sortOrder === "asc" ? "A–Z" : "Z–A"}
+            </button>
+            <button
+              onClick={() => setShowPasswords(!showPasswords)}
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition"
+            >
+              {showPasswords ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+              {showPasswords ? "Hide" : "Show"}
+            </button>
+          </div>
 
-            {lastUpdated && (
-              <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-2">
-                <Clock className="h-3 w-3" />
-                <span>Last updated: {lastUpdated.toLocaleString()}</span>
-              </div>
-            )}
-          </CardHeader>
+          {lastUpdated && (
+            <div className="px-6 py-2 flex items-center gap-1.5 text-xs text-slate-400 border-b border-slate-100">
+              <Clock className="h-3 w-3" />
+              Last refreshed: {lastUpdated.toLocaleString()}
+            </div>
+          )}
 
-          <CardContent className="p-4 md:p-6">
+          {/* Role list */}
+          <div className="divide-y divide-slate-100">
             {filteredAndSortedPasscodes.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                {searchTerm ? (
-                  <p>No roles found matching "{searchTerm}"</p>
-                ) : (
-                  <p>No roles found</p>
-                )}
+              <div className="py-12 text-center text-sm text-slate-400">
+                {searchTerm ? `No roles matching "${searchTerm}"` : "No roles found"}
               </div>
             ) : (
-              <div className="space-y-4">
-                {filteredAndSortedPasscodes.map((passcode) => (
-                  <div
-                    key={passcode.id}
-                    className={`border rounded-md p-4 bg-white shadow-sm transition-all ${
-                      editingRole === passcode.role
-                        ? "border-indigo-300 bg-indigo-50"
-                        : "hover:border-gray-300"
-                    }`}
-                  >
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h3 className="font-medium capitalize flex items-center gap-1.5">
-                          {passcode.role === "admin" ? (
-                            <Shield className="h-4 w-4 text-indigo-600" />
-                          ) : (
-                            <Key className="h-4 w-4 text-gray-500" />
-                          )}
-                          <span
-                            className={
-                              passcode.role === "admin"
-                                ? "text-indigo-600 font-semibold"
-                                : ""
-                            }
-                          >
+              filteredAndSortedPasscodes.map((passcode) => {
+                const roleConfig = getRoleConfig(passcode.role);
+                const isEditing = editingRole === passcode.role;
+
+                return (
+                  <div key={passcode.id} className={`transition-colors ${isEditing ? "bg-indigo-50/40" : "hover:bg-slate-50/60"}`}>
+                    {/* Role row */}
+                    <div className="flex items-center justify-between px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-lg ${roleConfig.color} flex items-center justify-center flex-shrink-0`}>
+                          {passcode.role === "admin"
+                            ? <Shield className="h-4 w-4 text-white" />
+                            : <Key className="h-4 w-4 text-white" />}
+                        </div>
+                        <div>
+                          <span className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full border capitalize ${roleConfig.badge}`}>
                             {passcode.role}
                           </span>
-                        </h3>
-                        <p className="text-xs text-gray-500 flex items-center gap-1.5 mt-0.5">
-                          <Clock className="h-3 w-3" />
-                          Last updated:{" "}
-                          {new Date(passcode.updated_at).toLocaleString()}
-                        </p>
+                          <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+                            <Clock className="h-3 w-3" />
+                            Updated {new Date(passcode.updated_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                          </p>
+                        </div>
                       </div>
-                      {editingRole === passcode.role ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
+
+                      {isEditing ? (
+                        <button
                           onClick={(e) => cancelEditing(e)}
-                          className="text-gray-600"
+                          className="text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors"
                         >
                           Cancel
-                        </Button>
+                        </button>
                       ) : (
-                        <Button
-                          variant="outline"
-                          size="sm"
+                        <button
                           onClick={(e) => startEditing(passcode.role, e)}
-                          className="border-indigo-200 hover:border-indigo-300 hover:bg-indigo-50"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors"
                         >
-                          Change Passcode
-                        </Button>
+                          Change
+                        </button>
                       )}
                     </div>
 
-                    {editingRole === passcode.role && (
-                      <div className="mt-4 space-y-3 p-3 bg-white rounded-md border border-gray-100">
-                        <div className="space-y-1">
-                          <Label
-                            htmlFor={`new-passcode-${passcode.role}`}
-                            className="text-sm"
-                          >
-                            New Passcode
-                          </Label>
-                          <div className="relative">
-                            <Input
-                              id={`new-passcode-${passcode.role}`}
-                              type={showPasswords ? "text" : "password"}
-                              value={newPasscode}
-                              onChange={(e) => setNewPasscode(e.target.value)}
-                              placeholder="Enter new passcode"
-                              className="pr-10"
-                              onClick={(e) => e.stopPropagation()}
-                              onMouseDown={(e) => e.stopPropagation()}
-                              autoComplete="new-password"
-                            />
-                            <button
-                              type="button"
-                              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                setShowPasswords(!showPasswords);
-                              }}
+                    {/* Inline edit form */}
+                    {isEditing && (
+                      <div className="px-6 pb-5 space-y-4">
+                        <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+                          {/* New passcode */}
+                          <div className="space-y-1.5">
+                            <label
+                              htmlFor={`new-passcode-${passcode.role}`}
+                              className="text-xs font-medium text-slate-600"
                             >
-                              {showPasswords ? (
-                                <EyeOff className="h-4 w-4" />
-                              ) : (
-                                <Eye className="h-4 w-4" />
-                              )}
-                            </button>
-                          </div>
-
-                          {/* Password strength meter */}
-                          {newPasscode && (
-                            <div className="mt-1.5">
-                              <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
-                                <div
-                                  className={`h-full ${passwordStrength.color}`}
-                                  style={{
-                                    width: `${Math.min(
-                                      100,
-                                      (passwordStrength.score / 6) * 100
-                                    )}%`,
-                                  }}
-                                ></div>
-                              </div>
-                              <p className="text-xs text-gray-500 mt-1">
-                                Strength: {passwordStrength.label}
-                              </p>
+                              New Passcode
+                            </label>
+                            <div className="relative">
+                              <input
+                                id={`new-passcode-${passcode.role}`}
+                                type={showPasswords ? "text" : "password"}
+                                value={newPasscode}
+                                onChange={(e) => setNewPasscode(e.target.value)}
+                                placeholder="Enter new passcode"
+                                className="w-full pl-3 pr-10 py-2.5 text-sm border border-slate-200 rounded-xl bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                                onClick={(e) => e.stopPropagation()}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                autoComplete="new-password"
+                              />
+                              <button
+                                type="button"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowPasswords(!showPasswords); }}
+                              >
+                                {showPasswords ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              </button>
                             </div>
-                          )}
-                        </div>
 
-                        <div className="space-y-1">
-                          <Label
-                            htmlFor={`confirm-passcode-${passcode.role}`}
-                            className="text-sm"
-                          >
-                            Confirm Passcode
-                          </Label>
-                          <div className="relative">
-                            <Input
-                              id={`confirm-passcode-${passcode.role}`}
-                              type={showPasswords ? "text" : "password"}
-                              value={confirmPasscode}
-                              onChange={(e) =>
-                                setConfirmPasscode(e.target.value)
-                              }
-                              placeholder="Confirm new passcode"
-                              className={`pr-10 ${
-                                confirmPasscode &&
-                                newPasscode !== confirmPasscode
-                                  ? "border-red-300 focus:border-red-500"
-                                  : ""
-                              }`}
-                              onClick={(e) => e.stopPropagation()}
-                              onMouseDown={(e) => e.stopPropagation()}
-                              autoComplete="new-password"
-                            />
-                            <button
-                              type="button"
-                              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                setShowPasswords(!showPasswords);
-                              }}
-                            >
-                              {showPasswords ? (
-                                <EyeOff className="h-4 w-4" />
-                              ) : (
-                                <Eye className="h-4 w-4" />
-                              )}
-                            </button>
-                          </div>
-                          {confirmPasscode &&
-                            newPasscode !== confirmPasscode && (
-                              <p className="text-xs text-red-500 mt-1">
-                                Passcodes don't match
-                              </p>
+                            {/* Strength meter */}
+                            {newPasscode && (
+                              <div className="mt-1.5 space-y-1">
+                                <div className="h-1 w-full bg-slate-100 rounded-full overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-full transition-all duration-300 ${passwordStrength.color}`}
+                                    style={{ width: `${Math.min(100, (passwordStrength.score / 6) * 100)}%` }}
+                                  />
+                                </div>
+                                <p className="text-xs text-slate-400">Strength: {passwordStrength.label}</p>
+                              </div>
                             )}
-                        </div>
+                          </div>
 
-                        {updateStatus.message && (
-                          <div
-                            className={`text-sm p-2 rounded-md ${
+                          {/* Confirm passcode */}
+                          <div className="space-y-1.5">
+                            <label
+                              htmlFor={`confirm-passcode-${passcode.role}`}
+                              className="text-xs font-medium text-slate-600"
+                            >
+                              Confirm Passcode
+                            </label>
+                            <div className="relative">
+                              <input
+                                id={`confirm-passcode-${passcode.role}`}
+                                type={showPasswords ? "text" : "password"}
+                                value={confirmPasscode}
+                                onChange={(e) => setConfirmPasscode(e.target.value)}
+                                placeholder="Confirm new passcode"
+                                className={`w-full pl-3 pr-10 py-2.5 text-sm border rounded-xl bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition ${
+                                  confirmPasscode && newPasscode !== confirmPasscode
+                                    ? "border-red-300"
+                                    : "border-slate-200"
+                                }`}
+                                onClick={(e) => e.stopPropagation()}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                autoComplete="new-password"
+                              />
+                              <button
+                                type="button"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowPasswords(!showPasswords); }}
+                              >
+                                {showPasswords ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              </button>
+                            </div>
+                            {confirmPasscode && newPasscode !== confirmPasscode && (
+                              <p className="text-xs text-red-500">Passcodes don't match</p>
+                            )}
+                          </div>
+
+                          {/* Status message */}
+                          {updateStatus.message && (
+                            <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium ${
                               updateStatus.success
                                 ? "bg-green-50 text-green-700 border border-green-200"
                                 : updateStatus.isWarning
-                                ? "bg-yellow-50 text-yellow-700 border border-yellow-200"
+                                ? "bg-amber-50 text-amber-700 border border-amber-200"
                                 : "bg-red-50 text-red-700 border border-red-200"
-                            }`}
-                          >
-                            <div className="flex items-center gap-1.5">
-                              {updateStatus.success ? (
-                                <CheckCircle2 className="h-4 w-4" />
-                              ) : updateStatus.isWarning ? (
-                                <AlertTriangle className="h-4 w-4" />
-                              ) : updateStatus.isLoading ? (
-                                <RefreshCw className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <AlertCircle className="h-4 w-4" />
-                              )}
+                            }`}>
+                              {updateStatus.success
+                                ? <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0" />
+                                : updateStatus.isWarning
+                                ? <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
+                                : updateStatus.isLoading
+                                ? <RefreshCw className="h-3.5 w-3.5 flex-shrink-0 animate-spin" />
+                                : <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />}
                               {updateStatus.message}
                             </div>
-                          </div>
-                        )}
+                          )}
 
-                        <div className="pt-2 flex justify-end">
-                          <Button
-                            onClick={(e) =>
-                              confirmPasscodeUpdate(passcode.role, e)
-                            }
-                            disabled={
-                              !newPasscode ||
-                              !confirmPasscode ||
-                              newPasscode !== confirmPasscode
-                            }
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                          >
-                            Update Passcode
-                          </Button>
+                          <div className="flex justify-end pt-1">
+                            <Button
+                              onClick={(e) => confirmPasscodeUpdate(passcode.role, e)}
+                              disabled={!newPasscode || !confirmPasscode || newPasscode !== confirmPasscode}
+                              className="inline-flex items-center gap-2 h-9 px-5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl shadow-sm disabled:opacity-50 transition-colors"
+                            >
+                              Update Passcode
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     )}
                   </div>
-                ))}
-              </div>
+                );
+              })
             )}
+          </div>
 
-            {/* Confirmation dialog */}
-            {showConfirmDialog && (
-              <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50">
-                <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-2xl border border-gray-100 animate-fade-in">
-                  <div className="flex items-center gap-2 mb-4 text-indigo-600">
-                    <Shield className="h-5 w-5" />
-                    <h3 className="text-lg font-medium">
-                      Confirm Passcode Update
-                    </h3>
-                  </div>
-                  <p className="text-gray-600 mb-6">
-                    Are you sure you want to update the passcode for role{" "}
-                    <span className="font-medium text-indigo-600">
-                      {roleToUpdate}
-                    </span>
-                    ?
-                  </p>
-                  <div className="flex justify-end gap-3">
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowConfirmDialog(false)}
-                      className="border-gray-300"
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={updatePasscode}
-                      className="bg-indigo-600 hover:bg-indigo-700 shadow-sm text-white"
-                    >
-                      Confirm
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </CardContent>
-
-          <CardFooter className="bg-gray-50 border-t border-gray-200 p-4 flex justify-between items-center">
-            <p className="text-xs text-gray-500">
-              {filteredAndSortedPasscodes.length}{" "}
-              {filteredAndSortedPasscodes.length === 1 ? "role" : "roles"} found
-              {searchTerm && ` for "${searchTerm}"`}
+          {/* Footer */}
+          <div className="px-6 py-3 border-t border-slate-100 flex items-center justify-between">
+            <p className="text-xs text-slate-400">
+              {filteredAndSortedPasscodes.length} {filteredAndSortedPasscodes.length === 1 ? "role" : "roles"}
+              {searchTerm && ` matching "${searchTerm}"`}
             </p>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-xs"
-              onClick={() => setSearchTerm("")}
-              disabled={!searchTerm}
-            >
-              Clear filter
-            </Button>
-          </CardFooter>
-        </Card>
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm("")}
+                className="text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors"
+              >
+                Clear filter
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Confirmation modal */}
+        {showConfirmDialog && (
+          <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-xl border border-slate-100 w-full max-w-sm p-6 animate-fade-in">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-9 h-9 rounded-xl bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                  <Shield className="h-4 w-4 text-indigo-600" />
+                </div>
+                <h3 className="text-sm font-semibold text-slate-900">Confirm Passcode Update</h3>
+              </div>
+              <p className="text-sm text-slate-600 mb-6">
+                Update the passcode for role{" "}
+                <span className="font-semibold text-indigo-600 capitalize">{roleToUpdate}</span>?
+              </p>
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => setShowConfirmDialog(false)}
+                  variant="outline"
+                  className="flex-1 h-9 text-sm font-medium rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={updatePasscode}
+                  className="flex-1 h-9 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl shadow-sm"
+                >
+                  Confirm
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

@@ -269,365 +269,279 @@ export function AdminTools() {
     return (
       <div className="space-y-8">
         {/* Quick Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm font-medium">
-                  Total Messages
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {stats ? stats.messageCount : "---"}
-                </p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+          {[
+            {
+              label: "Total Messages",
+              value: stats ? stats.messageCount.toLocaleString() : "—",
+              icon: MessageSquare,
+              bg: "bg-indigo-500",
+              light: "bg-indigo-50",
+              text: "text-indigo-600",
+            },
+            {
+              label: "Total Mentions",
+              value: stats ? stats.mentionCount.toLocaleString() : "—",
+              icon: AlertTriangle,
+              bg: "bg-amber-500",
+              light: "bg-amber-50",
+              text: "text-amber-600",
+            },
+            {
+              label: "Active Users",
+              value: stats?.topUsers ? stats.topUsers.length : "—",
+              icon: Users,
+              bg: "bg-emerald-500",
+              light: "bg-emerald-50",
+              text: "text-emerald-600",
+            },
+            {
+              label: "System Status",
+              value:
+                systemStatus?.server?.status === "online"
+                  ? "Online"
+                  : systemStatus?.server?.status
+                  ? "Offline"
+                  : "—",
+              icon: Activity,
+              bg:
+                systemStatus?.server?.status === "online"
+                  ? "bg-green-500"
+                  : "bg-red-500",
+              light:
+                systemStatus?.server?.status === "online"
+                  ? "bg-green-50"
+                  : "bg-red-50",
+              text:
+                systemStatus?.server?.status === "online"
+                  ? "text-green-600"
+                  : "text-red-600",
+            },
+          ].map(({ label, value, icon: Icon, bg, light, text }) => (
+            <div
+              key={label}
+              className="bg-white rounded-xl border border-slate-100 shadow-sm p-4 sm:p-5 flex items-center gap-3 sm:gap-4"
+            >
+              <div
+                className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center flex-shrink-0`}
+              >
+                <Icon className="w-5 h-5 text-white" />
               </div>
-              <div className="bg-gray-100 p-3 rounded-lg">
-                <MessageSquare className="w-6 h-6 text-gray-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm font-medium">
-                  Total Mentions
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-slate-400 uppercase tracking-wide truncate">
+                  {label}
                 </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {stats ? stats.mentionCount : "---"}
-                </p>
-              </div>
-              <div className="bg-gray-100 p-3 rounded-lg">
-                <AlertTriangle className="w-6 h-6 text-gray-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm font-medium">
-                  Active Users
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {stats && stats.topUsers ? stats.topUsers.length : "---"}
-                </p>
-              </div>
-              <div className="bg-gray-100 p-3 rounded-lg">
-                <Users className="w-6 h-6 text-gray-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm font-medium">
-                  System Status
-                </p>
-                <p className="text-lg font-semibold text-gray-900">
-                  {systemStatus?.server?.status === "online"
-                    ? "Online"
-                    : systemStatus?.server?.status
-                    ? "Offline"
-                    : "---"}
-                </p>
-              </div>
-              <div className="bg-gray-100 p-3 rounded-lg">
-                <Activity className="w-6 h-6 text-gray-600" />
+                <p className="text-xl sm:text-2xl font-bold text-slate-900">{value}</p>
               </div>
             </div>
-          </div>
+          ))}
         </div>
 
         {/* Message Management Section */}
-        <Card className="border-0 shadow-md bg-white">
-          <CardHeader className="bg-gray-50 border-b border-gray-200">
-            <CardTitle className="text-xl font-bold text-gray-900 flex items-center">
-              <div className="bg-red-100 p-2 rounded-lg mr-3">
-                <Trash2 className="w-5 h-5 text-red-600" />
-              </div>
-              Message Management
-            </CardTitle>
-            <CardDescription className="text-gray-600">
-              Manage and clear system message data with advanced controls
-            </CardDescription>
-          </CardHeader>
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-100">
+            <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0">
+              <Trash2 className="w-4 h-4 text-red-600" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900">Message Management</h3>
+              <p className="text-xs text-slate-500">Manage and clear system message data</p>
+            </div>
+          </div>
 
-          <CardContent className="p-6">
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
-              <div className="flex items-start">
-                <AlertTriangle className="w-5 h-5 text-amber-600 mr-3 mt-0.5 flex-shrink-0" />
-                <div>
-                  <h4 className="text-amber-800 font-medium mb-1">
-                    Data Deletion Warning
-                  </h4>
-                  <p className="text-sm text-amber-700">
-                    This action will permanently remove all messages, mentions,
-                    and related data from the system. This operation cannot be
-                    reversed.
-                  </p>
-                </div>
+          <div className="p-6 space-y-4">
+            <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
+              <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-px" />
+              <div>
+                <p className="text-sm font-semibold text-amber-800 mb-0.5">Data Deletion Warning</p>
+                <p className="text-xs text-amber-700 leading-relaxed">
+                  This permanently removes all messages, mentions and related data. This cannot be reversed.
+                </p>
               </div>
             </div>
 
             {!showConfirm ? (
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex flex-wrap gap-3">
                 <Button
                   variant="destructive"
                   onClick={() => setShowConfirm(true)}
-                  className="bg-red-600 hover:bg-red-700 shadow-lg hover:shadow-xl transition-all duration-200 px-6 py-3"
+                  className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl px-5 h-10 shadow-sm"
                 >
-                  <Trash2 className="w-4 h-4 mr-2" />
+                  <Trash2 className="w-4 h-4" />
                   Clear All Messages
                 </Button>
                 <Button
                   variant="outline"
                   onClick={fetchMessageStats}
                   disabled={loading}
-                  className="border-gray-300 hover:border-gray-400 px-6 py-3"
+                  className="inline-flex items-center gap-2 h-10 px-5 text-sm font-medium rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50"
                 >
-                  <RefreshCw
-                    className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
-                  />
+                  <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
                   Refresh Data
                 </Button>
               </div>
             ) : (
-              <div className="bg-red-50 border-2 border-red-200 rounded-lg p-6">
-                <div className="flex items-start mb-4">
-                  <div className="bg-red-200 p-2 rounded-lg mr-3">
-                    <AlertTriangle className="w-6 h-6 text-red-700" />
+              <div className="bg-red-50 border border-red-200 rounded-xl p-5">
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="w-8 h-8 rounded-lg bg-red-200 flex items-center justify-center flex-shrink-0">
+                    <AlertTriangle className="w-4 h-4 text-red-700" />
                   </div>
                   <div>
-                    <h4 className="text-red-900 font-bold text-lg mb-2">
-                      Final Confirmation Required
-                    </h4>
-                    <p className="text-red-800 leading-relaxed">
-                      You are about to permanently delete{" "}
-                      <strong>all messages</strong>,{" "}
-                      <strong>all mentions</strong>, and{" "}
-                      <strong>all related data</strong> from the system. This
-                      action is <strong>irreversible</strong>
-                      and will affect all users.
+                    <p className="text-sm font-bold text-red-900 mb-1">Final Confirmation Required</p>
+                    <p className="text-sm text-red-800 leading-relaxed">
+                      You are about to permanently delete <strong>all messages</strong>,{" "}
+                      <strong>all mentions</strong>, and <strong>all related data</strong>.
+                      This action is <strong>irreversible</strong> and will affect all users.
                     </p>
                   </div>
                 </div>
-
-                <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-red-200">
+                <div className="flex flex-wrap gap-3 pt-4 border-t border-red-200">
                   <Button
                     variant="destructive"
                     onClick={handleClearMessages}
                     disabled={loading}
-                    className="bg-red-700 hover:bg-red-800 shadow-lg flex items-center justify-center gap-2 px-6 py-3"
+                    className="inline-flex items-center gap-2 bg-red-700 hover:bg-red-800 text-white text-sm font-semibold rounded-xl px-5 h-10 shadow-sm"
                   >
                     {loading ? (
-                      <>
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                        <span>Deleting...</span>
-                      </>
+                      <><Loader2 className="h-4 w-4 animate-spin" /><span>Deleting…</span></>
                     ) : (
-                      <>
-                        <Trash2 className="h-5 w-5" />
-                        <span>Yes, Delete Everything</span>
-                      </>
+                      <><Trash2 className="h-4 w-4" /><span>Yes, Delete Everything</span></>
                     )}
                   </Button>
                   <Button
                     variant="outline"
                     onClick={() => setShowConfirm(false)}
                     disabled={loading}
-                    className="border-gray-400 hover:bg-gray-50 px-6 py-3"
+                    className="inline-flex items-center gap-2 h-10 px-5 text-sm font-medium rounded-xl border-slate-300 text-slate-600 hover:bg-white"
                   >
-                    Cancel Operation
+                    Cancel
                   </Button>
                 </div>
               </div>
             )}
 
             {error && (
-              <div className="mt-4 bg-red-100 border border-red-300 rounded-lg p-4">
-                <div className="flex items-center">
-                  <AlertTriangle className="w-5 h-5 text-red-600 mr-2" />
-                  <p className="text-red-800 font-medium">{error}</p>
-                </div>
+              <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                <AlertTriangle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                <p className="text-sm text-red-700 font-medium">{error}</p>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        {/* Message Statistics Section */}
-        <Card className="border-0 shadow-md bg-white">
-          <CardHeader className="bg-gray-50 border-b border-gray-200">
-            <CardTitle className="text-xl font-bold text-gray-900 flex items-center">
-              <div className="bg-blue-100 p-2 rounded-lg mr-3">
-                <BarChart3 className="w-5 h-5 text-blue-600" />
+        {/* Message Analytics */}
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                <BarChart3 className="w-4 h-4 text-indigo-600" />
               </div>
-              Message Analytics & Statistics
-            </CardTitle>
-            <CardDescription className="text-gray-600">
-              Comprehensive insights into system message data and user activity
-            </CardDescription>
-          </CardHeader>
+              <div>
+                <h3 className="text-sm font-semibold text-slate-900">Analytics &amp; Statistics</h3>
+                <p className="text-xs text-slate-500">Message data and user activity insights</p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              onClick={fetchMessageStats}
+              disabled={loading}
+              className="inline-flex items-center gap-2 h-9 px-4 text-xs font-medium rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50"
+            >
+              {loading ? (
+                <><Loader2 className="h-3.5 w-3.5 animate-spin" /><span>Loading…</span></>
+              ) : (
+                <><RefreshCw className="h-3.5 w-3.5" /><span>Refresh</span></>
+              )}
+            </Button>
+          </div>
 
-          <CardContent className="p-6">
-            <div className="flex flex-col sm:flex-row gap-4 mb-6">
-              <Button
-                variant="outline"
-                onClick={fetchMessageStats}
-                disabled={loading}
-                className="border-gray-300 hover:border-gray-400 hover:bg-gray-50 px-6 py-3 flex items-center gap-2"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="h-5 w-5 animate-spin text-gray-600" />
-                    <span>Loading Statistics...</span>
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="h-5 w-5 text-gray-600" />
-                    <span>Refresh Analytics</span>
-                  </>
-                )}
-              </Button>
+          {stats && (
+            <div className="p-6 space-y-6">
+              {/* Metric pair */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="rounded-xl bg-indigo-50 border border-indigo-100 p-5 flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-indigo-500 flex items-center justify-center flex-shrink-0">
+                    <MessageSquare className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-indigo-400 uppercase tracking-wide">Total Messages</p>
+                    <p className="text-3xl font-bold text-indigo-900">{stats.messageCount.toLocaleString()}</p>
+                    <p className="text-xs text-indigo-500 mt-0.5">System-wide count</p>
+                  </div>
+                </div>
 
-              {error && (
-                <div className="flex items-center text-red-600 text-sm bg-red-50 px-4 py-2 rounded-lg border border-red-200">
-                  <AlertTriangle className="h-5 w-5 mr-2" />
-                  <span>{error}</span>
+                <div className="rounded-xl bg-amber-50 border border-amber-100 p-5 flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-amber-500 flex items-center justify-center flex-shrink-0">
+                    <AlertTriangle className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-amber-400 uppercase tracking-wide">Total Mentions</p>
+                    <p className="text-3xl font-bold text-amber-900">{stats.mentionCount.toLocaleString()}</p>
+                    <p className="text-xs text-amber-500 mt-0.5">User notifications</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Top Users */}
+              {stats.topUsers && stats.topUsers.length > 0 ? (
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <TrendingUp className="w-4 h-4 text-slate-400" />
+                    <h4 className="text-sm font-semibold text-slate-700">Top Active Users</h4>
+                    <span className="text-xs text-slate-400">by message count</span>
+                  </div>
+                  <div className="space-y-2">
+                    {stats.topUsers.map((user, index) => {
+                      const maxCount = Math.max(...stats.topUsers.map((u) => u.message_count));
+                      const percentage = (user.message_count / maxCount) * 100;
+                      const rankColors = ["bg-indigo-500", "bg-indigo-400", "bg-indigo-300"];
+                      const barColor = index < 3 ? rankColors[index] : "bg-slate-300";
+
+                      return (
+                        <div
+                          key={index}
+                          className="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-50 border border-slate-100"
+                        >
+                          <div
+                            className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold text-white flex-shrink-0 ${
+                              index < 3 ? "bg-indigo-500" : "bg-slate-400"
+                            }`}
+                          >
+                            {index + 1}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-sm font-semibold text-slate-800 truncate">
+                                {user.username || "Unknown User"}
+                              </span>
+                              <span className="text-sm font-bold text-slate-600 ml-2 flex-shrink-0">
+                                {user.message_count.toLocaleString()}
+                              </span>
+                            </div>
+                            <div className="w-full bg-slate-200 rounded-full h-1.5">
+                              <div
+                                className={`h-1.5 rounded-full transition-all duration-500 ${barColor}`}
+                                style={{ width: `${percentage}%` }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-10 text-center">
+                  <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center mb-3">
+                    <Database className="w-6 h-6 text-slate-400" />
+                  </div>
+                  <p className="text-sm font-medium text-slate-500">No user data available</p>
+                  <p className="text-xs text-slate-400 mt-1">Activity statistics will appear once data is collected.</p>
                 </div>
               )}
             </div>
-
-            {stats && (
-              <div className="space-y-6">
-                {/* Main Statistics Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="bg-white rounded-lg p-6 shadow-md border border-gray-200">
-                    <div className="text-center">
-                      <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <MessageSquare className="w-8 h-8 text-gray-600" />
-                      </div>
-                      <div className="text-4xl font-bold text-gray-900 mb-2">
-                        {stats.messageCount.toLocaleString()}
-                      </div>
-                      <div className="text-gray-700 font-medium">
-                        Total Messages
-                      </div>
-                      <div className="text-sm text-gray-500 mt-1">
-                        System-wide count
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-white rounded-lg p-6 shadow-md border border-gray-200">
-                    <div className="text-center">
-                      <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <AlertTriangle className="w-8 h-8 text-gray-600" />
-                      </div>
-                      <div className="text-4xl font-bold text-gray-900 mb-2">
-                        {stats.mentionCount.toLocaleString()}
-                      </div>
-                      <div className="text-gray-700 font-medium">
-                        Total Mentions
-                      </div>
-                      <div className="text-sm text-gray-500 mt-1">
-                        User notifications
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Top Users Section */}
-                {stats.topUsers && stats.topUsers.length > 0 ? (
-                  <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
-                    <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                      <h4 className="text-lg font-bold text-gray-900 flex items-center">
-                        <TrendingUp className="w-5 h-5 mr-2 text-gray-600" />
-                        Top Active Users
-                      </h4>
-                      <p className="text-sm text-gray-600 mt-1">
-                        Users ranked by message count
-                      </p>
-                    </div>
-
-                    <div className="p-6">
-                      <div className="space-y-3">
-                        {stats.topUsers.map((user, index) => {
-                          const maxCount = Math.max(
-                            ...stats.topUsers.map((u) => u.message_count)
-                          );
-                          const percentage =
-                            (user.message_count / maxCount) * 100;
-                          const isTopUser = index < 3;
-
-                          return (
-                            <div
-                              key={index}
-                              className={`flex items-center p-4 rounded-lg border ${
-                                isTopUser
-                                  ? "bg-gray-50 border-gray-300"
-                                  : "bg-white border-gray-200"
-                              }`}
-                            >
-                              <div
-                                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold mr-4 ${
-                                  isTopUser
-                                    ? "bg-gray-700 text-white"
-                                    : "bg-gray-400 text-white"
-                                }`}
-                              >
-                                {index + 1}
-                              </div>
-
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between mb-2">
-                                  <span className="font-semibold text-gray-900 truncate">
-                                    {user.username || "Unknown User"}
-                                  </span>
-                                  <span
-                                    className={`font-bold ${
-                                      isTopUser
-                                        ? "text-gray-900"
-                                        : "text-gray-700"
-                                    }`}
-                                  >
-                                    {user.message_count.toLocaleString()}
-                                  </span>
-                                </div>
-
-                                <div className="w-full bg-gray-200 rounded-full h-2">
-                                  <div
-                                    className={`h-2 rounded-full transition-all duration-500 ${
-                                      isTopUser ? "bg-gray-600" : "bg-gray-400"
-                                    }`}
-                                    style={{ width: `${percentage}%` }}
-                                  ></div>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="bg-white rounded-lg shadow-md border border-gray-200 p-8 text-center">
-                    <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Database className="w-8 h-8 text-gray-400" />
-                    </div>
-                    <h4 className="text-lg font-medium text-gray-600 mb-2">
-                      No User Data Available
-                    </h4>
-                    <p className="text-gray-500">
-                      User activity statistics will appear here once data is
-                      available.
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          )}
+        </div>
       </div>
     );
   };
@@ -1062,101 +976,82 @@ export function AdminTools() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
-        {/* Header Section */}
-        <div className="mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div className="min-h-screen bg-slate-50">
+      {/* Top nav bar */}
+      <div className="sticky top-0 z-20 bg-white/80 backdrop-blur border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-3">
             <Link
               to="/dashboard"
-              className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors py-2 px-4 rounded-lg hover:bg-white border border-gray-200"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors"
             >
-              <ArrowLeft className="w-5 h-5 mr-2" />
-              <span className="font-medium">Back to Dashboard</span>
+              <ArrowLeft className="w-4 h-4" />
+              Dashboard
             </Link>
+            <span className="text-slate-300">/</span>
+            <span className="text-sm font-semibold text-slate-900">Admin Tools</span>
+          </div>
+          <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-3 py-1.5 rounded-full">
+            <Shield className="w-3.5 h-3.5" />
+            Administrator
+          </div>
+        </div>
+      </div>
 
-            <div className="flex items-center gap-3">
-              <div className="bg-white rounded-lg px-4 py-2 border border-gray-200 shadow-sm">
-                <div className="flex items-center text-sm text-gray-600">
-                  <Shield className="w-4 h-4 mr-2 text-gray-500" />
-                  <span>Administrator Access</span>
-                </div>
-              </div>
+      {/* Page header */}
+      <div className="bg-white border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8 pb-0">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center flex-shrink-0">
+              <Settings className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Admin Control Center</h1>
+              <p className="text-slate-500 text-sm">System management, monitoring &amp; configuration</p>
             </div>
           </div>
 
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 mb-3">
-              Admin Control Center
-            </h1>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Comprehensive administrative tools for system management and
-              monitoring
-            </p>
+          {/* Tabs */}
+          <div className="flex gap-1 overflow-x-auto">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+                  activeTab === tab.id
+                    ? "border-indigo-600 text-indigo-600"
+                    : "border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300"
+                }`}
+              >
+                <tab.icon className="w-4 h-4" />
+                {tab.label}
+              </button>
+            ))}
           </div>
         </div>
+      </div>
 
-        {/* Navigation Tabs */}
-        <div className="mb-8">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2">
-            <div className="flex flex-col sm:flex-row gap-2">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  className={`flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    activeTab === tab.id
-                      ? "bg-gray-900 text-white shadow-sm"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                  }`}
-                  onClick={() => setActiveTab(tab.id)}
-                >
-                  <tab.icon
-                    className={`w-5 h-5 ${
-                      activeTab === tab.id ? "text-white" : "text-gray-500"
-                    }`}
-                  />
-                  <div className="text-left hidden sm:block">
-                    <div className="font-semibold">{tab.label}</div>
-                    <div
-                      className={`text-xs ${
-                        activeTab === tab.id ? "text-gray-300" : "text-gray-500"
-                      }`}
-                    >
-                      {tab.description}
-                    </div>
-                  </div>
-                  <span className="sm:hidden">{tab.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Content Area */}
-        <div className="transition-all duration-300 ease-in-out">
+      {/* Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        <div className="transition-all duration-200">
           {getActiveTabContent()}
         </div>
+      </div>
 
-        {/* Footer */}
-        <div className="mt-12 text-center">
-          <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center text-sm text-gray-600">
-                <Settings className="w-4 h-4 mr-2 text-gray-400" />
-                <span>
-                  Administrative tools are restricted to authorized personnel
-                  only
-                </span>
-              </div>
-              <Link
-                to="/dashboard"
-                className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors px-4 py-2 rounded-lg hover:bg-gray-50"
-              >
-                <Home className="w-4 h-4 mr-2" />
-                <span>Return to Dashboard</span>
-              </Link>
-            </div>
-          </div>
+      {/* Footer */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-10">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 py-4 border-t border-slate-200">
+          <p className="text-xs text-slate-400 flex items-center gap-1.5">
+            <Shield className="w-3.5 h-3.5" />
+            Restricted to authorized administrators only
+          </p>
+          <Link
+            to="/dashboard"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors"
+          >
+            <Home className="w-3.5 h-3.5" />
+            Return to Dashboard
+          </Link>
         </div>
       </div>
     </div>
