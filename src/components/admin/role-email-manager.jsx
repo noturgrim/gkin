@@ -1,25 +1,18 @@
 import { useState, useEffect } from "react";
-import { Button } from "../ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "../ui/card";
 import {
   Mail,
   Save,
   Loader2,
-  Check,
+  CheckCircle,
   AlertCircle,
   Shield,
   FileText,
-  BookOpen,
   Users,
   Video,
   Music,
   DollarSign,
+  RefreshCw,
+  X,
 } from "lucide-react";
 import {
   getAllRoleEmails,
@@ -153,7 +146,7 @@ export const RoleEmailManager = () => {
       console.error("Error updating role emails:", error);
       setMessage({
         type: "error",
-        text: error.response?.data?.message || "Failed to update role emails",
+        text: error.message || "Failed to update role emails",
       });
     } finally {
       setIsSaving(false);
@@ -171,134 +164,122 @@ export const RoleEmailManager = () => {
 
   if (isLoading) {
     return (
-      <Card className="shadow-lg border-0">
-        <CardContent className="pt-12">
-          <div className="flex flex-col items-center justify-center py-8">
-            <Loader2 className="w-12 h-12 text-blue-600 animate-spin mb-4" />
-            <span className="text-lg font-medium text-gray-700">
-              Loading role emails...
-            </span>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 flex items-center justify-center gap-3">
+        <Loader2 className="w-5 h-5 animate-spin text-indigo-500" />
+        <span className="text-sm font-medium text-slate-500">Loading role emails…</span>
+      </div>
     );
   }
 
   return (
-    <Card className="shadow-lg border-0">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-xl">
-          <Mail className="w-6 h-6 text-gray-600" />
-          Role Email Management
-        </CardTitle>
-        <CardDescription>
-          Set email addresses for each role. All users in a role will share the
-          same email for notifications. (Pastor emails are set per service
-          assignment)
-        </CardDescription>
-      </CardHeader>
-
-      <CardContent className="space-y-6">
-        {/* Message display */}
-        {message.text && (
-          <div
-            className={`flex items-center gap-3 p-4 rounded-lg shadow-sm ${
-              message.type === "success"
-                ? "bg-green-50 text-green-700 border border-green-200"
-                : "bg-red-50 text-red-700 border border-red-200"
-            }`}
-          >
-            {message.type === "success" ? (
-              <Check className="w-6 h-6 flex-shrink-0" />
-            ) : (
-              <AlertCircle className="w-6 h-6 flex-shrink-0" />
-            )}
-            <span className="font-medium">{message.text}</span>
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm">
+      {/* Panel header */}
+      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
+            <Mail className="w-4 h-4 text-indigo-600" />
           </div>
-        )}
+          <div>
+            <h3 className="text-sm font-semibold text-slate-800">Role Email Addresses</h3>
+            <p className="text-xs text-slate-400">Shared email per role for notifications</p>
+          </div>
+        </div>
+        <button
+          onClick={fetchRoleEmails}
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-indigo-600 border border-slate-200 hover:border-indigo-300 rounded-lg px-3 py-1.5 transition-colors"
+        >
+          <RefreshCw className="w-3 h-3" />
+          Refresh
+        </button>
+      </div>
 
-        {/* Role Email Inputs */}
-        <div className="space-y-4">
-          {Object.entries(roleConfigs).map(([roleId, config]) => {
-            const Icon = config.icon;
-            return (
-              <div key={roleId} className="space-y-2">
-                <label
-                  htmlFor={`email-${roleId}`}
-                  className="text-sm font-semibold text-gray-700 flex items-center gap-2"
-                >
-                  <div
-                    className={`w-8 h-8 rounded-lg ${config.color} flex items-center justify-center shadow-sm`}
-                  >
-                    <Icon className="w-4 h-4 text-white" />
-                  </div>
-                  {config.name}
-                </label>
+      {/* Feedback strip */}
+      {message.text && (
+        <div
+          className={`flex items-center gap-2.5 mx-6 mt-4 px-4 py-3 rounded-xl text-sm font-medium ${
+            message.type === "success"
+              ? "bg-green-50 text-green-700 border border-green-200"
+              : "bg-red-50 text-red-700 border border-red-200"
+          }`}
+        >
+          {message.type === "success" ? (
+            <CheckCircle className="w-4 h-4 flex-shrink-0" />
+          ) : (
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          )}
+          <span className="flex-1">{message.text}</span>
+          <button onClick={() => setMessage({ type: "", text: "" })} className="opacity-60 hover:opacity-100">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
+      {/* Role email rows */}
+      <div className="divide-y divide-slate-100">
+        {Object.entries(roleConfigs).map(([roleId, config]) => {
+          const Icon = config.icon;
+          const hasValue = !!(editedEmails[roleId]?.trim());
+          return (
+            <div key={roleId} className="px-6 py-4 flex items-center gap-4">
+              {/* Role icon + name */}
+              <div className="flex items-center gap-3 w-44 flex-shrink-0">
+                <div className={`w-8 h-8 rounded-lg ${config.color} flex items-center justify-center flex-shrink-0`}>
+                  <Icon className="w-4 h-4 text-white" />
+                </div>
+                <span className="text-sm font-semibold text-slate-700 truncate">{config.name}</span>
+              </div>
+
+              {/* Email input */}
+              <div className="relative flex-1">
+                <div className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
+                  <Mail className="w-4 h-4 text-slate-300" />
+                </div>
                 <input
                   type="email"
                   id={`email-${roleId}`}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-800 bg-white shadow-sm transition-all duration-200"
-                  placeholder={`Enter email for ${config.name} role`}
+                  className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-xl bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                  placeholder={`${config.name} email address…`}
                   value={editedEmails[roleId] || ""}
                   onChange={(e) => handleEmailChange(roleId, e.target.value)}
                 />
               </div>
-            );
-          })}
-        </div>
 
-        {/* Information Box */}
-        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-gray-700">
-              <p className="font-semibold text-gray-900 mb-1">Important</p>
-              <p>
-                Each role shares a single email address. When you update a
-                role's email, it will be used for all users in that role. Leave
-                blank if no email notifications are needed for a particular
-                role.
-              </p>
-              <p className="mt-2">
-                <strong>Note:</strong> Pastor (Voorganger) emails are managed
-                through Service Assignments, as different pastors are assigned
-                per service date.
-              </p>
+              {/* Status dot */}
+              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${hasValue ? "bg-emerald-400" : "bg-slate-200"}`} title={hasValue ? "Email set" : "No email"} />
             </div>
-          </div>
-        </div>
+          );
+        })}
+      </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-4 pt-4">
-          <Button
-            onClick={handleSave}
-            disabled={isSaving}
-            className="flex-1 h-12 flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
-          >
-            {isSaving ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span>Saving Changes...</span>
-              </>
-            ) : (
-              <>
-                <Save className="w-5 h-5" />
-                <span>Save All Changes</span>
-              </>
-            )}
-          </Button>
+      {/* Info callout */}
+      <div className="mx-6 my-4 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex items-start gap-2.5">
+        <AlertCircle className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+        <p className="text-xs text-blue-700 leading-relaxed">
+          Each role shares one email address for all its users. <strong>Pastor (Voorganger)</strong> emails are managed through Service Assignments — a different email per service date.
+        </p>
+      </div>
 
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleReset}
-            disabled={isSaving}
-            className="px-8 h-12 rounded-lg border-gray-300 hover:bg-gray-50 font-medium"
-          >
-            Reset
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      {/* Action footer */}
+      <div className="flex items-center gap-3 px-6 py-4 border-t border-slate-100">
+        <button
+          onClick={handleSave}
+          disabled={isSaving}
+          className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors shadow-sm disabled:opacity-60"
+        >
+          {isSaving ? (
+            <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</>
+          ) : (
+            <><Save className="w-4 h-4" /> Save All Changes</>
+          )}
+        </button>
+        <button
+          onClick={handleReset}
+          disabled={isSaving}
+          className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl transition-colors disabled:opacity-60"
+        >
+          Reset
+        </button>
+      </div>
+    </div>
   );
 };
