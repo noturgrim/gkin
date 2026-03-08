@@ -261,10 +261,12 @@ class ChatService {
    * @param {Array} mentions - Array of mentions
    * @returns {Promise} Promise with the created message
    */
-  async sendMessage(content, mentions = []) {
+  async sendMessage(content, mentions = [], options = {}) {
     try {
       // First save the message to the database via API
-      const message = await api.post('/chat/messages', { content, mentions });
+      const body = { content, mentions };
+      if (options.noEmailNotification) body.noEmailNotification = true;
+      const message = await api.post('/chat/messages', body);
       
       // Then emit it via socket for real-time updates if connected
       if (this.connected && this.socket) {
@@ -345,16 +347,9 @@ class ChatService {
     while ((match = mentionRegex.exec(text)) !== null) {
       const mentionText = match[1].toLowerCase();
       
-      // Check if it's a role mention
-      const roles = ['liturgy', 'pastor', 'translation', 'beamer', 'music', 'treasurer'];
+      // Check if it's a valid role mention
+      const roles = ['liturgy', 'translation', 'beamer', 'music', 'treasurer', 'admin'];
       if (roles.includes(mentionText)) {
-        mentions.push({
-          type: 'role',
-          value: mentionText
-        });
-      } else {
-        // It could be a user mention - we'd need to resolve this
-        // For now, we'll just treat it as a role mention
         mentions.push({
           type: 'role',
           value: mentionText

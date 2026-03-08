@@ -11,11 +11,11 @@ const roleColors = {
     light: "bg-blue-50",
     border: "border-blue-200",
   },
-  pastor: {
-    bg: "bg-purple-600",
-    text: "text-purple-600",
-    light: "bg-purple-50",
-    border: "border-purple-200",
+  admin: {
+    bg: "bg-indigo-600",
+    text: "text-indigo-600",
+    light: "bg-indigo-50",
+    border: "border-indigo-200",
   },
   translation: {
     bg: "bg-green-800",
@@ -71,7 +71,7 @@ export function ChatInput({ onSendMessage, isSending }) {
       const suggestions = [];
 
       // First check for role matches
-      const roles = ["liturgy", "pastor", "translation", "beamer", "music", "treasurer"];
+      const roles = ["liturgy", "translation", "beamer", "music", "treasurer", "admin"];
       const matchingRoles = roles.filter((role) =>
         role.toLowerCase().includes(searchText)
       );

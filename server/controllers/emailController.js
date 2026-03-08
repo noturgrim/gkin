@@ -14,6 +14,7 @@ const sendEmail = async (req, res) => {
       cc,
       subject,
       message,
+      html,
       documentType,
       documentLink,
       serviceDate,
@@ -84,6 +85,11 @@ const sendEmail = async (req, res) => {
         mailOptions.cc = cc;
       }
 
+      // Add HTML body if provided
+      if (html) {
+        mailOptions.html = html;
+      }
+
       // Send the email
       info = await transporter.sendMail(mailOptions);
 
@@ -145,6 +151,7 @@ const sendEmailInternal = async (emailReq) => {
       cc,
       subject,
       message,
+      html,
       documentType,
       documentLink,
       serviceDate,
@@ -210,6 +217,11 @@ const sendEmailInternal = async (emailReq) => {
       // Add CC if provided and not empty
       if (cc && cc.trim()) {
         mailOptions.cc = cc;
+      }
+
+      // Add HTML body if provided
+      if (html) {
+        mailOptions.html = html;
       }
 
       // Send the email

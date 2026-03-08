@@ -1,5 +1,7 @@
 const db = require('../config/db');
 
+const MENTIONABLE_ROLES = new Set(['liturgy', 'translation', 'beamer', 'music', 'treasurer', 'admin']);
+
 /**
  * Get recent chat messages
  * @param {Request} req - Express request object
@@ -39,7 +41,7 @@ const getMessages = async (req, res) => {
  */
 const createMessage = async (req, res) => {
   try {
-    const { content, mentions } = req.body;
+    const { content, mentions, noEmailNotification } = req.body;
     const userId = req.user.id;
     
     // Validate request
@@ -53,6 +55,8 @@ const createMessage = async (req, res) => {
       [userId, content, JSON.stringify(mentions || [])]
     );
     
+    const messageId = result.rows[0].id;
+
     // Get the complete message with sender info
     const messageWithSender = await db.query(
       `SELECT m.id, m.content, m.created_at, m.mentions,
@@ -65,10 +69,70 @@ const createMessage = async (req, res) => {
       FROM messages m
       JOIN users u ON m.sender_id = u.id
       WHERE m.id = $1`,
-      [result.rows[0].id]
+      [messageId]
     );
     
-    res.status(201).json(messageWithSender.rows[0]);
+    const message = messageWithSender.rows[0];
+
+    // Collect unique mentionable role mentions (for email sending)
+    const mentionedRoles = Array.isArray(mentions)
+      ? [...new Set(mentions.filter((m) => m.type === 'role' && MENTIONABLE_ROLES.has(m.value)).map((m) => m.value))]
+      : [];
+
+    // Note: message_mentions rows are created automatically by the DB trigger
+    // trigger_create_message_mentions on messages INSERT.
+
+    if (mentionedRoles.length > 0 && !noEmailNotification) {
+      // Fetch up to 3 messages before this one for context
+      const contextResult = await db.query(
+        `SELECT m.content, m.created_at,
+          json_build_object('id', u.id, 'username', u.username, 'role', u.role) as sender
+        FROM messages m
+        JOIN users u ON m.sender_id = u.id
+        WHERE m.id < $1
+        ORDER BY m.id DESC
+        LIMIT 3`,
+        [messageId]
+      );
+      const contextMessages = contextResult.rows.reverse();
+
+      const { sendEmailInternal } = require('./emailController');
+      const roleEmailsController = require('./roleEmailsController');
+      const { buildMentionEmail } = require('../utils/emailTemplates');
+      const config = require('../config/config');
+
+      for (const role of mentionedRoles) {
+        try {
+          const roleEmailResult = await roleEmailsController.getRoleEmailInternal(role);
+          if (!roleEmailResult?.email) continue;
+
+          const { subject, html } = buildMentionEmail({
+            senderUsername: req.user.username,
+            senderRole: req.user.role,
+            mentionedRole: role,
+            contextMessages,
+            mentionMessage: message,
+            appUrl: config.frontendUrl,
+          });
+
+          await sendEmailInternal({
+            user: req.user,
+            body: {
+              to: roleEmailResult.email,
+              subject,
+              message: `${req.user.username} mentioned @${role} in GKIN chat.`,
+              html,
+              documentType: 'mention',
+              recipientType: role,
+            },
+          });
+        } catch (emailError) {
+          console.warn(`Failed to send mention email to @${role}:`, emailError.message);
+        }
+      }
+    }
+
+    res.status(201).json(message);
   } catch (error) {
     console.error('Error creating message:', error);
     res.status(500).json({ message: 'Error creating message' });

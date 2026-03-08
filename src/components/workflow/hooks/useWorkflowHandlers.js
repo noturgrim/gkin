@@ -5,10 +5,6 @@ import { toast } from "react-hot-toast";
 import sermonService from "../../../services/sermonService";
 import musicLinksService from "../../../services/musicLinksService";
 import chatService from "../../../services/chatService";
-import emailService from "../../../services/emailService";
-import roleEmailsService from "../../../services/roleEmailsService";
-import { getAssignments } from "../../../services/assignmentsService";
-import { getAssignablePeople } from "../../../services/assignablePeopleService";
 
 export const useWorkflowHandlers = () => {
   // Loading states
@@ -173,143 +169,14 @@ export const useWorkflowHandlers = () => {
         onStartAction(`${documentData.documentType}-completed`);
       }
 
-      // Send notifications if this is the final document
+      // Send in-app chat notification for final document
       if (documentData.documentType === "final") {
         try {
-          // Get service assignments to find specific people
-          const allAssignments = await getAssignments();
-          const serviceAssignment = allAssignments.find(
-            (a) => a.dateString === dateString
-          );
-          const assignments = serviceAssignment?.assignments || [];
-
-          // Find specific assigned people
-          const muzikaleBegeleiding = assignments.find(
-            (a) => a.role === "Muzikale begeleiding"
-          )?.person;
-          const voorzangers = assignments.find(
-            (a) => a.role === "Voorzangers"
-          )?.person;
-          const ouderlingVanDienst = assignments.find(
-            (a) => a.role === "Ouderling van dienst"
-          )?.person;
-
-          // Build list of who was emailed
-          let emailedList = "Beamer team, Translation team";
-          if (muzikaleBegeleiding) {
-            emailedList += `, ${muzikaleBegeleiding} (Muzikale begeleiding)`;
-          }
-          if (voorzangers) {
-            emailedList += `, ${voorzangers} (Voorzangers)`;
-          }
-          if (ouderlingVanDienst) {
-            emailedList += `, ${ouderlingVanDienst} (Ouderling van dienst)`;
-          }
-
-          // 1. Send in-app chat notification
-          const notificationMessage = `@beamer @translation The final document for ${dateString} has been uploaded. Emailed: ${emailedList}`;
+          const notificationMessage = `@beamer @translation The final document for ${dateString} has been uploaded.`;
           await chatService.sendMessage(notificationMessage, [
             { type: "role", value: "beamer" },
             { type: "role", value: "translation" },
-          ]);
-
-          // 2. Send emails to role emails and assigned people
-          try {
-            // Get role emails
-            const beamerEmail = await roleEmailsService.getRoleEmail("beamer");
-            const translationEmail = await roleEmailsService.getRoleEmail(
-              "translation"
-            );
-
-            console.log("Beamer email:", beamerEmail);
-            console.log("Translation email:", translationEmail);
-
-            // Get assignable people to find their email addresses
-            const allPeople = await getAssignablePeople(true);
-            console.log("All people:", allPeople);
-
-            const emailPromises = [];
-
-            if (beamerEmail?.email) {
-              console.log("Sending email to beamer:", beamerEmail.email);
-              emailPromises.push(
-                emailService.sendEmail({
-                  to: beamerEmail.email,
-                  subject: `Final Document Ready - ${dateString}`,
-                  message: `The final document has been uploaded for the service on ${dateString}.\n\nYou can access it here: ${documentLink}`,
-                  documentType: "final",
-                  documentLink: documentLink,
-                  serviceDate: dateString,
-                  recipientType: "beamer",
-                })
-              );
-            } else {
-              console.warn("Beamer email not configured");
-            }
-
-            if (translationEmail?.email) {
-              console.log(
-                "Sending email to translation:",
-                translationEmail.email
-              );
-              emailPromises.push(
-                emailService.sendEmail({
-                  to: translationEmail.email,
-                  subject: `Final Document Ready - ${dateString}`,
-                  message: `The final document has been uploaded for the service on ${dateString}.\n\nYou can access it here: ${documentLink}`,
-                  documentType: "final",
-                  documentLink: documentLink,
-                  serviceDate: dateString,
-                  recipientType: "translation",
-                })
-              );
-            } else {
-              console.warn("Translation email not configured");
-            }
-
-            // Send emails to assigned people
-            const assignedPeopleToEmail = [
-              { name: muzikaleBegeleiding, role: "Muzikale begeleiding" },
-              { name: voorzangers, role: "Voorzangers" },
-              { name: ouderlingVanDienst, role: "Ouderling van dienst" },
-            ].filter((p) => p.name); // Only include assigned people
-
-            for (const assignedPerson of assignedPeopleToEmail) {
-              const person = allPeople.find(
-                (p) => p.name === assignedPerson.name
-              );
-              if (person && person.email) {
-                console.log(
-                  `Sending email to ${assignedPerson.name} (${assignedPerson.role}):`,
-                  person.email
-                );
-                emailPromises.push(
-                  emailService.sendEmail({
-                    to: person.email,
-                    subject: `Final Document Ready - ${dateString}`,
-                    message: `Hello ${assignedPerson.name},\n\nThe final document has been uploaded for the service on ${dateString}.\n\nYou are assigned as: ${assignedPerson.role}`,
-                    documentType: "final",
-                    documentLink: documentLink,
-                    serviceDate: dateString,
-                    recipientType: assignedPerson.role,
-                  })
-                );
-              } else {
-                console.warn(
-                  `No email found for ${assignedPerson.name} (${assignedPerson.role})`
-                );
-              }
-            }
-
-            if (emailPromises.length > 0) {
-              await Promise.all(emailPromises);
-              console.log("All emails sent successfully");
-            } else {
-              console.warn("No emails to send - role emails not configured");
-            }
-          } catch (emailError) {
-            console.warn("Failed to send email notifications:", emailError);
-          }
+          ], { noEmailNotification: true });
         } catch (notificationError) {
           console.error("Failed to send notifications:", notificationError);
         }
@@ -509,40 +376,14 @@ export const useWorkflowHandlers = () => {
         onStartAction(`sermon-uploaded`);
       }
 
-      // Send notifications to translation team
+      // Send in-app chat notification to translation team
       try {
-        // 1. Send in-app chat notification
         const notificationMessage = `@translation I've uploaded the sermon for ${dateString}, you can now translate it.`;
         await chatService.sendMessage(notificationMessage, [
-          {
-            type: "role",
-            value: "translation",
-          },
-        ]);
-
-        // 2. Send email notification
-        try {
-          const translationEmail = await roleEmailsService.getRoleEmail(
-            "translation"
-          );
-          if (translationEmail?.email) {
-            await emailService.sendEmail({
-              to: translationEmail.email,
-              subject: `Sermon Document Ready for Translation - ${dateString}`,
-              message: `A new sermon document has been uploaded for the service on ${dateString}.\n\nPlease visit the website to translate it: ${window.location.origin}`,
-              documentType: "sermon",
-              documentLink: sermonData.sermonLink,
-              serviceDate: dateString,
-              recipientType: "translation",
-            });
-          }
-        } catch (emailError) {
-          console.warn("Failed to send email notification:", emailError);
-          // Don't fail the whole operation if email fails
-        }
+          { type: "role", value: "translation" },
+        ], { noEmailNotification: true });
       } catch (notificationError) {
         console.error("Failed to send notifications:", notificationError);
-        // Don't fail the whole operation if notifications fail
       }
 
       // Close the upload modal - no alert needed
@@ -828,43 +669,13 @@ export const useWorkflowHandlers = () => {
         onStartAction("lyrics-added");
       }
 
-      // Send notifications to beamer team
+      // Send in-app chat notification to beamer team
       try {
-        // 1. Send in-app chat notification
-        const songTitles = lyricsData.songs
-          .map((song) => song.title)
-          .join(", ");
+        const songTitles = lyricsData.songs.map((song) => song.title).join(", ");
         const notificationMessage = `@beamer Song lyrics have been uploaded for ${dateString}: ${songTitles}`;
         await chatService.sendMessage(notificationMessage, [
-          {
-            type: "role",
-            value: "beamer",
-          },
-        ]);
-
-        // 2. Send email notification to beamer role
-        try {
-          const beamerEmail = await roleEmailsService.getRoleEmail("beamer");
-
-          if (beamerEmail?.email) {
-            await emailService.sendEmail({
-              to: beamerEmail.email,
-              subject: `Song Lyrics Uploaded - ${dateString}`,
-              message: `New song lyrics have been uploaded for the service on ${dateString}.\n\nSongs:\n${lyricsData.songs
-                .map((song) => `- ${song.title}`)
-                .join(
-                  "\n"
-                )}\n\nPlease prepare the slides accordingly.\n\nView on website: ${
-                window.location.origin
-              }`,
-              documentType: "lyrics",
-              serviceDate: dateString,
-              recipientType: "beamer",
-            });
-          }
-        } catch (emailError) {
-          console.warn("Failed to send email notification:", emailError);
-        }
+          { type: "role", value: "beamer" },
+        ], { noEmailNotification: true });
       } catch (notificationError) {
         console.warn("Failed to send notifications:", notificationError);
       }
@@ -1037,31 +848,12 @@ export const useWorkflowHandlers = () => {
         onStartAction("sermon-translated");
       }
 
-      // Send notification to beamer team
+      // Send in-app chat notification to beamer team
       try {
-        // 1. Send in-app chat notification
         const notificationMessage = `@beamer The sermon for ${dateString} has been translated and is ready.`;
         await chatService.sendMessage(notificationMessage, [
           { type: "role", value: "beamer" },
-        ]);
-
-        // 2. Send email notification to beamer
-        try {
-          const beamerEmail = await roleEmailsService.getRoleEmail("beamer");
-          if (beamerEmail?.email) {
-            await emailService.sendEmail({
-              to: beamerEmail.email,
-              subject: `Sermon Translation Complete - ${dateString}`,
-              message: `The sermon has been translated for the service on ${dateString}.`,
-              documentType: "sermon",
-              documentLink: documentLink,
-              serviceDate: dateString,
-              recipientType: "beamer",
-            });
-          }
-        } catch (emailError) {
-          console.warn("Failed to send email notification:", emailError);
-        }
+        ], { noEmailNotification: true });
       } catch (notificationError) {
         console.error("Failed to send notifications:", notificationError);
       }
@@ -1216,64 +1008,15 @@ export const useWorkflowHandlers = () => {
         onStartAction("qrcode-uploaded");
       }
 
-      // Send notifications to beamer and liturgy teams
+      // Send in-app chat notification to beamer and liturgy teams
       try {
-        // 1. Send in-app chat notification
         const notificationMessage = `@beamer @liturgy I've uploaded the QR code for ${dateString}, you can now use it.`;
         await chatService.sendMessage(notificationMessage, [
-          {
-            type: "role",
-            value: "beamer",
-          },
-          {
-            type: "role",
-            value: "liturgy",
-          },
-        ]);
-
-        // 2. Send email notifications to both roles
-        try {
-          const beamerEmail = await roleEmailsService.getRoleEmail("beamer");
-          const liturgyEmail = await roleEmailsService.getRoleEmail("liturgy");
-
-          const emailPromises = [];
-
-          if (beamerEmail?.email) {
-            emailPromises.push(
-              emailService.sendEmail({
-                to: beamerEmail.email,
-                subject: `QR Code Ready - ${dateString}`,
-                message: `The QR code has been uploaded for the service on ${dateString}.\n\nYou can access it here: ${qrCodeData.qrCodeLink}`,
-                documentType: "qrcode",
-                documentLink: qrCodeData.qrCodeLink,
-                serviceDate: dateString,
-                recipientType: "beamer",
-              })
-            );
-          }
-
-          if (liturgyEmail?.email) {
-            emailPromises.push(
-              emailService.sendEmail({
-                to: liturgyEmail.email,
-                subject: `QR Code Ready - ${dateString}`,
-                message: `The QR code has been uploaded for the service on ${dateString}.\n\nYou can access it here: ${qrCodeData.qrCodeLink}`,
-                documentType: "qrcode",
-                documentLink: qrCodeData.qrCodeLink,
-                serviceDate: dateString,
-                recipientType: "liturgy",
-              })
-            );
-          }
-
-          await Promise.all(emailPromises);
-        } catch (emailError) {
-          console.warn("Failed to send email notifications:", emailError);
-          // Don't fail the whole operation if email fails
-        }
+          { type: "role", value: "beamer" },
+          { type: "role", value: "liturgy" },
+        ], { noEmailNotification: true });
       } catch (notificationError) {
         console.error("Failed to send notifications:", notificationError);
-        // Don't fail the whole operation if notifications fail
       }
 
       // Close the modal - no alert needed
