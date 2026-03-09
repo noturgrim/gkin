@@ -4,7 +4,6 @@ import { useWorkflow } from "../context/WorkflowContext";
 import { toast } from "react-hot-toast";
 import sermonService from "../../../services/sermonService";
 import musicLinksService from "../../../services/musicLinksService";
-import chatService from "../../../services/chatService";
 
 export const useWorkflowHandlers = () => {
   // Loading states
@@ -167,19 +166,6 @@ export const useWorkflowHandlers = () => {
       // Update the service status for this task if needed
       if (onStartAction) {
         onStartAction(`${documentData.documentType}-completed`);
-      }
-
-      // Send in-app chat notification for final document
-      if (documentData.documentType === "final") {
-        try {
-          const notificationMessage = `@beamer @translation The final document for ${dateString} has been uploaded.`;
-          await chatService.sendMessage(notificationMessage, [
-            { type: "role", value: "beamer" },
-            { type: "role", value: "translation" },
-          ], { noEmailNotification: true });
-        } catch (notificationError) {
-          console.error("Failed to send notifications:", notificationError);
-        }
       }
 
       // Return success - no alert needed as the modal already shows loading state
@@ -374,16 +360,6 @@ export const useWorkflowHandlers = () => {
       // Update the service status for this task if needed
       if (onStartAction) {
         onStartAction(`sermon-uploaded`);
-      }
-
-      // Send in-app chat notification to translation team
-      try {
-        const notificationMessage = `@translation I've uploaded the sermon for ${dateString}, you can now translate it.`;
-        await chatService.sendMessage(notificationMessage, [
-          { type: "role", value: "translation" },
-        ], { noEmailNotification: true });
-      } catch (notificationError) {
-        console.error("Failed to send notifications:", notificationError);
       }
 
       // Close the upload modal - no alert needed
@@ -669,17 +645,6 @@ export const useWorkflowHandlers = () => {
         onStartAction("lyrics-added");
       }
 
-      // Send in-app chat notification to beamer team
-      try {
-        const songTitles = lyricsData.songs.map((song) => song.title).join(", ");
-        const notificationMessage = `@beamer Song lyrics have been uploaded for ${dateString}: ${songTitles}`;
-        await chatService.sendMessage(notificationMessage, [
-          { type: "role", value: "beamer" },
-        ], { noEmailNotification: true });
-      } catch (notificationError) {
-        console.warn("Failed to send notifications:", notificationError);
-      }
-
       // Show a success message
       alert("Song lyrics have been saved to the database successfully!");
     } catch (error) {
@@ -848,16 +813,6 @@ export const useWorkflowHandlers = () => {
         onStartAction("sermon-translated");
       }
 
-      // Send in-app chat notification to beamer team
-      try {
-        const notificationMessage = `@beamer The sermon for ${dateString} has been translated and is ready.`;
-        await chatService.sendMessage(notificationMessage, [
-          { type: "role", value: "beamer" },
-        ], { noEmailNotification: true });
-      } catch (notificationError) {
-        console.error("Failed to send notifications:", notificationError);
-      }
-
       // Show a success message using toast instead of alert
       toast.success("Sermon translation has been marked as completed!");
     } catch (error) {
@@ -1006,17 +961,6 @@ export const useWorkflowHandlers = () => {
       // Update the service status if needed
       if (onStartAction) {
         onStartAction("qrcode-uploaded");
-      }
-
-      // Send in-app chat notification to beamer and liturgy teams
-      try {
-        const notificationMessage = `@beamer @liturgy I've uploaded the QR code for ${dateString}, you can now use it.`;
-        await chatService.sendMessage(notificationMessage, [
-          { type: "role", value: "beamer" },
-          { type: "role", value: "liturgy" },
-        ], { noEmailNotification: true });
-      } catch (notificationError) {
-        console.error("Failed to send notifications:", notificationError);
       }
 
       // Close the modal - no alert needed
