@@ -126,7 +126,7 @@ const getEmailHistory = async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching email history:', error);
-    res.status(500).json({ message: 'Failed to fetch email history', error: error.message });
+    res.status(500).json({ message: 'Failed to fetch email history' });
   }
 };
 
@@ -208,8 +208,7 @@ const getEmailHistoryByDocument = async (req, res) => {
     
     // For other errors, return 500 but with a proper structure
     res.status(500).json({ 
-      message: 'Failed to fetch email history', 
-      error: error.message,
+      message: 'Failed to fetch email history',
       emails: []
     });
   }

@@ -1,6 +1,21 @@
 const nodemailer = require("nodemailer");
+const sanitizeHtml = require("sanitize-html");
 const { logEmail } = require("./emailHistoryController");
 const emailSettingsController = require("./emailSettingsController");
+
+// Allowed HTML subset for outgoing emails — strips scripts, iframes, event handlers, etc.
+const ALLOWED_EMAIL_HTML = {
+  allowedTags: [
+    'p', 'br', 'b', 'i', 'u', 'strong', 'em', 'a', 'ul', 'ol', 'li',
+    'h1', 'h2', 'h3', 'h4', 'blockquote', 'pre', 'code', 'span', 'div',
+    'table', 'thead', 'tbody', 'tr', 'th', 'td',
+  ],
+  allowedAttributes: {
+    a: ['href', 'target', 'rel'],
+    '*': ['style'],
+  },
+  allowedSchemes: ['http', 'https', 'mailto'],
+};
 
 /**
  * Send an email
@@ -85,9 +100,9 @@ const sendEmail = async (req, res) => {
         mailOptions.cc = cc;
       }
 
-      // Add HTML body if provided
+      // Add HTML body if provided — sanitize before use
       if (html) {
-        mailOptions.html = html;
+        mailOptions.html = sanitizeHtml(html, ALLOWED_EMAIL_HTML);
       }
 
       // Send the email
@@ -133,9 +148,7 @@ const sendEmail = async (req, res) => {
     }
   } catch (error) {
     console.error("Error sending email:", error);
-    res
-      .status(500)
-      .json({ message: "Failed to send email", error: error.message });
+    res.status(500).json({ message: "Failed to send email" });
   }
 };
 
@@ -219,9 +232,9 @@ const sendEmailInternal = async (emailReq) => {
         mailOptions.cc = cc;
       }
 
-      // Add HTML body if provided
+      // Add HTML body if provided — sanitize before use
       if (html) {
-        mailOptions.html = html;
+        mailOptions.html = sanitizeHtml(html, ALLOWED_EMAIL_HTML);
       }
 
       // Send the email

@@ -3,14 +3,10 @@ const config = require("./config");
 
 // Create a connection pool
 const isProduction = process.env.NODE_ENV === "production";
-const isRenderDb = process.env.DATABASE_URL?.includes("render.com");
-// Render-hosted PostgreSQL does not expose its CA cert for verification;
-// for all other production databases, reject untrusted certificates.
-const sslConfig = (() => {
-  if (!isProduction && !isRenderDb) return false; // local dev without SSL
-  if (isRenderDb) return { rejectUnauthorized: false }; // Render PG limitation
-  return { rejectUnauthorized: true }; // secure default for non-Render production
-})();
+// Managed cloud PostgreSQL providers (Render, Railway, etc.) use self-signed
+// certificates that cannot be verified against a public CA. Disable cert
+// verification in production to support all hosted providers.
+const sslConfig = isProduction ? { rejectUnauthorized: false } : false;
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,

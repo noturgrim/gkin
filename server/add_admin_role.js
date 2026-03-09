@@ -10,19 +10,19 @@ async function addAdminRole() {
     if (roleExists.rows.length > 0) {
       console.log('Admin role already exists in the database');
     } else {
-      // Insert admin role
+      // Insert admin role with a placeholder — update via the admin panel after login
       await db.query(
         'INSERT INTO role_passcodes (role, passcode) VALUES ($1, $2)',
         ['admin', 'admin2025']
       );
-      console.log('Added admin role with passcode: admin2025');
+      console.log('Admin role added. Set a strong passcode via the admin panel.');
     }
     
-    // Verify roles in database
-    const roles = await db.query('SELECT role, passcode FROM role_passcodes');
-    console.log('\nCurrent roles in database:');
+    // Verify roles in database (do not log passcode values)
+    const roles = await db.query('SELECT role FROM role_passcodes');
+    console.log('\nRoles in database:');
     roles.rows.forEach(row => {
-      console.log(`- ${row.role}: ${row.passcode}`);
+      console.log(`- ${row.role}`);
     });
     
     console.log('\nAdmin role setup completed');

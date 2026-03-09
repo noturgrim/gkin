@@ -43,8 +43,7 @@ const adminController = {
       console.error('Error clearing messages:', error);
       return res.status(500).json({
         success: false,
-        message: 'Failed to clear messages',
-        error: error.message
+        message: 'Failed to clear messages'
       });
     }
   },
@@ -108,8 +107,7 @@ const adminController = {
       console.error('Error getting message stats:', error);
       return res.status(500).json({
         success: false,
-        message: 'Failed to get message statistics',
-        error: error.message
+        message: 'Failed to get message statistics'
       });
     }
   },
@@ -143,7 +141,7 @@ const adminController = {
         console.error('Database connection test failed:', error);
         status.database.status = 'disconnected';
         status.database.connected = false;
-        status.database.error = error.message;
+        // Do not expose raw error message to callers
       }
 
       return res.status(200).json({
@@ -154,8 +152,7 @@ const adminController = {
       console.error('Error getting system status:', error);
       return res.status(500).json({
         success: false,
-        message: 'Failed to get system status',
-        error: error.message
+        message: 'Failed to get system status'
       });
     }
   }

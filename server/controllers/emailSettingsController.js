@@ -128,8 +128,7 @@ const emailSettingsController = {
       console.error('Error fetching email settings:', error);
       return res.status(500).json({
         success: false,
-        message: 'Failed to fetch email settings',
-        error: error.message
+        message: 'Failed to fetch email settings'
       });
     }
   },
@@ -201,8 +200,7 @@ const emailSettingsController = {
       console.error('Error updating email settings:', error);
       return res.status(500).json({
         success: false,
-        message: 'Failed to update email settings',
-        error: error.message
+        message: 'Failed to update email settings'
       });
     }
   },
