@@ -150,6 +150,20 @@ export function SchedulePage() {
     getAssignablePeople(true).then((p) => setAssignablePeople(p ?? [])).catch(() => {});
   }, []);
 
+  const refreshAssignablePeople = () => {
+    getAssignablePeople(true)
+      .then((p) => {
+        const people = p ?? [];
+        setAssignablePeople(people);
+        const map = {};
+        for (const person of people) {
+          if (person.name && person.email) map[person.name.toLowerCase()] = person.email;
+        }
+        setEmailMap(map);
+      })
+      .catch(() => {});
+  };
+
   // ── Derived data ────────────────────────────────────────────────────────
 
   const sundaysInWindow = useMemo(() => {
@@ -699,6 +713,7 @@ export function SchedulePage() {
                       getPeopleForRole={getPeopleForRole}
                       currentService={editingService}
                       defaultRoleNames={DEFAULT_ROLE_NAMES}
+                      onPersonAdded={refreshAssignablePeople}
                     />
                   </div>
                   {/* Desktop layout */}
@@ -712,6 +727,7 @@ export function SchedulePage() {
                       getPeopleForRole={getPeopleForRole}
                       currentService={editingService}
                       defaultRoleNames={DEFAULT_ROLE_NAMES}
+                      onPersonAdded={refreshAssignablePeople}
                     />
                   </div>
 

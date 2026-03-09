@@ -1,7 +1,7 @@
 // src/components/assignments/DraggableRoleManagerMobile.jsx
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Button } from "../ui/button";
-import { Select } from "../ui/select";
+import { PersonCombobox } from "./PersonCombobox";
 import { GripVertical, Plus, Trash2 } from "lucide-react";
 import { Label } from "../ui/label";
 
@@ -14,6 +14,7 @@ export const DraggableRoleManagerMobile = ({
   getPeopleForRole,
   currentService,
   defaultRoleNames = new Set(),
+  onPersonAdded,
 }) => {
   const handleDragEnd = (result) => {
     if (!result.destination) return;
@@ -94,29 +95,21 @@ export const DraggableRoleManagerMobile = ({
                             key={assignment.originalIndex}
                             className="flex gap-2"
                           >
-                            <Select
+                            <PersonCombobox
                               value={assignment.person}
-                              onChange={(e) =>
+                              onChange={(val) =>
                                 updateAssignment(
                                   currentService.dateString,
                                   assignment.originalIndex,
-                                  e.target.value
+                                  val
                                 )
                               }
-                              className="flex-1 text-sm h-10 border-2 border-gray-300 focus:border-blue-400 transition-colors"
-                            >
-                              <option value="">Not assigned</option>
-                              {availablePeople.length > 0
-                                ? availablePeople.map((person) => {
-                                    const isDisabled = usedInThisRole.has(person.name);
-                                    return (
-                                      <option key={person.id} value={person.name} disabled={isDisabled}>
-                                        {person.name} ({person.email}){isDisabled ? " — already in this role" : ""}
-                                      </option>
-                                    );
-                                  })
-                                : null}
-                            </Select>
+                              availablePeople={availablePeople}
+                              usedInThisRole={usedInThisRole}
+                              roleName={roleName}
+                              onPersonAdded={onPersonAdded}
+                              className="flex-1"
+                            />
                             {(!defaultRoleNames.has(roleName) || people.length > 1) && (
                               <Button
                                 variant="ghost"
