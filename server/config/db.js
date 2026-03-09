@@ -2,11 +2,11 @@ const { Pool } = require("pg");
 const config = require("./config");
 
 // Create a connection pool
-const isProduction = process.env.NODE_ENV === "production";
-// Managed cloud PostgreSQL providers (Render, Railway, etc.) use self-signed
-// certificates that cannot be verified against a public CA. Disable cert
-// verification in production to support all hosted providers.
-const sslConfig = isProduction ? { rejectUnauthorized: false } : false;
+const dbUrl = process.env.DATABASE_URL || '';
+const isLocalDb = !dbUrl || dbUrl.includes('localhost') || dbUrl.includes('127.0.0.1');
+// Use SSL whenever connecting to a remote database (Render, Railway, etc.),
+// regardless of NODE_ENV — so local dev pointing at a remote DB also works.
+const sslConfig = isLocalDb ? false : { rejectUnauthorized: false };
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
